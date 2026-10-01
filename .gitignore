@@ -1,0 +1,79 @@
+# ============================================================
+# GovSmart — .gitignore
+# ============================================================
+
+# ─── Python ──────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# ─── Virtual Environments ────────────────────────────────────
+.venv/
+env/
+venv/
+ENV/
+
+# ─── Poetry ──────────────────────────────────────────────────
+# poetry.lock TETAP di-commit agar build reproducible
+# Hanya abaikan cache Poetry lokal
+.cache/
+
+# ─── Node.js / React / Vite ──────────────────────────────────
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+# package-lock.json TETAP di-commit agar dependensi terkunci
+# dist & build hasil bundling tidak perlu di-commit
+dist/
+build/
+.vite/
+
+# ─── Environment Variables & Secrets ─────────────────────────
+# PENTING: Jangan pernah commit file .env yang berisi secret!
+.env
+.env.local
+.env.*.local
+# .env.example BOLEH di-commit (berisi contoh tanpa nilai sensitif)
+
+# ─── Database & Upload Files ──────────────────────────────────
+# File database SQLite lokal (untuk testing)
+*.db
+*.sqlite
+*.sqlite3
+# Folder foto bukti yang diupload warga (disimpan di Docker volume)
+backend/uploads/
+uploads/
+
+# ─── Testing & Coverage ──────────────────────────────────────
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+*.cover
+
+# ─── Docker ──────────────────────────────────────────────────
+# Abaikan data volume Docker jika disimpan lokal
+docker/data/
+
+# ─── macOS System Files ───────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# ─── IDE & Editor ────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ─── Logs ────────────────────────────────────────────────────
+*.log
+logs/
+*.pid
