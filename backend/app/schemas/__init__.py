@@ -1,4 +1,4 @@
-from .user import UserCreate, UserResponse, AdminDinasCreate
+from .user import UserCreate, UserResponse, AdminDinasCreate, AdminDinasUpdate
 from .token import Token, TokenData
 from .department import DepartmentCreate, DepartmentResponse
 from .report import ReportCreate, ReportUpdateStatus, ReportResponse

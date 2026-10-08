@@ -26,6 +26,10 @@ def create_report(db: Session, report_in: ReportCreate, user_id: int):
     db.add(db_report)
     db.commit()
     db.refresh(db_report)
+
+    # Audit trail: record the initial 'diterima' (received) status from the system/AI.
+    create_audit_log(db, report_id=db_report.id, admin_id=None, status_baru="diterima")
+
     return db_report
 
 def get_report_by_id(db: Session, report_id: int):

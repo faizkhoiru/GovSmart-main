@@ -6,6 +6,9 @@ from sqlalchemy.pool import StaticPool
 
 from app.main import app
 from app.database import Base, get_db
+from app.models.department import Department  # ensure table is registered for create_all
+from app.models.user import User  # ensure all mapped tables are present
+from app.models.report import Report
 from app.crud.department import seed_departments
 from app.crud.user import seed_super_admin, create_user
 from app.schemas.user import UserCreate

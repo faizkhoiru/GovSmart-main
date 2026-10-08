@@ -11,7 +11,7 @@ import re
 # - Min 1 angka
 # - Min 1 simbol khusus
 PASSWORD_REGEX = re.compile(
-    r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};\':"\\|,.<>\/?]).{8,}$'
+    r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};\'":\"\\|,.<>\/?]).{8,}$'
 )
 
 
@@ -28,6 +28,7 @@ class UserBase(BaseModel):
     nik_or_nip: str = Field(..., min_length=16, max_length=20, description="NIK untuk warga (16 digit), NIP untuk pegawai")
     email: EmailStr
 
+
 class UserCreate(UserBase):
     password: str = Field(..., min_length=8)
 
@@ -36,19 +37,39 @@ class UserCreate(UserBase):
     def password_must_be_strong(cls, v: str) -> str:
         return validate_password_strength(v)
 
+
 class AdminDinasCreate(BaseModel):
     nip: str = Field(..., min_length=16, max_length=20, description="NIP Pegawai")
     email: EmailStr
     password: str = Field(..., min_length=8)
+    dept_id: int = Field(..., description="ID dinas yang dikelola admin")
 
     @field_validator("password")
     @classmethod
     def password_must_be_strong(cls, v: str) -> str:
         return validate_password_strength(v)
 
+
+class AdminDinasUpdate(BaseModel):
+    nip: Optional[str] = Field(None, min_length=16, max_length=20, description="NIP Pegawai")
+    email: Optional[EmailStr] = None
+    password: Optional[str] = Field(None, min_length=8)
+    dept_id: Optional[int] = Field(None, description="ID dinas yang dikelola admin")
+
+    @field_validator("password")
+    @classmethod
+    def password_must_be_strong(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None:
+            return validate_password_strength(v)
+        return v
+
+
 class UserResponse(UserBase):
     id: int
     role: str
+    dept_id: Optional[int] = None
+    is_active: bool = True
+    nama_dinas: Optional[str] = None
 
     class Config:
         from_attributes = True

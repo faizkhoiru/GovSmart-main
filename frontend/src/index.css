@@ -346,6 +346,72 @@ body {
   border: 1px solid #6ee7b7;
 }
 
+/* Toast Notifications */
+.toast-viewport {
+  position: fixed;
+  top: 1.25rem;
+  right: 1.25rem;
+  z-index: 3000;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: min(380px, calc(100vw - 2rem));
+  pointer-events: none;
+}
+.toast {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid #e2e8f0;
+  border-left: 5px solid #2563eb;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.2);
+  color: var(--text-main);
+  animation: toast-in 0.25s ease-out;
+  pointer-events: auto;
+}
+.toast-success {
+  border-left-color: #16a34a;
+}
+.toast-error {
+  border-left-color: #dc2626;
+}
+.toast-icon {
+  display: flex;
+  color: #2563eb;
+}
+.toast-success .toast-icon {
+  color: #16a34a;
+}
+.toast-error .toast-icon {
+  color: #dc2626;
+}
+.toast p {
+  flex: 1;
+  line-height: 1.4;
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+.toast button {
+  display: flex;
+  background: transparent;
+  border: 0;
+  color: #64748b;
+  cursor: pointer;
+}
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 /* Modals */
 .modal-overlay {
   position: fixed;
@@ -354,7 +420,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 100;
+  z-index: 2000;
   padding: 1rem;
 }
 .modal-content {
@@ -365,6 +431,28 @@ body {
   border-radius: var(--radius-xl);
   padding: 2.5rem;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  position: relative;
+  z-index: 2001;
+}
+.report-map-marker {
+  background: transparent;
+  border: 0;
+}
+.report-map-marker > div {
+  width: 32px;
+  height: 40px;
+  background: var(--marker-color);
+  color: #ffffff;
+  border: 2px solid #ffffff;
+  border-radius: 50% 50% 50% 0;
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: rotate(-45deg);
+}
+.report-map-marker svg {
+  transform: rotate(45deg);
 }
 
 /* Chatbot Premium */

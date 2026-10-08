@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Building2,
   MessageSquare,
@@ -17,9 +17,76 @@ import {
   Sparkles,
   Filter,
   Search,
+  Navigation,
 } from "lucide-react";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+
+// Fix leaflet default icon
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+});
+
+// Warna pin per dinas
+const DEPT_COLORS = [
+  "#ef4444", "#f97316", "#eab308", "#22c55e",
+  "#14b8a6", "#3b82f6", "#8b5cf6", "#ec4899"
+];
+const createReportIcon = (color) =>
+  L.divIcon({
+    className: "report-map-marker",
+    html: `
+      <div style="--marker-color:${color}" aria-label="Laporan">
+        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+          <path d="M14 2v6h6M8 13h8M8 17h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>`,
+    iconSize: [32, 40],
+    iconAnchor: [16, 40],
+    popupAnchor: [0, -38],
+  });
+
+// Komponen untuk re-center peta
+function RecenterMap({ center }) {
+  const map = useMap();
+  useEffect(() => { map.setView(center, map.getZoom()); }, [center]);
+  return null;
+}
+
+function ToastViewport({ notifications, dismiss }) {
+  return (
+    <div className="toast-viewport" role="status" aria-live="polite">
+      {notifications.map((item) => (
+        <div key={item.id} className={`toast toast-${item.type}`}>
+          <div className="toast-icon">
+            {item.type === "success" ? <CheckCircle size={18} /> : <AlertTriangle size={18} />}
+          </div>
+          <p>{item.message}</p>
+          <button type="button" onClick={() => dismiss(item.id)} aria-label="Tutup notifikasi">
+            <X size={16} />
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function App() {
+  const [notifications, setNotifications] = useState([]);
+  const notify = (message, type = "error") => {
+    const id = Date.now() + Math.random();
+    setNotifications((items) => [...items, { id, message, type }]);
+    setTimeout(() => setNotifications((items) => items.filter((item) => item.id !== id)), 4500);
+  };
+  const dismissNotification = (id) => {
+    setNotifications((items) => items.filter((item) => item.id !== id));
+  };
+
   const [mainView, setMainView] = useState("options"); // 'options' | 'pengaduan' | 'pertanyaan' | 'admin'
   const [token, setToken] = useState(
     localStorage.getItem("govsmart_token") || "",
@@ -45,6 +112,11 @@ export default function App() {
   const [long, setLong] = useState("");
   const [submitSuccess, setSubmitSuccess] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [uploadingFoto, setUploadingFoto] = useState(false);
+  const [fotoFile, setFotoFile] = useState(null);
+  const [fotoUploadMsg, setFotoUploadMsg] = useState("");
+  const [isDragging, setIsDragging] = useState(false);
+  const [gpsLoading, setGpsLoading] = useState(false);
 
   // Reports Data State
   const [reports, setReports] = useState([]);
@@ -61,7 +133,11 @@ export default function App() {
   const [adminNip, setAdminNip] = useState("");
   const [adminEmail, setAdminEmail] = useState("");
   const [adminPassword, setAdminPassword] = useState("");
+  const [adminDeptId, setAdminDeptId] = useState("");
   const [adminSuccess, setAdminSuccess] = useState("");
+  const [adminDinasList, setAdminDinasList] = useState([]);
+  const [editingAdmin, setEditingAdmin] = useState(null);
+  const [editForm, setEditForm] = useState({ nip: "", email: "", password: "", dept_id: "" });
 
   // AI Chatbot Widget State
   const [showChatbot, setShowChatbot] = useState(false);
@@ -106,6 +182,7 @@ export default function App() {
   useEffect(() => {
     fetchReports();
     fetchDepartments();
+    fetchAdminDinas();
   }, [token]);
 
   // Auth Handlers
@@ -204,9 +281,10 @@ export default function App() {
 
       // Auto login after register
       setAuthMode("login");
-      alert("Registrasi berhasil! Silakan login.");
+      notify("Registrasi berhasil. Silakan login.", "success");
     } catch (e) {
       setAuthError(e.message);
+      notify(e.message);
     }
   };
 
@@ -255,12 +333,88 @@ export default function App() {
       setIsiLaporan("");
       setLat("");
       setLong("");
+
+      // Jika ada foto yang dipilih, upload otomatis setelah laporan dibuat
+      if (fotoFile) {
+        setUploadingFoto(true);
+        setFotoUploadMsg("⏳ Mengupload foto bukti...");
+        try {
+          const formData = new FormData();
+          formData.append("foto", fotoFile);
+          const fotoRes = await fetch(`/api/v1/reports/${data.id}/upload-foto`, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}` },
+            body: formData,
+          });
+          if (fotoRes.ok) {
+            setFotoUploadMsg("✅ Foto bukti berhasil diunggah!");
+          } else {
+            const fotoErr = await fotoRes.json();
+            setFotoUploadMsg(`❌ ${fotoErr.detail || "Gagal mengupload foto"}`);
+          }
+        } catch {
+          setFotoUploadMsg("❌ Gagal mengupload foto, koneksi terganggu.");
+        } finally {
+          setUploadingFoto(false);
+          setFotoFile(null);
+        }
+      }
+
       fetchReports();
     } catch (e) {
-      alert(e.message);
+      notify(e.message);
     } finally {
       setSubmitting(false);
     }
+  };
+
+  // Upload Foto Handler
+  const handleUploadFoto = async (reportId) => {
+    if (!fotoFile) {
+      setFotoUploadMsg("Pilih file foto terlebih dahulu.");
+      return;
+    }
+    setUploadingFoto(true);
+    setFotoUploadMsg("");
+    try {
+      const formData = new FormData();
+      formData.append("foto", fotoFile);
+      const res = await fetch(`/api/v1/reports/${reportId}/upload-foto`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.detail || "Gagal mengupload foto");
+      }
+      setFotoUploadMsg("✅ Foto bukti berhasil diunggah!");
+      setFotoFile(null);
+    } catch (e) {
+      setFotoUploadMsg(`❌ ${e.message}`);
+    } finally {
+      setUploadingFoto(false);
+    }
+  };
+
+  // GPS Auto-Fill Handler
+  const handleUseGPS = () => {
+    if (!navigator.geolocation) {
+      notify("Browser Anda tidak mendukung Geolocation.");
+      return;
+    }
+    setGpsLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLat(pos.coords.latitude.toFixed(6));
+        setLong(pos.coords.longitude.toFixed(6));
+        setGpsLoading(false);
+      },
+      () => {
+        notify("Gagal mendapatkan lokasi. Pastikan izin lokasi diaktifkan.");
+        setGpsLoading(false);
+      }
+    );
   };
 
   // Status Update Handler
@@ -282,9 +436,9 @@ export default function App() {
 
       fetchReports();
       setSelectedReport(null);
-      alert("Status laporan berhasil diperbarui!");
+      notify("Status laporan berhasil diperbarui.", "success");
     } catch (e) {
-      alert(e.message);
+      notify(e.message);
     }
   };
 
@@ -320,20 +474,109 @@ export default function App() {
           nip: adminNip,
           email: adminEmail,
           password: adminPassword,
+          dept_id: adminDeptId ? parseInt(adminDeptId, 10) : undefined,
         }),
       });
 
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.detail || "Gagal membuat akun admin");
+        let errorMsg = "Gagal membuat akun admin";
+        if (typeof err.detail === "string") {
+          errorMsg = err.detail;
+        } else if (Array.isArray(err.detail)) {
+          errorMsg = err.detail.map((d) => d.msg).join(", ");
+        } else if (err.detail) {
+          errorMsg = JSON.stringify(err.detail);
+        }
+        throw new Error(errorMsg);
       }
 
       setAdminSuccess(`Akun Admin Dinas (${adminEmail}) berhasil dibuat!`);
+      notify(`Akun Admin Dinas (${adminEmail}) berhasil dibuat.`, "success");
       setAdminNip("");
       setAdminEmail("");
       setAdminPassword("");
+      setAdminDeptId("");
     } catch (e) {
-      alert(e.message);
+      notify(e.message);
+    }
+  };
+
+  // Fetch Admin Dinas list
+  const fetchAdminDinas = async () => {
+    try {
+      const res = await fetch("/api/v1/admin/admin-dinas", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setAdminDinasList(data);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  // Edit Admin Dinas open
+  const handleEditAdminDinas = (admin) => {
+    setEditingAdmin(admin);
+    setEditForm({
+      nip: admin.nik_or_nip || "",
+      email: admin.email || "",
+      password: "",
+      dept_id: admin.dept_id ? String(admin.dept_id) : "",
+    });
+  };
+
+  // Save Admin Dinas edit
+  const handleUpdateAdminDinas = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await fetch(`/api/v1/admin/admin-dinas/${editingAdmin.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          nip: editForm.nip,
+          email: editForm.email,
+          password: editForm.password || undefined,
+          dept_id: editForm.dept_id ? parseInt(editForm.dept_id, 10) : undefined,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        let errorMsg = "Gagal memperbarui akun";
+        if (typeof err.detail === "string") errorMsg = err.detail;
+        else if (Array.isArray(err.detail)) errorMsg = err.detail.map((d) => d.msg).join(", ");
+        else if (err.detail) errorMsg = JSON.stringify(err.detail);
+        throw new Error(errorMsg);
+      }
+      notify("Akun Admin Dinas berhasil diperbarui.", "success");
+      setEditingAdmin(null);
+      fetchAdminDinas();
+    } catch (e) {
+      notify(e.message);
+    }
+  };
+
+  // Delete Admin Dinas
+  const handleDeleteAdminDinas = async (admin) => {
+    if (!window.confirm(`Hapus akun Admin Dinas ${admin.email}? Akun yang dinonaktifkan tidak dapat login.`)) return;
+    try {
+      const res = await fetch(`/api/v1/admin/admin-dinas/${admin.id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.detail || "Gagal menghapus akun");
+      }
+      notify("Akun Admin Dinas berhasil dinonaktifkan.", "success");
+      fetchAdminDinas();
+    } catch (e) {
+      notify(e.message);
     }
   };
 
@@ -388,6 +631,7 @@ export default function App() {
   if (!token) {
     return (
       <div className="auth-page-overlay">
+        <ToastViewport notifications={notifications} dismiss={dismissNotification} />
         <div className="auth-ambient auth-ambient-one" />
         <div className="auth-ambient auth-ambient-two" />
 
@@ -550,6 +794,7 @@ export default function App() {
           background: "var(--bg-primary)",
         }}
       >
+        <ToastViewport notifications={notifications} dismiss={dismissNotification} />
         <header className="navbar-solid">
           <div className="brand-logo">
             <Sparkles className="w-6 h-6 text-accent-primary" />
@@ -673,6 +918,7 @@ export default function App() {
         background: "var(--bg-primary)",
       }}
     >
+      <ToastViewport notifications={notifications} dismiss={dismissNotification} />
       <header className="navbar-solid">
         <div
           className="brand-logo"
@@ -769,12 +1015,21 @@ export default function App() {
                   >
                     <CheckCircle size={18} /> Laporan Diterima & Teranalisis AI!
                   </div>
-                  <p style={{ fontSize: "0.9rem", color: "var(--text-main)" }}>
+                  <p style={{ fontSize: "0.9rem", color: "var(--text-main)", marginBottom: "0.5rem" }}>
                     Urgency AI:{" "}
                     <span className={`badge badge-${submitSuccess.urgensi}`}>
                       {submitSuccess.urgensi}
                     </span>
+                    {" "}| Dinas:{" "}
+                    <strong>
+                      {departments.find((d) => d.id === submitSuccess.dept_id)?.nama_dinas || "AI Auto-Routing"}
+                    </strong>
                   </p>
+                  {fotoUploadMsg && (
+                    <p style={{ fontSize: "0.85rem", marginTop: "0.5rem", color: fotoUploadMsg.startsWith("✅") ? "#059669" : "#dc2626", fontWeight: 600 }}>
+                      {fotoUploadMsg}
+                    </p>
+                  )}
                 </div>
               )}
 
@@ -801,36 +1056,114 @@ export default function App() {
                     required
                   />
                 </div>
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1fr",
-                    gap: "1rem",
-                  }}
-                >
-                  <div className="form-group">
-                    <label className="form-label">Latitude (Opsional)</label>
+                {/* Koordinat Lokasi + Tombol GPS */}
+                <div className="form-group">
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+                    <label className="form-label" style={{ margin: 0 }}>Koordinat Lokasi Kejadian (Opsional)</label>
+                    <button
+                      type="button"
+                      onClick={handleUseGPS}
+                      disabled={gpsLoading}
+                      style={{
+                        display: "flex", alignItems: "center", gap: "0.35rem",
+                        background: "var(--accent-primary)", color: "white",
+                        border: "none", borderRadius: "8px", padding: "0.4rem 0.85rem",
+                        fontSize: "0.8rem", fontWeight: 700, cursor: gpsLoading ? "not-allowed" : "pointer",
+                        opacity: gpsLoading ? 0.7 : 1, transition: "all 0.2s",
+                      }}
+                    >
+                      <Navigation size={13} />
+                      {gpsLoading ? "Mendeteksi..." : "Gunakan Lokasi Saya"}
+                    </button>
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
                     <input
-                      type="number"
-                      step="any"
-                      className="form-input"
-                      placeholder="-7.1123"
-                      value={lat}
-                      onChange={(e) => setLat(e.target.value)}
+                      type="number" step="any" className="form-input"
+                      placeholder="Latitude, e.g. -7.1123"
+                      value={lat} onChange={(e) => setLat(e.target.value)}
+                    />
+                    <input
+                      type="number" step="any" className="form-input"
+                      placeholder="Longitude, e.g. 112.1554"
+                      value={long} onChange={(e) => setLong(e.target.value)}
                     />
                   </div>
-                  <div className="form-group">
-                    <label className="form-label">Longitude (Opsional)</label>
+                  {lat && long && (
+                    <p style={{ fontSize: "0.8rem", color: "#059669", marginTop: "0.3rem", display: "flex", alignItems: "center", gap: "0.3rem" }}>
+                      <MapPin size={12} /> Koordinat: {lat}, {long}
+                    </p>
+                  )}
+                </div>
+
+                {/* Upload Foto Bukti — Drag & Drop Zone */}
+                <div className="form-group">
+                  <label className="form-label">📎 Foto Bukti (Opsional, JPEG/PNG/WEBP, maks 5 MB)</label>
+                  <div
+                    onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                    onDragLeave={(e) => { e.preventDefault(); setIsDragging(false); }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      setIsDragging(false);
+                      const file = e.dataTransfer.files[0];
+                      if (file && ["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+                        setFotoFile(file);
+                        setFotoUploadMsg("");
+                      } else if (file) {
+                        setFotoUploadMsg("❌ Format tidak didukung. Gunakan JPEG, PNG, atau WEBP.");
+                      }
+                    }}
+                    onClick={() => document.getElementById("foto-input").click()}
+                    style={{
+                      border: `2px dashed ${isDragging ? "var(--accent-primary)" : fotoFile ? "#10b981" : "#cbd5e1"}`,
+                      borderRadius: "12px",
+                      padding: "1.5rem",
+                      textAlign: "center",
+                      cursor: "pointer",
+                      background: isDragging
+                        ? "rgba(79,70,229,0.06)"
+                        : fotoFile
+                        ? "rgba(16,185,129,0.05)"
+                        : "#f8fafc",
+                      transition: "all 0.2s ease",
+                      userSelect: "none",
+                    }}
+                  >
                     <input
-                      type="number"
-                      step="any"
-                      className="form-input"
-                      placeholder="112.1554"
-                      value={long}
-                      onChange={(e) => setLong(e.target.value)}
+                      id="foto-input"
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      style={{ display: "none" }}
+                      onChange={(e) => {
+                        setFotoFile(e.target.files[0] || null);
+                        setFotoUploadMsg("");
+                      }}
                     />
+                    {fotoFile ? (
+                      <>
+                        <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>🖼️</div>
+                        <p style={{ fontWeight: 700, color: "#059669", marginBottom: "0.25rem", fontSize: "0.9rem" }}>
+                          {fotoFile.name}
+                        </p>
+                        <p style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
+                          {(fotoFile.size / 1024 / 1024).toFixed(2)} MB — Klik untuk ganti
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>
+                          {isDragging ? "📂" : "📤"}
+                        </div>
+                        <p style={{ fontWeight: 600, color: isDragging ? "var(--accent-primary)" : "var(--text-main)", marginBottom: "0.25rem", fontSize: "0.9rem" }}>
+                          {isDragging ? "Lepaskan foto di sini" : "Drag & drop foto ke sini"}
+                        </p>
+                        <p style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
+                          atau <span style={{ color: "var(--accent-primary)", fontWeight: 600 }}>klik untuk pilih file</span>
+                        </p>
+                      </>
+                    )}
                   </div>
                 </div>
+
                 <button
                   type="submit"
                   className="nav-btn nav-btn-primary"
@@ -840,11 +1173,13 @@ export default function App() {
                     marginTop: "1rem",
                     padding: "0.85rem",
                   }}
-                  disabled={submitting}
+                  disabled={submitting || uploadingFoto}
                 >
                   <Send size={18} />{" "}
                   {submitting
                     ? "Menganalisis AI & Kirim..."
+                    : uploadingFoto
+                    ? "Mengupload Foto..."
                     : "Kirim Pengaduan"}
                 </button>
               </form>
@@ -938,7 +1273,7 @@ export default function App() {
                           size={14}
                           style={{ display: "inline", marginRight: "4px" }}
                         />{" "}
-                        Dinas ID: {report.dept_id || "AI Auto-Routing"}
+                        {departments.find((d) => d.id === report.dept_id)?.nama_dinas || "AI Auto-Routing"}
                       </span>
                       <span>
                         {new Date(report.created_at).toLocaleDateString(
@@ -1132,6 +1467,20 @@ export default function App() {
                         required
                       />
                     </div>
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label className="form-label">Dinas</label>
+                      <select
+                        className="form-select"
+                        value={adminDeptId}
+                        onChange={(e) => setAdminDeptId(e.target.value)}
+                        required
+                      >
+                        <option value="">Pilih Dinas</option>
+                        {departments.map((d) => (
+                          <option key={d.id} value={d.id}>{d.nama_dinas}</option>
+                        ))}
+                      </select>
+                    </div>
                     <button
                       type="submit"
                       className="nav-btn nav-btn-primary"
@@ -1141,7 +1490,116 @@ export default function App() {
                     </button>
                   </form>
                 </div>
-              )}
+              )}{/* Daftar Admin Dinas (Super Admin only) */}
+              {userRole === "super_admin" && (
+                <div className="glass-panel" style={{ padding: "1.5rem", marginBottom: "2rem" }}>
+                  <h2 style={{ fontSize: "1.2rem", fontWeight: 700, marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                    <UserPlus className="text-accent-primary" /> Daftar Admin Dinas Terdaftar
+                  </h2>
+                  {adminDinasList.length === 0 ? (
+                    <p style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>Belum ada Admin Dinas terdaftar.</p>
+                  ) : (
+                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.9rem" }}>
+                      <thead>
+                        <tr style={{ borderBottom: "2px solid var(--border-color)", textAlign: "left", color: "var(--text-muted)" }}>
+                          <th style={{ padding: "0.75rem" }}>ID</th>
+                          <th style={{ padding: "0.75rem" }}>NIP</th>
+                          <th style={{ padding: "0.75rem" }}>Email</th>
+                          <th style={{ padding: "0.75rem" }}>Dinas</th>
+                          <th style={{ padding: "0.75rem" }}>Status</th>
+                          <th style={{ padding: "0.75rem" }}>Aksi</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {adminDinasList.map((a) => (
+                          <tr key={a.id} style={{ borderBottom: "1px solid #e2e8f0" }}>
+                            <td style={{ padding: "0.75rem", fontWeight: 600 }}>#{a.id}</td>
+                            <td style={{ padding: "0.75rem" }}>{a.nik_or_nip}</td>
+                            <td style={{ padding: "0.75rem" }}>{a.email}</td>
+                            <td style={{ padding: "0.75rem" }}>{a.nama_dinas || departments.find((d) => d.id === a.dept_id)?.nama_dinas || "-"}</td>
+                            <td style={{ padding: "0.75rem" }}>{a.is_active ? "Aktif" : "Non-aktif"}</td>
+                            <td style={{ padding: "0.75rem", display: "flex", gap: "0.3rem" }}>
+                              <button
+                                className="nav-btn"
+                                style={{ padding: "0.3rem 0.7rem", fontSize: "0.8rem" }}
+                                onClick={() => handleEditAdminDinas(a)}
+                              >
+                                Edit
+                              </button>
+                              <button
+                                className="nav-btn"
+                                style={{ padding: "0.3rem 0.7rem", fontSize: "0.8rem", borderColor: "#ef4444", color: "#ef4444" }}
+                                onClick={() => handleDeleteAdminDinas(a)}
+                              >
+                                Hapus
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              )}{/* Peta Lamongan dengan Pin Laporan*/}
+              <div className="glass-panel" style={{ padding: "1.5rem", marginBottom: "2rem" }}>
+                <h2 style={{ fontSize: "1.2rem", fontWeight: 700, marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  <MapPin className="text-accent-primary" /> Peta Sebaran Laporan — Kabupaten Lamongan
+                </h2>
+                {/* Legenda Dinas */}
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginBottom: "1rem" }}>
+                  {departments.map((d, i) => (
+                    <span key={d.id} style={{ display: "flex", alignItems: "center", gap: "0.3rem", fontSize: "0.75rem", background: "#f1f5f9", padding: "0.25rem 0.6rem", borderRadius: "999px", fontWeight: 600 }}>
+                      <span style={{ width: 10, height: 10, borderRadius: "50%", background: DEPT_COLORS[i % DEPT_COLORS.length], display: "inline-block" }} />
+                      {d.nama_dinas.replace("Dinas ", "")}
+                    </span>
+                  ))}
+                </div>
+                <div style={{ height: "420px", borderRadius: "12px", overflow: "hidden" }}>
+                  <MapContainer
+                    center={[-7.1189, 112.4109]}
+                    zoom={11}
+                    style={{ height: "100%", width: "100%" }}
+                    scrollWheelZoom={true}
+                  >
+                    <TileLayer
+                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                      attribution='&copy; <a href="https://openstreetmap.org">OpenStreetMap</a>'
+                    />
+                    {reports
+                      .filter((r) => r.lat && r.long)
+                      .map((r) => {
+                        const deptIdx = departments.findIndex((d) => d.id === r.dept_id);
+                        const color = DEPT_COLORS[deptIdx >= 0 ? deptIdx % DEPT_COLORS.length : 0];
+                        return (
+                          <Marker
+                            key={r.id}
+                            position={[parseFloat(r.lat), parseFloat(r.long)]}
+                            icon={createReportIcon(color)}
+                          >
+                            <Popup>
+                              <div style={{ minWidth: "180px" }}>
+                                <strong style={{ fontSize: "0.9rem" }}>{r.judul}</strong><br />
+                                <span style={{ fontSize: "0.8rem", color: "#64748b" }}>
+                                  {departments.find((d) => d.id === r.dept_id)?.nama_dinas || "AI Auto-Routing"}
+                                </span><br />
+                                <span style={{ fontSize: "0.75rem", fontWeight: 700, color: r.urgensi === "darurat" ? "#ef4444" : r.urgensi === "penting" ? "#f97316" : "#22c55e" }}>
+                                  ● {r.urgensi.toUpperCase()}
+                                </span>{" | "}
+                                <span style={{ fontSize: "0.75rem" }}>{r.status}</span>
+                              </div>
+                            </Popup>
+                          </Marker>
+                        );
+                      })}
+                  </MapContainer>
+                </div>
+                {reports.filter((r) => r.lat && r.long).length === 0 && (
+                  <p style={{ textAlign: "center", color: "var(--text-muted)", fontSize: "0.85rem", marginTop: "0.75rem" }}>
+                    Belum ada laporan dengan data koordinat lokasi.
+                  </p>
+                )}
+              </div>
+
               <div className="glass-panel" style={{ padding: "1.5rem" }}>
                 <h2
                   style={{
@@ -1280,7 +1738,7 @@ export default function App() {
                 value={newStatus}
                 onChange={(e) => setNewStatus(e.target.value)}
               >
-                <option value="menunggu">Menunggu</option>
+                <option value="diterima">Diterima</option>
                 <option value="diproses">Diproses</option>
                 <option value="selesai">Selesai</option>
                 <option value="ditolak">Ditolak</option>
@@ -1381,6 +1839,66 @@ export default function App() {
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+      )}{/* Edit Admin Dinas Modal */}
+      {editingAdmin && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h3 style={{ fontSize: "1.25rem", fontWeight: 800, marginBottom: "1rem" }}>
+              Edit Admin Dinas — #{editingAdmin.id}
+            </h3>
+            <form onSubmit={handleUpdateAdminDinas}>
+              <div className="form-group">
+                <label className="form-label">NIP Aparatur</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  value={editForm.nip}
+                  onChange={(e) => setEditForm({ ...editForm, nip: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Email Dinas</label>
+                <input
+                  type="email"
+                  className="form-input"
+                  value={editForm.email}
+                  onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Password Baru (kosongkan jika tidak diubah)</label>
+                <input
+                  type="password"
+                  className="form-input"
+                  placeholder="••••••••"
+                  value={editForm.password}
+                  onChange={(e) => setEditForm({ ...editForm, password: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Dinas</label>
+                <select
+                  className="form-select"
+                  value={editForm.dept_id}
+                  onChange={(e) => setEditForm({ ...editForm, dept_id: e.target.value })}
+                >
+                  <option value="">Pilih Dinas</option>
+                  {departments.map((d) => (
+                    <option key={d.id} value={d.id}>{d.nama_dinas}</option>
+                  ))}
+                </select>
+              </div>
+              <div style={{ display: "flex", gap: "1rem", justifyContent: "flex-end", marginTop: "2rem" }}>
+                <button className="nav-btn" type="button" onClick={() => setEditingAdmin(null)}>
+                  Batal
+                </button>
+                <button type="submit" className="nav-btn nav-btn-primary">
+                  Simpan Perubahan
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

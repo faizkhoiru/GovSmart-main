@@ -9,6 +9,6 @@ class AuditLog(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     report_id = Column(Integer, ForeignKey("reports.id"), nullable=False)
-    admin_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    admin_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     status_baru = Column(String(50), nullable=False)
     timestamp = Column(DateTime(timezone=True), server_default=func.now())

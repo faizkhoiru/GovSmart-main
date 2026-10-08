@@ -28,15 +28,16 @@ def list_reports(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    # Warga only sees their own reports
+    # Warga only sees their own reports. Admin dinas only sees reports routed to their dinas.
     user_id_filter = current_user.id if current_user.role == "warga" else None
+    dept_id_filter = current_user.dept_id if current_user.role == "admin" else dept_id
 
     return get_reports(
         db=db,
         skip=skip,
         limit=limit,
         user_id=user_id_filter,
-        dept_id=dept_id,
+        dept_id=dept_id_filter,
         status=status,
         urgensi=urgensi
     )
@@ -52,6 +53,8 @@ def get_report_detail(
         raise HTTPException(status_code=404, detail="Laporan tidak ditemukan")
     if current_user.role == "warga" and report.user_id != current_user.id:
         raise HTTPException(status_code=403, detail="Tidak memiliki akses ke laporan ini")
+    if current_user.role == "admin" and report.dept_id != current_user.dept_id:
+        raise HTTPException(status_code=403, detail="Tidak memiliki akses ke laporan ini")
     return report
 
 @router.patch("/{report_id}/status", response_model=ReportResponse)
@@ -64,6 +67,8 @@ def change_report_status(
     report = get_report_by_id(db, report_id)
     if not report:
         raise HTTPException(status_code=404, detail="Laporan tidak ditemukan")
+    if current_admin.role == "admin" and report.dept_id != current_admin.dept_id:
+        raise HTTPException(status_code=403, detail="Tidak memiliki akses ke laporan ini")
 
     allowed_statuses = ["diterima", "diproses", "selesai", "ditolak"]
     if status_in.status not in allowed_statuses:

@@ -1,7 +1,8 @@
 from sqlalchemy.orm import Session
+from typing import Optional
 from app.models.audit import AuditLog
 
-def create_audit_log(db: Session, report_id: int, admin_id: int, status_baru: str):
+def create_audit_log(db: Session, report_id: int, admin_id: Optional[int], status_baru: str):
     log_entry = AuditLog(
         report_id=report_id,
         admin_id=admin_id,

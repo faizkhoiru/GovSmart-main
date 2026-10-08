@@ -10,7 +10,7 @@ ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
 MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024  # 5 MB
 
 # Direktori penyimpanan file upload di dalam container
-UPLOAD_DIR = "/app/uploads"
+UPLOAD_DIR = os.environ.get("GOVSMART_UPLOAD_DIR", "/app/uploads")
 
 
 def validate_and_save_upload(file: UploadFile) -> str:
