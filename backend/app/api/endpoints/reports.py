@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query, UploadFile, File
+from sqlalchemy import desc
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from app.database import get_db
@@ -6,6 +7,7 @@ from app.schemas.report import ReportCreate, ReportUpdateStatus, ReportResponse
 from app.crud.report import create_report, get_report_by_id, get_reports, update_report_status
 from app.api.deps import get_current_user, get_current_active_admin
 from app.models.user import User
+from app.models.report import Report
 from app.core.upload import validate_and_save_upload
 
 router = APIRouter()
@@ -56,6 +58,29 @@ def get_report_detail(
     if current_user.role == "admin" and report.dept_id != current_user.dept_id:
         raise HTTPException(status_code=403, detail="Tidak memiliki akses ke laporan ini")
     return report
+
+@router.get("/notifications/me", response_model=List[ReportResponse])
+def get_my_notifications(
+    limit: int = Query(10, ge=1, le=50),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_admin),
+):
+    """
+    Notifikasi laporan baru untuk admin dinas.
+    Kembalikan (limit) laporan yang dialokasikan ke dinas admin ini dengan status
+    'diterima' atau 'diproses' (belum selesai/ditolak), urut terbaru dulu.
+    """
+    pendidng = (
+        db.query(Report)
+        .filter(
+            Report.dept_id == current_user.dept_id,
+            Report.status.in_(["diterima", "diproses"]),
+        )
+        .order_by(desc(Report.created_at))
+        .limit(limit)
+        .all()
+    )
+    return pendidng
 
 @router.patch("/{report_id}/status", response_model=ReportResponse)
 def change_report_status(

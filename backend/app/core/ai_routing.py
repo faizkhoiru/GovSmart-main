@@ -53,7 +53,8 @@ KEYWORDS_DEPT_MAP = {
     ],
     "Dinas Pekerjaan Umum Sumber Daya Air": [
         "drainase", "got", "selokan", "irigasi", "sungai", "banjir", "saluran air",
-        "sumber daya air", "waduk", "dam", "tanggul", "pompa air"
+        "sumber daya air", "waduk", "dam", "tanggul", "pompa air",
+        "longsor", "tanah", "lumpur", "lereng", "bencana alam",
     ],
     "Dinas Perumahan Rakyat, Kawasan Permukiman dan Cipta Karya": [
         "perumahan", "rumah", "permukiman", "rusun", "air bersih", "sanitasi",

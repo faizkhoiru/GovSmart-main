@@ -6,6 +6,7 @@ import {
   ShieldCheck,
   LogIn,
   LogOut,
+  Bell,
   Send,
   UserPlus,
   MapPin,
@@ -137,6 +138,8 @@ export default function App() {
   const [adminSuccess, setAdminSuccess] = useState("");
   const [adminDinasList, setAdminDinasList] = useState([]);
   const [editingAdmin, setEditingAdmin] = useState(null);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [statusFilter, setStatusFilter] = useState("all"); // 'all' | 'diterima' | 'diproses' | 'selesai' | 'ditolak'
   const [editForm, setEditForm] = useState({ nip: "", email: "", password: "", dept_id: "" });
 
   // AI Chatbot Widget State
@@ -155,7 +158,9 @@ export default function App() {
     setLoadingReports(true);
     try {
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
-      const res = await fetch("/api/v1/reports/", { headers });
+      const params = new URLSearchParams();
+      if (statusFilter !== "all") params.set("status", statusFilter);
+      const res = await fetch(`/api/v1/reports/?${params}`, { headers });
       if (res.ok) {
         const data = await res.json();
         setReports(data);
@@ -178,6 +183,58 @@ export default function App() {
       console.error(e);
     }
   };
+
+  const fetchNotifications = async () => {
+    if (userRole !== "admin") return;
+    try {
+      const res = await fetch("/api/v1/reports/notifications/me", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const newCount = data.length;
+        // Trigger browser notification + sound hanya saat ada laporan BARU (naik)
+        if (typeof window !== "undefined" && newCount > unreadCount && document.visibilityState !== "visible") {
+          try {
+            const perm = await Notification.requestPermission();
+            if (perm === "granted") {
+              navigator.serviceWorker && navigator.serviceWorker.ready
+                ? (await navigator.serviceWorker).active?.postMessage({ type: "newReport", count: newCount })
+                : new Notification("GovSmart — Laporan Baru", {
+                    body: `${newCount} laporan baru untuk dinas Anda`,
+                    icon: "/favicon.svg",
+                  });
+              // Sound efek kecil (data URI, <1KB)
+              const audio = new Audio("data:audio/wav;base64,UklGRlgAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YVgAAAFg////AYGA////AP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AA==");
+              audio.volume = 0.3;
+              audio.play().catch(() => {});
+            }
+          } catch (e) {
+            console.error("Notification error:", e);
+          }
+        }
+        setUnreadCount(newCount);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  // Auto-refresh notifikasi setiap 15 detik (polling)
+  useEffect(() => {
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 15000);
+    return () => clearInterval(interval);
+  }, [token, userRole]);
+
+  // Refetch laporan ketika filter status berubah (kecuali saat token masih kosong — handled di bawah)
+  const [reportsFetchedOnce, setReportsFetchedOnce] = useState(false);
+  useEffect(() => {
+    if (token) {
+      fetchReports();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [statusFilter]);
 
   useEffect(() => {
     fetchReports();
@@ -808,6 +865,41 @@ export default function App() {
                 color: "var(--text-main)",
               }}
             >
+              {userRole === "admin" && (
+                <button
+                  onClick={() => { setUnreadCount(0); setMainView("admin"); }}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "inherit",
+                    cursor: "pointer",
+                    marginRight: "0.5rem",
+                    position: "relative",
+                  }}
+                  title="Dasbor Admin"
+                >
+                  <Bell size={18} />
+                  {unreadCount > 0 && (
+                    <span
+                      style={{
+                        position: "absolute",
+                        top: "-4px",
+                        right: "-4px",
+                        background: "var(--accent-rose)",
+                        color: "white",
+                        fontSize: "0.65rem",
+                        fontWeight: 700,
+                        padding: "2px 5px",
+                        borderRadius: "999px",
+                        minWidth: "18px",
+                        textAlign: "center",
+                      }}
+                    >
+                      {unreadCount}
+                    </span>
+                  )}
+                </button>
+              )}
               {userEmail} ({userRole}) &nbsp;&bull;&nbsp;
               <button
                 onClick={handleLogout}
@@ -1205,6 +1297,33 @@ export default function App() {
                   gap: "1.25rem",
                 }}
               >
+                <div
+                  style={{
+                    display: "flex",
+                    gap: "0.5rem",
+                    flexWrap: "wrap",
+                    marginBottom: "-0.5rem",
+                  }}
+                >
+                  {["all", "diterima", "diproses", "selesai", "ditolak"].map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => setStatusFilter(s)}
+                      className="nav-btn"
+                      style={{
+                        padding: "0.3rem 0.7rem",
+                        fontSize: "0.78rem",
+                        background: statusFilter === s ? "var(--accent-emerald)" : "transparent",
+                        color: statusFilter === s ? "white" : "var(--text-muted)",
+                        borderColor: statusFilter === s ? "var(--accent-emerald)" : "var(--border-color)",
+                      }}
+                    >
+                      {s === "all"
+                        ? "Semua"
+                        : s.charAt(0).toUpperCase() + s.slice(1)}
+                    </button>
+                  ))}
+                </div>
                 {reports.map((report) => (
                   <div
                     key={report.id}
