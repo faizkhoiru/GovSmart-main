@@ -1,0 +1,33 @@
+0.573
+7. Lengkapi data mengenai "Lokasi Usaha" dan pilih "Lanjut"
+11.43
+Pengembangan
+Lokasi Usaha
+Apakah alamat sama dengan data di KTP
+pelaku usaha?
+• Ya.
+• Tidak
+Pilih berdasarkan alamat lokasi usaha
+sebelumnya?
+• Ya
+• Tidak
+Provinsi
+DKI Jakarta
+Kabupaten/Kota
+Kola Aam. Jakarta ulara
+Kecamaran
+Tanjung Priok
+Desa/Keluranan
+sunter Jaya
+Kode Posi
+24631
+Alamat Lengkap
+Alamat Jalan
+lat: -6.1502614 Ubah
+Long: 106.8795785
+© Koordinat lokasi telah dipilih.
+•kan akan melaku.
+moanaunan cedu
+• Ya
+• lack
+Lanjut

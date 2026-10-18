@@ -1,0 +1,14 @@
+0.967
+5. Setelah Anda melengkapi data di atas, kemudian lengkapi data Luas Lahan,
+Satuan, dan Modal Usaha. Selanjutnya pilih "Validasi Risiko"
+11.41
+Pengembangan
+Validasi Risiko
+Luas Lahan
+20 m?
+Satuan
+• m?
+ha
+Modal Usaha
+Rp 100.000.000
+validai daiko

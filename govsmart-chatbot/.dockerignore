@@ -1,0 +1,10 @@
+venv/
+__pycache__/
+eval/
+Modelfile
+.git
+.env
+knowledge_base/
+data/clean
+*.pyc
+tests/

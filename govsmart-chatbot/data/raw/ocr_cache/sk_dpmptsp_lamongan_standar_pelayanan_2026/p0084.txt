@@ -1,0 +1,44 @@
+0.981
+NO KOMPONEN URAIAN
+3
+Sistem, Mekanisme,
+dan Prosedur
+Tenaga Kesehatan
+Mengajukan
+Pendaftaran
+Verifikasi Persyaratan
+oleh Petugas FO
+102k
+Tenaga Kesehatan
+Melengkapi Lengkap?
+rersvaratan
+Ya
+kekomendas1 dar1
+Dinkes melalui aplikasi
+BO proses Izinnya
+KADPMPICP
+Memvalidasi Melalui
+Aplikasi MPP Digital
+enetoltan urat
+Izin Praktik
+Melalui MPP
+Dieital
+Keterangan:
+1. Pemohon mendaftarkan Izin dengan mengirimkan File melalui
+aplikasi MPP Digital
+2. Petugas FO menerima dan meneliti kelengkapan berkas
+persyaratan yang masuk ke MPP Digital. Apabila berkas belum
+lengkap pemohon menerima pemberitahuan tentang
+kekurangan berkas, agar pemohon segera melengkapi
+3. Petugas Back Office memproses perizinan selanjutnya
+diteruskan kepada Tim Teknis melalui Aplikasi MPP Digital
+4. Pemrosesan Rekomendasi oleh Dinas Kesehatan melalui
+Aplikasi MPP Digital
+5. Atas dasar Rekomendasi Teknis Dinas Kesehatan, Back Office
+memproses Naskah Izin tenaga kesehatan
+6. Penandatanganan Naskah Izin oleh Kepala DPMPTSP melalui
+Aplikasi MPP Digital
+7. Pemohon mencetak Izin dari aplikasi MPP Digital
+Jangka Waktu Jangka waktu pelayanan sesuai sistem, dimana permohonan akan
+Penyelesaian diproses sejak kelengkapan persyaratan atas permohonan
+(pendaftaran) dinyatakan lengkap dan diterima, serta tidak terjadi

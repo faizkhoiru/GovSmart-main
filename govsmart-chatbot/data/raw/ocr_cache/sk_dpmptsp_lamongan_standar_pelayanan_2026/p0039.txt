@@ -1,0 +1,43 @@
+1.000
+NO KOMPONEN URAIAN
+2
+Sistem,
+Mekanisme, Pelaku Usaha
+dan Prosedur Pendataran melare
+Portal OS.
+Pelaku Usaha Melakukan
+Pengisian dan Pengajuan UKL
+Pemeriksaan UKL-UPL
+Perbaikan UKi.-
+Perbaikan?
+Tidak
+Penetapan Persetujuan
+Rekomendasi UKL-UPL
+Keterangan:
+1. Pelaku usaha mengajukan permohonan (pendaftaran) melalui Portal
+OSS dan memenuhi persyaratan yang dibutuhkan, selanjutnya sistem
+OSS memproses Permohonan atas pendaftaran dari Pelaku Usaha
+2. Pelaku usaha melakukan pengisian dan pengajuan UKL-UPL untuk
+dilakukan pemeriksaan, bila berdasarkan pemeriksaan terdapat
+perbaikan, maka Pelaku usaha melakukan perbaikan UKL-UPL
+3. Berdasarkan hasil pemeriksaan UKL-UPL, selanjutnya Bupati
+menetapkan persetujuan rekomendasi UKL-UPL
+4. Petugas mengentry Persetujuan rekomendasi UKL-UPL dalam Sistem
+OSS dan mengevaluasi hasil entry dalam Sistem OSS
+5. Sistem OSS menerbitkan Persetujuan Lingkungan.
+Jangka Waktu Maksimal 45 hari sejak kelengkapan persyaratan atas permohonan
+Penyelesaian (pendaftaran) dinyatakan lengkap dan diterima, serta tidak terjadi kendala
+teknis.
+Biaya/Tarif Tidak ada biaya/tarif
+Produk Penerbitan Persetujuan Lingkungan (Pernyataan Kesanggupan Pengelolaan
+Pelayanan Lingkungan Hidup/ PKPLH)
+Sarana dan 1. Ruang tunggu dengan pendingin ruangan
+Prasarana, 2. Sistem antrian
+dan/atau 3. Meja dan kursi
+Fasilitas 4. Komputer
+5. Printer
+1o. Jaringan internet
+7. Handphone
+8. Alat tulis kantor
+Kompetensi 1. Berpendidikan minimal S1
+Pelaksana

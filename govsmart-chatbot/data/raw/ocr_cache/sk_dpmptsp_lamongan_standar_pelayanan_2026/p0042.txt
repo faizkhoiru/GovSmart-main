@@ -1,0 +1,44 @@
+1.000
+NO KOMPONEN URAIAN
+3 Sistem, Mekanisme,
+dan Prosedur Pelaku Usaha
+Pelaku Usaha Menyusun AMDAL
+Perbaikan Dokumen Penilaian ANDAL dan RKL-RPI
+AMUAL
+Penilaian Akhir ANDAL dan RKL-
+RPL
+Keoutusan Kelavakan
+Layak istem OSS
+Menerbitkar
+Persetujuar
+Dingnunige
+lloak Layar
+Kembali ke Pemohon
+Keterangan:
+1. Pelaku usaha mengajukan permohonan (pendaftaran) melalui
+Portal OSS dan memenuhi persyaratan yang dibutuhkan,
+selanjutnya sistem OSS memproses Permohonan atas
+pendaftaran dari Pelaku Usaha
+2. Pelaku usaha menyusun Dokumen AMDAL (Didalamnya terdapat
+ANDAL dan RKL-RPL), dan selanjutnya mengajukan Andal dan
+RKL-RPL untuk dilakukan Penilaian
+3. Setelah dilakukan penilaian, Pelaku usaha melakukan perbaikan
+Dokumen AMDAL
+4. Setelah dilakukan perbaikan, maka Pelaku usaha menyerahkan
+Dokumen AMDAL yang telah diperbaiki untuk dilakukan
+Penilaian Akhir
+5. Rekomendasi hasil penilaian dan penilaian akhir menjadi dasar
+dalam penetapan keputusan kelayakan lingkungan hidup atau
+ketidaklayakan lingkungan hidup
+6. Petugas mengentry SK Kelayakan Lingkungan Hidup dalam
+Sistem OSS dan mengevaluasi hasil entry dalam Sistem OSS,
+selanjutnya Sistem OSS menerbitkan Persetujuan Lingkungan.
+Jangka Waktu Maksimal 60 hari sejak kelengkapan persyaratan atas permohonan
+Penyelesaian (pendaftaran) dinyatakan lengkap dan diterima, telah dilakukan
+penyusunan Dokumen AMDAL serta tidak terjadi kendala teknis. Bila
+pada saat pengajuan permohonan Pelaku Usaha belum melakukan
+penyusunan Dokumen AMDAL, maka akan menambah waktu
+maksimal 180 hari untuk penyusunan Dokumen AMDAL.
+Biaya/Tarif Tidak ada biaya
+Produk Pelayanan Pemberian Persetujuan Lingkungan (Surat Keputusan Kelayakan
+Lingkungan Hidup/SKKL)

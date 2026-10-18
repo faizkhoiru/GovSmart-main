@@ -240,6 +240,28 @@ export default function App() {
     fetchReports();
     fetchDepartments();
     fetchAdminDinas();
+    if (!token) return;
+    (async () => {
+      try {
+        const res = await fetch("/api/v1/chat/history?limit=20", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        const rows = (data.results || []).slice().reverse();
+        if (!rows.length) return;
+        setChatMessages([
+          {
+            role: "ai",
+            text: "Halo! Saya Asisten AI GovSmart. Ada yang bisa saya bantu terkait perizinan UMKM/NIB atau panduan layanan publik?",
+          },
+          ...rows.flatMap((r) => [
+            { role: "user", text: r.prompt },
+            { role: "ai", text: r.response },
+          ]),
+        ]);
+      } catch (_) { /* riwayat opsional */ }
+    })();
   }, [token]);
 
   // Auth Handlers
@@ -638,6 +660,16 @@ export default function App() {
   };
 
   // AI Chatbot Handler
+  const chatErrorText = async (res) => {
+    try {
+      const err = await res.json();
+      const d = err.detail;
+      if (d && typeof d === "object" && d.pesan) return d.pesan;
+      if (typeof d === "string") return d;
+    } catch (_) { /* body bukan JSON */ }
+    return "Maaf, terjadi kesalahan saat menghubungi server AI.";
+  };
+
   const handleSendChat = async (e) => {
     e.preventDefault();
     if (!chatPrompt.trim()) return;
@@ -654,23 +686,18 @@ export default function App() {
       const res = await fetch("/api/v1/chat/", {
         method: "POST",
         headers,
-        body: JSON.stringify({ prompt: userMsg }),
+        body: JSON.stringify({ pertanyaan: userMsg }),
       });
 
       if (res.ok) {
         const data = await res.json();
         setChatMessages((prev) => [
           ...prev,
-          { role: "ai", text: data.response },
+          { role: "ai", text: data.jawaban || "Tidak ada jawaban." },
         ]);
       } else {
-        setChatMessages((prev) => [
-          ...prev,
-          {
-            role: "ai",
-            text: "Maaf, terjadi kesalahan saat menghubungi server AI.",
-          },
-        ]);
+        const text = await chatErrorText(res);
+        setChatMessages((prev) => [...prev, { role: "ai", text }]);
       }
     } catch (e) {
       setChatMessages((prev) => [

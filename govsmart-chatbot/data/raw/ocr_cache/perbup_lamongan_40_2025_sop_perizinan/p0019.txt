@@ -1,0 +1,30 @@
+1.000
+Pelaksana Mutu Baku
+Keterangan.
+No Kegiatan OPD
+Pemohon Teknis Operator Pengawas DPMPTSP Kelengkapan Waktu Output
+Pemohon Persyaratan PBG Sesuai Persyaratan
+menyelesaikan Pemohon PBG terunggah
+persyaratan PBG
+melalui aplikasi SIMBG
+2 OPD teknis menerima Persyaratan PBG yang Sesuai Notifikasi
+notifikasi permohonan terunggah ke dalam Sistem
+PBG dari pemohon sistem
+Pemeriksaan Kelengkapan 1 Hari Hasil Dapat
+kelengkapan dokumen persyaratan dokumen pemeriksaan mengunduh
+yang diajukan teknis pemenuhan dokumen tersebut
+pengajuan PBG dari bila diperlukan
+Lemonon
+Verifikasi dokumen Hasil pemeriksaan 1 Hari Dokumen Dapat
+yang diajukan dinilai Tidak terverifikasi menyatakan
+belum lengkap atau alacan ataml
+belum layak keterangan
+Ya penolakan
+Perbaikan dokumen Hasil pemeriksaan Sesuai Kelengkapan
+kelengkapan dokumen Pemohon dokumen
+persyaratan
+OPD teknis menerima Dokumen terverifikasi 60 Menit Dokumen
+dokumen lengkap diterima
+Operator memeriksa Dokumen terverifikasi 10 Menit Hasil
+kelengkapan dokumen pemeriksanaan
+dokumen

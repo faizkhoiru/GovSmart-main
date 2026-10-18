@@ -1,0 +1,41 @@
+0.991
+NO KOMPONEN URAIAN
+3 Sistem,
+Mekanisme, Pelaln: licohe
+dan Prosedur
+melalui Portal OSS
+Verinkas1 Persyaratan
+secara manual/hardcopy
+11da: oleh Petugas FO
+Pelaku Usahal Lengkap?
+Melengkap1
+Fersvaratan
+Feneritan Persetumuen
+Venifikasi Persyaratan
+Administrasi oleh BO
+lidak
+Lengkap?
+DPMPTSP Menerbitkan
+Surat Fersetujuat
+Benisaha UiMku
+Keterangan:
+1. Pelaku Usaha mengajukan permohonan Perizinan Berusaha UMKU
+melalui Sistem OSS, selanjutnya Sistem OSS mengirimkan notifikasi
+kepada OPD Teknis
+2. OPD Teknis melakukan verifikasi kelengkapan dokumen dan
+persyaratan, apabila persyaratan dinilai lengkap akan dilanjutkan
+menuju proses selanjutnya, sedangkan untuk persyaratan yang tidak
+lengkap selanjutnya dapat dilengkapi terlebih dahulu oleh pemohon
+dan kembali melakukan pendaftaran melalui Portal OSS
+3. Untuk persyaratan yang lengkap, selanjutnya OPD Teknis Menerbitkan
+Persetujuan Teknis
+4. Petugas BO DPMPTSP melakukan verifikasi persyaratan administratif,
+apabila persyaratan dinilai lengkap akan dilanjutkan menuju proses
+selanjutnya, sedangkan untuk persyaratan yang tidak
+lengkap
+selanjutnya dapat dilengkapi terlebih dahulu oleh pemohon dan
+kembali melakukan pendaftaran melalui Portal OSS
+5. Berdasarkan persyaratan administratif yang sudah lengkap, DPMPTSP
+Menerbitkan Surat Persetujuan dan mengunggah (upload) ke Sistem
+OSS, yang selanjutnya Sistem OSS menerbitkan Perizinan Berusaha
+Untuk Menunjang Kegiatan Usaha (UMKU)

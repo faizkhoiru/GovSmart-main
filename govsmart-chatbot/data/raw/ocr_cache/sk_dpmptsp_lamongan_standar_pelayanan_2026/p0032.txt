@@ -1,0 +1,46 @@
+1.000
+NO KOMPONEN URAIAN
+Rencana teknis bangunan dan/atau rencana induk
+kawasan.
+Sistem, Mekanisme,
+dan Prosedur Pelaku Usaha Mengajukan
+Pendaftaran melalui Portal
+Verifikasi Persyaratan oleh Petugas FO
+Tidak
+Pelaku Usaha
+Melengkap Lengkap?
+Fersyaratar
+Sistem OSS
+Menerbitkan
+PKKPR
+Keterangan:
+1. Pelaku usaha mengajukan permohonan (pendaftaran) melalui
+Portal OSS dengan menyertakan persyaratan yang diperlukan
+(dokumen usulan kegiatan, dil)
+2. Sistem OSS melakukan verifikasi terhadap kelengkapan
+persyaratan atas permohonan (pendaftaran) dari Pelaku Usaha,
+apabila persyaratan dinilai lengkap akan dilanjutkan menuju
+proses selanjutnya, sedangkan untuk persyaratan yang tidak
+lengkap selanjutnya dapat dilengkapi terlebih dahulu oleh
+pemohon dan kembali melakukan pendaftaran melalui Portal
+OSS
+3. Sistem OSS menerbitkan PKKPR (Persetujuan Kesesuaian
+Kegiatan Pemanfaatan Ruang).
+Jangka Waktu Jangka waktu pelayanan sesuai sistem, dimana permohonan akan
+Penyelesaian diproses sejak kelengkapan persyaratan atas permohonan
+(pendaftaran) dinyatakan lengkap dan diterima oleh sistem OSS, serta
+tidak terjadi kendala teknis.
+5 Biaya/Tarif Tidak ada biaya/tarif
+6 Produk Pelayanan Penerbitan Persetujuan Kesesuaian Kegiatan Pemanfaatan Ruang
+Sarana dan 1. Ruang tunggu dengan pendingin ruangan
+Prasarana, dan/atau 2. Sistem antrian
+Fasilitas 3. Meja dan kursi
+4. Komputer
+5. Printer
+6. Jaringan internet
+7. Handphone
+8. Alat tulis kantor
+Kompetensi 1. Berpendidikan minimal S1
+Pelaksana 2. Memahami peraturan perundang-undangan yang menjadi dasar
+dalam pemberian perizinan
+3. Terampil dalam mengoperasikan komputer dan internet

@@ -1,0 +1,39 @@
+1.000
+No KOMPONEN URAIAN
+2
+Sistem, Mekanisme,
+dan Prosedur
+Tenaga Kesehatan
+Mengajukan
+Pendaftaran
+Verifikasi Persyaratan
+oleh Petugas FO
+Tenaga 1dak
+Kesehatan
+Lengkap?
+Melengkapi
+Persyaratan
+Ya
+Petugas BO meproses
+dengan membuat surat
+pengantar ke OPD Teknis
+OPD Menerbitkan Surat
+Rekomendasi
+BO proses Izinnya
+KA DPMPTSP
+Menandatangani Naskah
+Izin
+Penerbitan Izin
+Nakes Hewan
+Keterangan:
+1. Pemohon mendaftarkan Izin kepada Front Office dengan
+membawa Persyaratan lengkap
+2. Petugas FO menerima dan meneliti kelengkapan berkas
+persyaratan. Apabila berkas belum lengkap berkas
+dikembalikan kepada pemohon untuk dilengkapi.
+3. Petugas Back Office membuat surat pengantar permohonan
+rekomendasi kepada OPD Teknis
+4. Pemrosesan rekomendasi oleh Dinas Peternakan
+5. Atas dasar Rekomendasi Teknis Dinas Peternakan, Back
+Office memproses Naskah Izin
+6. Penandatanganan Naskah Izin oleh Kepala DPMPTSP
