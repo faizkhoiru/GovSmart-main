@@ -35,6 +35,7 @@ services:
       - ACCESS_TOKEN_EXPIRE_MINUTES=1440
       - CHATBOT_URL=http://host.docker.internal:8001
       - CHATBOT_INTERNAL_TOKEN=${CHATBOT_INTERNAL_TOKEN:-govsmart-dev-token}
+      - CHATBOT_TIMEOUT=180
     volumes:
       - ./backend:/app
       - uploads_data:/app/uploads

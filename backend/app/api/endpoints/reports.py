@@ -138,8 +138,65 @@ def upload_foto_bukti(
     saved_filename = validate_and_save_upload(foto)
 
     # Simpan nama file ke database
-    report.foto_bukti = saved_filename
+    setattr(report, "foto_bukti", saved_filename)
     db.commit()
     db.refresh(report)
 
+    return report
+
+@router.post("/sync-routing")
+def sync_unrouted_reports(
+    db: Session = Depends(get_db),
+    current_admin: User = Depends(get_current_active_admin)
+):
+    """
+    Menyelaraskan semua laporan yang belum ter-routing secara otomatis (dept_id is NULL)
+    menggunakan model AI smart routing terbaru.
+    """
+    from app.core.ai_routing import analyze_report_ai
+
+    unrouted = db.query(Report).filter(Report.dept_id == None).all()
+    updated_count = 0
+    details = []
+
+    for rep in unrouted:
+        dept_id, urgensi = analyze_report_ai(rep.judul, rep.isi_laporan, db)
+        setattr(rep, "dept_id", dept_id)
+        if urgensi:
+            setattr(rep, "urgensi", urgensi)
+        updated_count += 1
+        details.append({"report_id": rep.id, "judul": rep.judul, "dept_id": dept_id, "urgensi": urgensi})
+
+    if updated_count > 0:
+        db.commit()
+
+    return {
+        "status": "success",
+        "total_unrouted_found": len(unrouted),
+        "total_updated": updated_count,
+        "details": details
+    }
+
+@router.post("/{report_id}/reroute", response_model=ReportResponse)
+def reroute_single_report(
+    report_id: int,
+    db: Session = Depends(get_db),
+    current_admin: User = Depends(get_current_active_admin)
+):
+    """
+    Menganalisis ulang dan me-reroute laporan secara otomatis menggunakan AI smart routing.
+    """
+    from app.core.ai_routing import analyze_report_ai
+
+    report = get_report_by_id(db, report_id)
+    if not report:
+        raise HTTPException(status_code=404, detail="Laporan tidak ditemukan")
+
+    dept_id, urgensi = analyze_report_ai(report.judul, report.isi_laporan, db)
+    setattr(report, "dept_id", dept_id)
+    if urgensi:
+        setattr(report, "urgensi", urgensi)
+
+    db.commit()
+    db.refresh(report)
     return report

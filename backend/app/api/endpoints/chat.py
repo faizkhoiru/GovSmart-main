@@ -33,10 +33,10 @@ async def limited_user(user_id):
 
 @router.post("/", response_model=ChatResponse, status_code=200)
 async def ask_chatbot(
+    request: Request,
     payload: ChatRequest,
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user),
-    request: Request = None
 ):
     user_id = current_user.id
     await limited_user(user_id)
@@ -46,11 +46,15 @@ async def ask_chatbot(
     db.rollback()  # kunci: rolling sesi supaya pool DB tidak hold selama await
     chat_url = settings.CHATBOT_URL+"/ask"
     headers = {"X-Internal-Token": settings.CHATBOT_INTERNAL_TOKEN}
-    timeout = getattr(settings, "CHATBOT_TIMEOUT", 60)
+    timeout = getattr(settings, "CHATBOT_TIMEOUT", 180)
     async with httpx.AsyncClient(timeout=timeout) as client:
         try:
             resp = await client.post(chat_url, json={"pertanyaan":pertanyaan}, headers=headers)
-        except httpx.RequestError:
+        except httpx.TimeoutException:
+            raise HTTPException(504, detail={"kode":"CHATBOT_TIMEOUT","pesan":"Chatbot membutuhkan waktu lebih lama untuk memproses jawaban. Silakan coba sesaat lagi.","fields":[]})
+        except httpx.RequestError as exc:
+            import logging
+            logging.getLogger(__name__).error(f"Chatbot connection error: {exc}")
             raise HTTPException(503, detail={"kode":"CHATBOT_UNAVAILABLE","pesan":"Chatbot layanan tidak tersedia.","fields":[]})
     if resp.status_code == 401:
         raise HTTPException(503, detail={"kode":"CHATBOT_UNAVAILABLE","pesan":"Layanan chatbot gagal autentikasi.","fields":[]})

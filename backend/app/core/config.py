@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     MYSQL_DB: str = "govsmart"
     DATABASE_URL: Optional[str] = None
     CHATBOT_URL: str = os.environ.get("CHATBOT_URL", "http://chatbot:8001")
-    CHATBOT_TIMEOUT: int = int(os.environ.get("CHATBOT_TIMEOUT", 60))
+    CHATBOT_TIMEOUT: int = int(os.environ.get("CHATBOT_TIMEOUT", 180))
     CHATBOT_INTERNAL_TOKEN: str = os.environ.get("CHATBOT_INTERNAL_TOKEN", "")
     CHAT_RATE_LIMIT_PER_MINUTE: int = int(os.environ.get("CHAT_RATE_LIMIT_PER_MINUTE", 20))
     @property
