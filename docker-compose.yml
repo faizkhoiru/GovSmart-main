@@ -33,16 +33,14 @@ services:
       - MYSQL_DB=govsmart
       - SECRET_KEY=supersecretkeygovsmart2026!
       - ACCESS_TOKEN_EXPIRE_MINUTES=1440
-      - CHATBOT_URL=http://chatbot:8001
+      - CHATBOT_URL=http://host.docker.internal:8001
       - CHATBOT_INTERNAL_TOKEN=${CHATBOT_INTERNAL_TOKEN:-govsmart-dev-token}
     volumes:
-      # Volume persisten untuk foto bukti upload (maks 5 MB per file sesuai PRD)
+      - ./backend:/app
       - uploads_data:/app/uploads
     depends_on:
       db:
         condition: service_healthy
-      chatbot:
-        condition: service_started
 
   chatbot:
     build:

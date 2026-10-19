@@ -102,7 +102,13 @@ def change_report_status(
             detail=f"Status tidak valid. Pilihan status yang diperbolehkan: {', '.join(allowed_statuses)}"
         )
 
-    return update_report_status(db, report, status_baru=status_in.status, admin_id=current_admin.id)
+    return update_report_status(
+        db,
+        report,
+        status_baru=status_in.status,
+        admin_id=current_admin.id,
+        catatan_petugas=status_in.catatan_petugas
+    )
 
 @router.post("/{report_id}/upload-foto", response_model=ReportResponse)
 def upload_foto_bukti(

@@ -7,11 +7,17 @@ __pycache__/
 *.py[cod]
 *$py.class
 *.so
+*.egg-info/
+.eggs/
 
 # ─── Virtual Environments ────────────────────────────────────
+.venv
 .venv/
+env
 env/
+venv
 venv/
+ENV
 ENV/
 
 # ─── Poetry ──────────────────────────────────────────────────
@@ -33,9 +39,11 @@ build/
 # ─── Environment Variables & Secrets ─────────────────────────
 # PENTING: Jangan pernah commit file .env yang berisi secret!
 .env
+.env.*
 .env.local
 .env.*.local
-# .env.example BOLEH di-commit (berisi contoh tanpa nilai sensitif)
+!.env.example
+!**/.env.example
 
 # ─── Database & Upload Files ──────────────────────────────────
 # File database SQLite lokal (untuk testing)
@@ -45,6 +53,9 @@ build/
 # Folder foto bukti yang diupload warga (disimpan di Docker volume)
 backend/uploads/
 uploads/
+**/uploads/*
+!backend/uploads/.gitkeep
+!uploads/.gitkeep
 
 # ─── Testing & Coverage ──────────────────────────────────────
 .pytest_cache/
@@ -72,6 +83,8 @@ Thumbs.db
 *.swp
 *.swo
 *~
+pyrightconfig.json
+**/pyrightconfig.json
 
 # ─── Logs ────────────────────────────────────────────────────
 *.log
@@ -79,3 +92,4 @@ logs/
 *.pid
 *.zip.env
 *.zip
+

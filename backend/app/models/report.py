@@ -16,3 +16,5 @@ class Report(Base):
     long = Column(Float, nullable=True)
     # Nama file bukti foto yang diupload (nullable, maks 5 MB, JPEG/PNG/WEBP)
     foto_bukti = Column(String(255), nullable=True)
+    # Catatan / keterangan tindak lanjut dari petugas dinas
+    catatan_petugas = Column(Text, nullable=True)

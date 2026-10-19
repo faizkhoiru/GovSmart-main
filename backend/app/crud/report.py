@@ -64,8 +64,10 @@ def get_reports(
 
     return query.order_by(urgency_order, Report.id.desc()).offset(skip).limit(limit).all()
 
-def update_report_status(db: Session, report: Report, status_baru: str, admin_id: int):
+def update_report_status(db: Session, report: Report, status_baru: str, admin_id: int, catatan_petugas: Optional[str] = None):
     report.status = status_baru
+    if catatan_petugas is not None:
+        report.catatan_petugas = catatan_petugas.strip() or None
     db.commit()
     db.refresh(report)
 

@@ -1,10 +1,13 @@
+# pyrefly: ignore [missing-import]
 from fastapi import APIRouter, Depends, Request, HTTPException, status
+# pyrefly: ignore [missing-import]
 from sqlalchemy.orm import Session
 from typing import List
 from app.api.deps import get_db, get_current_user
 from app.core.config import settings
 from app.core.privacy import mask_pii
 from app.schemas.chat import ChatRequest, ChatResponse, ChatHistoryOut
+# pyrefly: ignore [missing-import]
 import httpx
 import time
 from collections import defaultdict
@@ -37,7 +40,9 @@ async def ask_chatbot(
 ):
     user_id = current_user.id
     await limited_user(user_id)
-    pertanyaan = mask_pii(payload.pertanyaan.strip())
+    pertanyaan = mask_pii(payload.get_query())
+    if not (1 <= len(pertanyaan) <= 500):
+        raise HTTPException(422, detail="Pertanyaan wajib 1-500 karakter.")
     db.rollback()  # kunci: rolling sesi supaya pool DB tidak hold selama await
     chat_url = settings.CHATBOT_URL+"/ask"
     headers = {"X-Internal-Token": settings.CHATBOT_INTERNAL_TOKEN}

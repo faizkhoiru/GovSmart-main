@@ -19,6 +19,8 @@ import {
   Filter,
   Search,
   Navigation,
+  Download,
+  RotateCcw,
 } from "lucide-react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
@@ -127,8 +129,17 @@ export default function App() {
   // Admin Audit & Update Modal State
   const [selectedReport, setSelectedReport] = useState(null);
   const [newStatus, setNewStatus] = useState("");
+  const [catatanPetugas, setCatatanPetugas] = useState("");
   const [auditLogs, setAuditLogs] = useState([]);
   const [showAuditModal, setShowAuditModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const QUICK_PROMPTS = [
+    "Berapa lama proses registrasi KKPR?",
+    "Bagaimana syarat izin NIB UMKM?",
+    "Apa saja syarat permohonan e-KTP baru?",
+    "Bagaimana cara membuat laporan fasilitas rusak?",
+  ];
 
   // Super Admin Register State
   const [adminNip, setAdminNip] = useState("");
@@ -505,7 +516,10 @@ export default function App() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ status: newStatus }),
+        body: JSON.stringify({
+          status: newStatus,
+          catatan_petugas: catatanPetugas,
+        }),
       });
 
       if (!res.ok) {
@@ -515,10 +529,51 @@ export default function App() {
 
       fetchReports();
       setSelectedReport(null);
+      setCatatanPetugas("");
       notify("Status laporan berhasil diperbarui.", "success");
     } catch (e) {
       notify(e.message);
     }
+  };
+
+  // Export CSV Handler
+  const handleExportCSV = () => {
+    if (!reports || reports.length === 0) {
+      notify("Tidak ada data laporan untuk diekspor.");
+      return;
+    }
+    const headers = ["ID", "Judul", "Urgensi", "Dinas", "Status", "Lokasi_Lat", "Lokasi_Long", "Catatan_Petugas", "Tanggal"];
+    const rows = filteredReports.map((r) => [
+      r.id,
+      `"${(r.judul || "").replace(/"/g, '""')}"`,
+      r.urgensi,
+      `"${departments.find((d) => d.id === r.dept_id)?.nama_dinas || 'Auto-Routing'}"`,
+      r.status,
+      r.lat || "",
+      r.long || "",
+      `"${(r.catatan_petugas || "").replace(/"/g, '""')}"`,
+      `"${new Date(r.created_at).toLocaleString('id-ID')}"`
+    ]);
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `govsmart_laporan_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    notify("Berkas CSV laporan berhasil diunduh.", "success");
+  };
+
+  // Clear Chat Handler
+  const handleClearChat = () => {
+    setChatMessages([
+      {
+        role: "ai",
+        text: "Halo! Percakapan telah dibersihkan. Ada yang bisa saya bantu seputar perizinan UMKM, layanan dinas, atau informasi Kabupaten Lamongan?",
+      },
+    ]);
+    notify("Riwayat obrolan di layar telah dibersihkan.", "success");
   };
 
   // Fetch Audit Logs
@@ -711,6 +766,24 @@ export default function App() {
       setChatLoading(false);
     }
   };
+
+  // Filtered reports by search query
+  const filteredReports = reports.filter((r) => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    const judul = (r.judul || "").toLowerCase();
+    const isi = (r.isi_laporan || "").toLowerCase();
+    const dinas = (departments.find((d) => d.id === r.dept_id)?.nama_dinas || "").toLowerCase();
+    const idStr = String(r.id);
+    return judul.includes(q) || isi.includes(q) || dinas.includes(q) || idStr.includes(q);
+  });
+
+  // KPI Metrics Calculation
+  const kpiTotal = reports.length;
+  const kpiDarurat = reports.filter((r) => r.urgensi === "darurat").length;
+  const kpiDiproses = reports.filter((r) => r.status === "diproses").length;
+  const kpiSelesai = reports.filter((r) => r.status === "selesai").length;
+  const kpiPersenSelesai = kpiTotal > 0 ? Math.round((kpiSelesai / kpiTotal) * 100) : 0;
 
   if (!token) {
     return (
@@ -1324,6 +1397,19 @@ export default function App() {
                   gap: "1.25rem",
                 }}
               >
+                {/* Search Bar Realtime */}
+                <div style={{ position: "relative", marginBottom: "0.25rem" }}>
+                  <Search size={16} style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="Cari laporan berdasarkan judul, isi, nama dinas, atau ID..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    style={{ paddingLeft: "2.3rem", fontSize: "0.9rem" }}
+                  />
+                </div>
+
                 <div
                   style={{
                     display: "flex",
@@ -1351,12 +1437,20 @@ export default function App() {
                     </button>
                   ))}
                 </div>
-                {reports.map((report) => (
-                  <div
-                    key={report.id}
-                    className="glass-panel"
-                    style={{ padding: "1.5rem" }}
-                  >
+
+                {filteredReports.length === 0 ? (
+                  <div className="glass-panel" style={{ padding: "2rem", textAlign: "center", color: "var(--text-muted)", fontSize: "0.95rem" }}>
+                    {searchQuery
+                      ? `Tidak ditemukan laporan dengan kata kunci "${searchQuery}".`
+                      : "Belum ada pengaduan pada kategori ini."}
+                  </div>
+                ) : (
+                  filteredReports.map((report) => (
+                    <div
+                      key={report.id}
+                      className="glass-panel"
+                      style={{ padding: "1.5rem" }}
+                    >
                     <div
                       style={{
                         display: "flex",
@@ -1398,12 +1492,72 @@ export default function App() {
                       style={{
                         fontSize: "1rem",
                         color: "var(--text-muted)",
-                        marginBottom: "1.25rem",
+                        marginBottom: "1rem",
                         lineHeight: 1.6,
                       }}
                     >
                       {report.isi_laporan}
                     </p>
+                    {report.foto_bukti && (
+                      <div style={{ marginBottom: "1rem" }}>
+                        <img
+                          src={`/uploads/${report.foto_bukti}`}
+                          alt="Foto Bukti Kerusakan"
+                          style={{
+                            maxWidth: "100%",
+                            maxHeight: "220px",
+                            borderRadius: "10px",
+                            objectFit: "cover",
+                            border: "1px solid var(--border-color)",
+                            cursor: "pointer",
+                            boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+                          }}
+                          onClick={() => window.open(`/uploads/${report.foto_bukti}`, "_blank")}
+                          title="Klik untuk melihat foto ukuran penuh"
+                        />
+                      </div>
+                    )}
+                    {report.catatan_petugas && (
+                      <div
+                        style={{
+                          marginBottom: "0.85rem",
+                          padding: "0.75rem 1rem",
+                          background: "rgba(16, 185, 129, 0.08)",
+                          borderLeft: "4px solid #10b981",
+                          borderRadius: "6px",
+                          fontSize: "0.88rem",
+                          color: "var(--text-main)",
+                        }}
+                      >
+                        <strong style={{ color: "#059669", display: "block", marginBottom: "0.25rem", fontSize: "0.82rem" }}>
+                          📌 Tindak Lanjut Dinas:
+                        </strong>
+                        {report.catatan_petugas}
+                      </div>
+                    )}
+                    {report.lat && report.long && (
+                      <div style={{ marginBottom: "0.85rem" }}>
+                        <a
+                          href={`https://www.google.com/maps?q=${report.lat},${report.long}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "0.35rem",
+                            fontSize: "0.8rem",
+                            color: "var(--accent-primary)",
+                            textDecoration: "none",
+                            background: "rgba(59, 130, 246, 0.08)",
+                            padding: "0.3rem 0.65rem",
+                            borderRadius: "6px",
+                            fontWeight: 600,
+                          }}
+                        >
+                          <MapPin size={13} /> Lokasi GPS ({report.lat}, {report.long})
+                        </a>
+                      </div>
+                    )}
                     <div
                       style={{
                         fontSize: "0.85rem",
@@ -1428,7 +1582,8 @@ export default function App() {
                       </span>
                     </div>
                   </div>
-                ))}
+                ))
+              )}
               </div>
             </div>
           </div>
@@ -1443,14 +1598,25 @@ export default function App() {
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: "1rem",
-                marginBottom: "2rem",
+                justifyContent: "space-between",
+                marginBottom: "1.5rem",
               }}
             >
-              <Bot size={32} className="text-accent-primary" />
-              <h2 style={{ fontSize: "1.75rem", fontWeight: 800 }}>
-                Tanya AI GovSmart
-              </h2>
+              <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+                <Bot size={32} className="text-accent-primary" />
+                <h2 style={{ fontSize: "1.75rem", fontWeight: 800 }}>
+                  Tanya AI GovSmart
+                </h2>
+              </div>
+              <button
+                type="button"
+                className="nav-btn"
+                onClick={handleClearChat}
+                style={{ padding: "0.4rem 0.85rem", fontSize: "0.82rem", display: "inline-flex", alignItems: "center", gap: "0.4rem" }}
+                title="Bersihkan riwayat percakapan di layar"
+              >
+                <RotateCcw size={14} /> Mulai Baru
+              </button>
             </div>
 
             <div
@@ -1504,6 +1670,29 @@ export default function App() {
               )}
             </div>
 
+            {/* Rekomendasi Pertanyaan Cepat */}
+            <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginBottom: "1rem" }}>
+              {QUICK_PROMPTS.map((qp, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => setChatPrompt(qp)}
+                  className="nav-btn"
+                  style={{
+                    padding: "0.35rem 0.75rem",
+                    fontSize: "0.78rem",
+                    background: "rgba(59, 130, 246, 0.06)",
+                    borderColor: "rgba(59, 130, 246, 0.25)",
+                    color: "var(--accent-primary)",
+                    borderRadius: "999px",
+                    cursor: "pointer",
+                  }}
+                >
+                  💡 {qp}
+                </button>
+              ))}
+            </div>
+
             <form
               onSubmit={handleSendChat}
               style={{ display: "flex", gap: "1rem" }}
@@ -1539,6 +1728,48 @@ export default function App() {
               >
                 Dasbor Manajemen & Penanganan Pengaduan
               </h1>
+
+              {/* Kartu Ringkasan Statistik (KPI Metrics) */}
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+                  gap: "1.25rem",
+                  marginBottom: "2rem",
+                }}
+              >
+                <div className="glass-panel" style={{ padding: "1.25rem 1.5rem" }}>
+                  <div style={{ fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Total Pengaduan</div>
+                  <div style={{ fontSize: "2rem", fontWeight: 800, color: "var(--text-main)", marginTop: "0.25rem" }}>{kpiTotal}</div>
+                  <div style={{ fontSize: "0.75rem", color: "var(--text-dim)", marginTop: "0.25rem" }}>Semua kategori dinas</div>
+                </div>
+
+                <div className="glass-panel" style={{ padding: "1.25rem 1.5rem", borderLeft: "4px solid #ef4444" }}>
+                  <div style={{ fontSize: "0.85rem", color: "#ef4444", fontWeight: 700, display: "flex", alignItems: "center", gap: "0.35rem" }}>
+                    <AlertTriangle size={15} /> Urgensi Darurat
+                  </div>
+                  <div style={{ fontSize: "2rem", fontWeight: 800, color: "#ef4444", marginTop: "0.25rem" }}>{kpiDarurat}</div>
+                  <div style={{ fontSize: "0.75rem", color: "var(--text-dim)", marginTop: "0.25rem" }}>Prioritas penanganan utama</div>
+                </div>
+
+                <div className="glass-panel" style={{ padding: "1.25rem 1.5rem", borderLeft: "4px solid #f59e0b" }}>
+                  <div style={{ fontSize: "0.85rem", color: "#d97706", fontWeight: 700, display: "flex", alignItems: "center", gap: "0.35rem" }}>
+                    <Clock size={15} /> Sedang Diproses
+                  </div>
+                  <div style={{ fontSize: "2rem", fontWeight: 800, color: "#d97706", marginTop: "0.25rem" }}>{kpiDiproses}</div>
+                  <div style={{ fontSize: "0.75rem", color: "var(--text-dim)", marginTop: "0.25rem" }}>Dalam pengerjaan OPD</div>
+                </div>
+
+                <div className="glass-panel" style={{ padding: "1.25rem 1.5rem", borderLeft: "4px solid #10b981" }}>
+                  <div style={{ fontSize: "0.85rem", color: "#059669", fontWeight: 700, display: "flex", alignItems: "center", gap: "0.35rem" }}>
+                    <CheckCircle size={15} /> Selesai Ditangani
+                  </div>
+                  <div style={{ fontSize: "2rem", fontWeight: 800, color: "#059669", marginTop: "0.25rem" }}>
+                    {kpiSelesai} <span style={{ fontSize: "1rem", fontWeight: 600, color: "var(--text-muted)" }}>({kpiPersenSelesai}%)</span>
+                  </div>
+                  <div style={{ fontSize: "0.75rem", color: "var(--text-dim)", marginTop: "0.25rem" }}>Penyelesaian tuntas</div>
+                </div>
+              </div>
               {userRole === "super_admin" && (
                 <div
                   className="glass-panel"
@@ -1747,39 +1978,85 @@ export default function App() {
               </div>
 
               <div className="glass-panel" style={{ padding: "1.5rem" }}>
-                <h2
+                <div
                   style={{
-                    fontSize: "1.2rem",
-                    fontWeight: 700,
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    flexWrap: "wrap",
+                    gap: "1rem",
                     marginBottom: "1.5rem",
                   }}
                 >
-                  Daftar Pengaduan Masuk
-                </h2>
-                <table
-                  style={{
-                    width: "100%",
-                    borderCollapse: "collapse",
-                    fontSize: "0.95rem",
-                  }}
-                >
-                  <thead>
-                    <tr
-                      style={{
-                        borderBottom: "2px solid var(--border-color)",
-                        textAlign: "left",
-                        color: "var(--text-muted)",
-                      }}
-                    >
-                      <th style={{ padding: "1rem" }}>ID</th>
-                      <th style={{ padding: "1rem" }}>Urgensi AI</th>
-                      <th style={{ padding: "1rem" }}>Judul Laporan</th>
-                      <th style={{ padding: "1rem" }}>Status</th>
-                      <th style={{ padding: "1rem" }}>Aksi</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {reports.map((r) => (
+                  <h2
+                    style={{
+                      fontSize: "1.2rem",
+                      fontWeight: 700,
+                      margin: 0,
+                    }}
+                  >
+                    Daftar Pengaduan Masuk
+                  </h2>
+                  <button
+                    type="button"
+                    className="nav-btn"
+                    onClick={handleExportCSV}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "0.4rem",
+                      padding: "0.45rem 1rem",
+                      fontSize: "0.85rem",
+                      fontWeight: 600,
+                    }}
+                    title="Unduh seluruh data laporan ke format CSV / Excel"
+                  >
+                    <Download size={15} /> Ekspor CSV
+                  </button>
+                </div>
+
+                {/* Search Bar Admin */}
+                <div style={{ position: "relative", marginBottom: "1.25rem" }}>
+                  <Search size={16} style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="Filter laporan berdasarkan kata kunci atau ID..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    style={{ paddingLeft: "2.3rem", fontSize: "0.9rem" }}
+                  />
+                </div>
+
+                {filteredReports.length === 0 ? (
+                  <p style={{ textAlign: "center", color: "var(--text-muted)", padding: "2rem" }}>
+                    {searchQuery ? `Tidak ada laporan yang cocok dengan kata kunci "${searchQuery}".` : "Belum ada pengaduan masuk."}
+                  </p>
+                ) : (
+                  <table
+                    style={{
+                      width: "100%",
+                      borderCollapse: "collapse",
+                      fontSize: "0.95rem",
+                    }}
+                  >
+                    <thead>
+                      <tr
+                        style={{
+                          borderBottom: "2px solid var(--border-color)",
+                          textAlign: "left",
+                          color: "var(--text-muted)",
+                        }}
+                      >
+                        <th style={{ padding: "1rem" }}>ID</th>
+                        <th style={{ padding: "1rem" }}>Urgensi AI</th>
+                        <th style={{ padding: "1rem" }}>Judul Laporan</th>
+                        <th style={{ padding: "1rem" }}>Status</th>
+                        <th style={{ padding: "1rem" }}>Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredReports.map((r) => (
                       <tr
                         key={r.id}
                         style={{ borderBottom: "1px solid #e2e8f0" }}
@@ -1828,6 +2105,7 @@ export default function App() {
                             onClick={() => {
                               setSelectedReport(r);
                               setNewStatus(r.status);
+                              setCatatanPetugas(r.catatan_petugas || "");
                             }}
                           >
                             Ubah Status
@@ -1849,9 +2127,10 @@ export default function App() {
                     ))}
                   </tbody>
                 </table>
-              </div>
+              )}
             </div>
-          )}
+          </div>
+        )}
       </div>
 
       {/* Modals for Admin Actions */}
@@ -1869,14 +2148,72 @@ export default function App() {
             </h3>
             <p
               style={{
-                fontSize: "1rem",
-                color: "var(--text-muted)",
-                marginBottom: "1.5rem",
-                lineHeight: 1.5,
+                fontSize: "1.05rem",
+                fontWeight: 700,
+                color: "var(--text-main)",
+                marginBottom: "0.5rem",
               }}
             >
               {selectedReport.judul}
             </p>
+            <p
+              style={{
+                fontSize: "0.9rem",
+                color: "var(--text-muted)",
+                marginBottom: "1rem",
+                lineHeight: 1.5,
+                background: "rgba(0,0,0,0.02)",
+                padding: "0.75rem",
+                borderRadius: "8px",
+                border: "1px solid var(--border-color)",
+              }}
+            >
+              {selectedReport.isi_laporan}
+            </p>
+            {selectedReport.foto_bukti && (
+              <div style={{ marginBottom: "1rem" }}>
+                <p style={{ fontSize: "0.8rem", fontWeight: 600, color: "var(--text-muted)", marginBottom: "0.25rem" }}>
+                  Foto Bukti Lampiran:
+                </p>
+                <img
+                  src={`/uploads/${selectedReport.foto_bukti}`}
+                  alt="Foto Bukti"
+                  style={{
+                    maxWidth: "100%",
+                    maxHeight: "180px",
+                    borderRadius: "8px",
+                    objectFit: "cover",
+                    border: "1px solid var(--border-color)",
+                    cursor: "pointer",
+                  }}
+                  onClick={() => window.open(`/uploads/${selectedReport.foto_bukti}`, "_blank")}
+                  title="Klik untuk membuka ukuran penuh"
+                />
+              </div>
+            )}
+            {selectedReport.lat && selectedReport.long && (
+              <div style={{ marginBottom: "1rem" }}>
+                <a
+                  href={`https://www.google.com/maps?q=${selectedReport.lat},${selectedReport.long}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "0.35rem",
+                    fontSize: "0.8rem",
+                    color: "var(--accent-primary)",
+                    textDecoration: "none",
+                    background: "rgba(59, 130, 246, 0.08)",
+                    padding: "0.3rem 0.65rem",
+                    borderRadius: "6px",
+                    fontWeight: 600,
+                  }}
+                >
+                  <MapPin size={13} /> Lokasi GPS ({selectedReport.lat}, {selectedReport.long})
+                </a>
+              </div>
+            )}
             <div className="form-group">
               <label className="form-label">Pilih Status Baru</label>
               <select
@@ -1890,6 +2227,17 @@ export default function App() {
                 <option value="ditolak">Ditolak</option>
               </select>
             </div>
+            <div className="form-group" style={{ marginTop: "1rem" }}>
+              <label className="form-label">Catatan / Tindak Lanjut Petugas (Opsional)</label>
+              <textarea
+                className="form-input"
+                rows={3}
+                placeholder="Tuliskan keterangan perbaikan, tindak lanjut tim lapangan, atau alasan penolakan..."
+                value={catatanPetugas}
+                onChange={(e) => setCatatanPetugas(e.target.value)}
+                style={{ resize: "vertical" }}
+              />
+            </div>
             <div
               style={{
                 display: "flex",
@@ -1900,7 +2248,10 @@ export default function App() {
             >
               <button
                 className="nav-btn"
-                onClick={() => setSelectedReport(null)}
+                onClick={() => {
+                  setSelectedReport(null);
+                  setCatatanPetugas("");
+                }}
               >
                 Batal
               </button>

@@ -67,9 +67,21 @@ ALIAS = {
 }
 
 
+try:
+    from .typo_corrector import koreksi_teks
+except ImportError:
+    try:
+        from typo_corrector import koreksi_teks
+    except ImportError:
+        def koreksi_teks(t): return t
+
+
 def expand_query(q):
-    extra = [ALIAS[t] for t in dict.fromkeys(re.findall(r"\w+", q.lower())) if t in ALIAS]
-    return q + (" (" + "; ".join(extra) + ")" if extra else "")
+    q_norm = koreksi_teks(q)
+    # Cari alias baik dari kata asli maupun kata yang sudah dikoreksi
+    tokens = dict.fromkeys(re.findall(r"\w+", (q + " " + q_norm).lower()))
+    extra = [ALIAS[t] for t in tokens if t in ALIAS]
+    return q_norm + (" (" + "; ".join(extra) + ")" if extra else "")
 
 
 class BM25:
