@@ -14,4 +14,4 @@ def create_audit_log(db: Session, report_id: int, admin_id: Optional[int], statu
     return log_entry
 
 def get_audit_logs_by_report(db: Session, report_id: int):
-    return db.query(AuditLog).filter(AuditLog.report_id == report_id).order_by(AuditLog.timestamp.desc()).all()
+    return db.query(AuditLog).filter(AuditLog.report_id == report_id).order_by(AuditLog.id.desc()).all()

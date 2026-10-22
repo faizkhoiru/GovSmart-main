@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query, UploadFile, File
+from sqlalchemy import desc
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from app.database import get_db
@@ -6,6 +7,7 @@ from app.schemas.report import ReportCreate, ReportUpdateStatus, ReportResponse
 from app.crud.report import create_report, get_report_by_id, get_reports, update_report_status
 from app.api.deps import get_current_user, get_current_active_admin
 from app.models.user import User
+from app.models.report import Report
 from app.core.upload import validate_and_save_upload
 
 router = APIRouter()
@@ -57,6 +59,29 @@ def get_report_detail(
         raise HTTPException(status_code=403, detail="Tidak memiliki akses ke laporan ini")
     return report
 
+@router.get("/notifications/me", response_model=List[ReportResponse])
+def get_my_notifications(
+    limit: int = Query(10, ge=1, le=50),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_admin),
+):
+    """
+    Notifikasi laporan baru untuk admin dinas.
+    Kembalikan (limit) laporan yang dialokasikan ke dinas admin ini dengan status
+    'diterima' atau 'diproses' (belum selesai/ditolak), urut terbaru dulu.
+    """
+    pendidng = (
+        db.query(Report)
+        .filter(
+            Report.dept_id == current_user.dept_id,
+            Report.status.in_(["diterima", "diproses"]),
+        )
+        .order_by(desc(Report.created_at))
+        .limit(limit)
+        .all()
+    )
+    return pendidng
+
 @router.patch("/{report_id}/status", response_model=ReportResponse)
 def change_report_status(
     report_id: int,
@@ -77,7 +102,13 @@ def change_report_status(
             detail=f"Status tidak valid. Pilihan status yang diperbolehkan: {', '.join(allowed_statuses)}"
         )
 
-    return update_report_status(db, report, status_baru=status_in.status, admin_id=current_admin.id)
+    return update_report_status(
+        db,
+        report,
+        status_baru=status_in.status,
+        admin_id=current_admin.id,
+        catatan_petugas=status_in.catatan_petugas
+    )
 
 @router.post("/{report_id}/upload-foto", response_model=ReportResponse)
 def upload_foto_bukti(
@@ -107,8 +138,65 @@ def upload_foto_bukti(
     saved_filename = validate_and_save_upload(foto)
 
     # Simpan nama file ke database
-    report.foto_bukti = saved_filename
+    setattr(report, "foto_bukti", saved_filename)
     db.commit()
     db.refresh(report)
 
+    return report
+
+@router.post("/sync-routing")
+def sync_unrouted_reports(
+    db: Session = Depends(get_db),
+    current_admin: User = Depends(get_current_active_admin)
+):
+    """
+    Menyelaraskan semua laporan yang belum ter-routing secara otomatis (dept_id is NULL)
+    menggunakan model AI smart routing terbaru.
+    """
+    from app.core.ai_routing import analyze_report_ai
+
+    unrouted = db.query(Report).filter(Report.dept_id == None).all()
+    updated_count = 0
+    details = []
+
+    for rep in unrouted:
+        dept_id, urgensi = analyze_report_ai(rep.judul, rep.isi_laporan, db)
+        setattr(rep, "dept_id", dept_id)
+        if urgensi:
+            setattr(rep, "urgensi", urgensi)
+        updated_count += 1
+        details.append({"report_id": rep.id, "judul": rep.judul, "dept_id": dept_id, "urgensi": urgensi})
+
+    if updated_count > 0:
+        db.commit()
+
+    return {
+        "status": "success",
+        "total_unrouted_found": len(unrouted),
+        "total_updated": updated_count,
+        "details": details
+    }
+
+@router.post("/{report_id}/reroute", response_model=ReportResponse)
+def reroute_single_report(
+    report_id: int,
+    db: Session = Depends(get_db),
+    current_admin: User = Depends(get_current_active_admin)
+):
+    """
+    Menganalisis ulang dan me-reroute laporan secara otomatis menggunakan AI smart routing.
+    """
+    from app.core.ai_routing import analyze_report_ai
+
+    report = get_report_by_id(db, report_id)
+    if not report:
+        raise HTTPException(status_code=404, detail="Laporan tidak ditemukan")
+
+    dept_id, urgensi = analyze_report_ai(report.judul, report.isi_laporan, db)
+    setattr(report, "dept_id", dept_id)
+    if urgensi:
+        setattr(report, "urgensi", urgensi)
+
+    db.commit()
+    db.refresh(report)
     return report

@@ -1,0 +1,13 @@
+0.929
+12. Setelah data disimpan, maka akan ada keterangan "Data Usaha Anda Berhasil
+Disimpan"
+12.22 • @714
+Pengembangan
+Tambah Produk/ Jasa
+• Tambah Produk atau Jasa
+Kue l
+f Kapasitas per Tahun
+û Hapus  Ubah
+Berhasil
+Data usaha anda berhasil disimpan
+Kembali

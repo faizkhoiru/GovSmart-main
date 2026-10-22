@@ -1,0 +1,47 @@
+0.497
+NO KOMPONEN URAIAN
+3 Sistem, Mekanisme, dan
+Prosedur Pelaku usaha
+mengajukan
+permohonan Sertifikat
+Standar di Portal OSS
+Verifikasi persyaratan
+oleh Petugas FO
+1dak
+Pelaku usaha
+melengkapi Lengkap
+Ya
+Risiko Menengah Risiko Rendah dan
+Tinggi Menengah Rendah
+Diproses oleh
+kementerian atau Diproses oleh
+Sistem OSS
+lembaga terkait
+Sertifikat Standar
+Terbit /
+Terverifikasi
+Keterangan:
+1. Pelaku usalla mengajukan permohonan (pendaftaran)
+melalui Portal OSS pada bagian proses pemenuhan standar
+usaha, kemudian memenuhi persyaratan yang dibutuhkan.
+2. Sistem OSS akan melakukan verifikasi data dan dokumen.
+Untuk usaha dengan risiko menengah tinggi verifikasi akan
+dilanjutkan oleh kementerian atau lembaga terkait.
+3. Setelah dilakukan verifikasi, Pelaku usaha melakukan
+perbaikan Dokumen/data yang tidak memenuhi syarat
+4. Setelah dilakukan perbaikan, maka Pelaku usaha
+melakukan pengajuan kembali melalui sistem OSS untuk
+dilakukan verifikasi ulang.
+5. Apabila disetujui status akan berubah menjadi
+"Terverifikasi" atau "Terbit" (tergantung jenisnya), dan pelaku
+bisa mengunduh dokumen sertifikat standar tersebut pada
+sistem OSS.
+6. Sertifikat standar adalah bukti bahwa usaha telah
+memenuhi standar, menjamin legalitas operasional dan
+perlindungan hukum..
+Jangka Waktu 5 (lima) hari kerja
+Penyelesaian
+Biaya/Tarif Tidak ada biaya/tarif
+Produk Pelayanan Sertifikat Standar
+Sarana dan Prasarana, 1. Ruang tunggu dengan pendingin ruangan
+dan/atau Fasilitas 2. Sistem antrian

@@ -1,0 +1,19 @@
+0.573
+-44-
+Pelaksana Mutu Baku
+Kegiatan Keterangan
+Pemohon Sistem OSS OPD Teknis Kelengkapan Waktu Output
+1 Pelaku usaha melakukan pengisian • Komputer On- 60 Menit Dokumen
+dan pengajuan SPPL dan memenuhi line SPPL Diterima
+persyaratan yang dibutuhkan • Isian SPPL
+melalui Sistem OSS
+Sistem OSS menerima pengajuan Dokumen SPPL 15 Menit Dokumen
+SPPL dari Pelaku Usaha dan Diterima
+melakukan Verinkast Data Terverifikasi
+Sistem OSS menerbitkan SPPL Dokumen SPPL 30 Menit Dokumen
+Diterima
+Terferivikasi Diterbitkan
+Pelaku usaha menerima penerbitan Komputer On- 10 Menit Dokumen
+line
+Pelaku usaha melakukan registrasi Dokumen SPPL 15 Menit SPPL
+SPPL ke OPD Teknis Diterima Teregister

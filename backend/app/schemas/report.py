@@ -10,6 +10,7 @@ class ReportCreate(BaseModel):
 
 class ReportUpdateStatus(BaseModel):
     status: str = Field(..., description="Status baru: diterima, diproses, selesai, ditolak")
+    catatan_petugas: Optional[str] = Field(None, max_length=1000, description="Catatan tindak lanjut atau alasan petugas")
 
 class ReportResponse(BaseModel):
     id: int
@@ -23,6 +24,8 @@ class ReportResponse(BaseModel):
     long: Optional[float] = None
     # Nama file foto bukti yang telah diupload (None jika belum ada lampiran)
     foto_bukti: Optional[str] = None
+    # Catatan / keterangan tindak lanjut dari dinas
+    catatan_petugas: Optional[str] = None
 
     class Config:
         from_attributes = True

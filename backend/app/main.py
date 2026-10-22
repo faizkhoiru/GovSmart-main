@@ -1,4 +1,7 @@
+# pyrefly: ignore [missing-import]
 from fastapi import FastAPI
+# pyrefly: ignore [missing-import]
+from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 from app.core.config import settings
 from app.database import engine, Base, SessionLocal
@@ -30,6 +33,11 @@ app = FastAPI(
 )
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
+
+import os
+UPLOAD_DIR = os.environ.get("GOVSMART_UPLOAD_DIR", "/app/uploads")
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
 @app.get("/")
 def read_root():

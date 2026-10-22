@@ -1,0 +1,6 @@
+{
+  "model": "intfloat/multilingual-e5-small",
+  "n": 1080,
+  "dim": 384,
+  "chunks_sha1": "e64338c007b9b90f3dbc1d567f2e763e8e8d37b4"
+}

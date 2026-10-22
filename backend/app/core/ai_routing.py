@@ -29,89 +29,126 @@ DEFAULT_DEPARTMENTS = [
 KEYWORDS_DEPT_MAP = {
     "Dinas Pendidikan": [
         "sekolah", "guru", "murid", "siswa", "beasiswa", "gedung sekolah",
-        "seragam", "ijazah", "sd", "smp", "sma", "smk", "pendidikan", "belajar"
+        "seragam", "ijazah", "sd", "smp", "sma", "smk", "pendidikan", "belajar",
+        "kampus", "universitas", "mahasiswa", "dosen", "kuliah", "fakultas",
+        "ruang kelas", "kelas", "gedung kuliah", "paud", "tk", "madrasah",
+        "fasilitas kampus", "fasilitas sekolah", "fasilitas pendidikan", "akademik",
+        "buku pelajaran", "bop", "bosda", "dana bos", "tawuran pelajar"
     ],
     "Dinas Kesehatan": [
         "posyandu", "puskesmas", "rumah sakit", "obat", "dokter", "ambulans",
-        "penyakit", "demam", "dbd", "stunting", "kesehatan", "pasien", "vaksin"
+        "penyakit", "demam", "dbd", "stunting", "kesehatan", "pasien", "vaksin",
+        "bidan", "perawat", "bpjs kesehatan", "fasilitas kesehatan", "faskes",
+        "gizi buruk", "wabah", "medis", "imunisasi", "apotek", "infeksi", "virus",
+        "diare", "poliklinik", "tenaga medis", "pelayanan medis", "igd"
     ],
     "Dinas Kependudukan dan Pencatatan Sipil": [
         "ktp", "e-ktp", "kk", "kartu keluarga", "akta", "suket", "pindahan",
-        "akte kelahiran", "pernikahan", "perceraian", "kependudukan", "dukcapil"
+        "akte kelahiran", "pernikahan", "perceraian", "kependudukan", "dukcapil",
+        "akte kematian", "kia", "kartu identitas anak", "legalisir", "nik",
+        "domisili", "surat pindah", "identitas kependudukan", "ikd"
     ],
     "Dinas Sosial": [
         "bansos", "bantuan sosial", "kemiskinan", "fakir miskin", "lansia",
-        "disabilitas", "yatim", "anak terlantar", "pkh", "bpnt", "sosial"
+        "disabilitas", "yatim", "anak terlantar", "pkh", "bpnt", "sosial",
+        "gelandangan", "pengemis", "gepeng", "panti asuhan", "bantuan bencana",
+        "keluarga prasejahtera", "tuna wisma", "orang terlantar", "sembako"
     ],
     "Dinas Pemberdayaan Masyarakat dan Desa": [
         "desa", "dusun", "bumdes", "kelurahan", "dana desa", "musyawarah desa",
-        "pemberdayaan", "masyarakat", "karang taruna", "posyandu desa"
+        "pemberdayaan", "masyarakat", "karang taruna", "posyandu desa", "kepala desa",
+        "kades", "bpd", "perangkat desa", "rt", "rw", "pamong desa", "balai desa",
+        "warga desa", "aparat desa"
     ],
     "Dinas Pekerjaan Umum Bina Marga": [
         "jalan rusak", "jalan ambruk", "pengerasan jalan", "berlubang",
         "lubang", "aspal", "trotoar", "infrastruktur", "jembatan", "bina marga",
+        "jalanan", "jalan raya", "jembatan rusak", "jembatan ambruk", "jalan putus",
+        "jalan amblas", "jalan ambles", "jalan retak", "jalan cor", "jalan bolong",
+        "gorong-gorong jalan", "jalan kabupaten"
     ],
     "Dinas Pekerjaan Umum Sumber Daya Air": [
         "drainase", "got", "selokan", "irigasi", "sungai", "banjir", "saluran air",
-        "sumber daya air", "waduk", "dam", "tanggul", "pompa air"
+        "sumber daya air", "waduk", "dam", "tanggul", "pompa air",
+        "longsor", "tanah", "lumpur", "lereng", "bencana alam", "tanah longsor",
+        "abrasi", "tanggul jebol", "kali", "rawa", "genangan air", "saluran pembuangan",
+        "kali mampet", "erosi", "pintu air"
     ],
     "Dinas Perumahan Rakyat, Kawasan Permukiman dan Cipta Karya": [
         "perumahan", "rumah", "permukiman", "rusun", "air bersih", "sanitasi",
-        "cipta karya", "pdam", "pipanisasi", "pemukiman", "kavling"
+        "cipta karya", "pdam", "pipanisasi", "pemukiman", "kavling", "gedung",
+        "bangunan roboh", "septic tank", "mck", "saluran limbah rumah tangga",
+        "bedah rumah", "rutilahu", "rumah kumuh", "bangunan rusak"
     ],
     "Dinas Perhubungan": [
         "lampu lalu lintas", "traffic light", "rambu", "macet", "parkir",
-        "terminal", "penerangan jalan", "pju", "angkutan", "transportasi"
+        "terminal", "penerangan jalan", "pju", "angkutan", "transportasi",
+        "marka jalan", "bus", "angkot", "juru parkir", "lampu jalan",
+        "penerangan jalan umum", "pelabuhan", "halte", "kemacetan", "uji kir"
     ],
     "Dinas Lingkungan Hidup": [
         "sampah", "pohon", "limbah", "bau", "polusi", "taman", "kebersihan",
-        "lingkungan", "tps", "tempat sampah", "penghijauan", "pencemaran"
+        "lingkungan", "tps", "tempat sampah", "penghijauan", "pencemaran",
+        "pohon tumbang", "dahan patah", "tpa", "sampah menumpuk", "limbah pabrik",
+        "sungai kotor", "tumpukan sampah", "bak sampah"
     ],
     "Dinas Penanaman Modal dan Pelayanan Terpadu Satu Pintu": [
         "izin", "perizinan", "umkm", "nib", "usaha", "pbg", "imb",
-        "investasi", "ptsp", "dpmptsp", "siup", "tdp"
+        "investasi", "ptsp", "dpmptsp", "siup", "tdp", "izin usaha", "oss",
+        "izin mendirikan bangunan", "izin operasional"
     ],
     "Dinas Tenaga Kerja": [
         "tenaga kerja", "buruh", "upah", "phk", "lowongan", "pengangguran",
-        "pelatihan kerja", "disnaker", "tki", "bpjs ketenagakerjaan"
+        "pelatihan kerja", "disnaker", "tki", "bpjs ketenagakerjaan", "pesangon",
+        "umr", "umk", "gaji", "ketenagakerjaan", "blk", "magang", "pekerja migran"
     ],
     "Dinas Perikanan": [
         "ikan", "nelayan", "tambak", "budidaya", "hasil laut", "kapal",
-        "perikanan", "kolam ikan", "udang", "bandeng"
+        "perikanan", "kolam ikan", "udang", "bandeng", "bibit ikan", "pakan ikan",
+        "tangkapan laut", "perahu nelayan", "tpi", "tempat pelelangan ikan"
     ],
     "Dinas Komunikasi dan Informatika": [
         "internet", "wifi", "jaringan", "sinyal", "kominfo", "website",
-        "aplikasi", "layanan online", "sistem informasi", "data", "siber"
+        "aplikasi", "layanan online", "sistem informasi", "data", "siber",
+        "hoaks", "server", "blank spot", "tower", "tiang internet", "kabel fiber"
     ],
     "Dinas Perpustakaan dan Kearsipan Daerah": [
         "perpustakaan", "buku", "arsip", "dokumen", "literasi",
-        "koleksi buku", "pustakawan", "kearsipan"
+        "koleksi buku", "pustakawan", "kearsipan", "perpustakaan keliling",
+        "pojok baca", "minat baca", "ruang baca"
     ],
     "Dinas Satuan Polisi Pamong Praja": [
         "pedagang kaki lima", "pkl", "ketertiban", "kebisingan", "razia",
-        "satpol", "penertiban", "pelanggaran perda", "liar", "bangunan liar"
+        "satpol", "penertiban", "pelanggaran perda", "liar", "bangunan liar",
+        "kebakaran", "terbakar", "damkar", "pemadam kebakaran", "pemadam",
+        "api", "hangus", "tawuran", "miras", "gangguan ketertiban", "prostitusi"
     ],
     "Dinas Ketahanan Pangan dan Pertanian": [
         "pangan", "pertanian", "sawah", "padi", "pupuk", "hama", "petani",
-        "kebun", "hortikultura", "tanaman", "ketahanan pangan", "gabah"
+        "kebun", "hortikultura", "tanaman", "ketahanan pangan", "gabah",
+        "panen", "irigasi sawah", "ternak", "sapi", "kambing", "unggas", "gagal panen"
     ],
-    "Dinas Koperasi, Perindustrian, dan Perdagangan": [
+    "Dinas Koperasi, Perindustian, dan Perdagangan": [
         "koperasi", "industri", "perdagangan", "pasar", "pedagang",
-        "ukm", "usaha kecil", "toko", "pabrik", "produksi", "distribusi"
+        "ukm", "usaha kecil", "toko", "pabrik", "produksi", "distribusi",
+        "harga sembako", "minyak goreng", "beras mahal", "timbangan", "operasi pasar"
     ],
     "Dinas Kebudayaan, Pemuda dan Olahraga dan Pariwisata": [
         "budaya", "seni", "wisata", "pariwisata", "olahraga", "pemuda",
-        "stadion", "lapangan", "festival", "kesenian", "destinasi wisata"
+        "stadion", "lapangan", "festival", "kesenian", "destinasi wisata",
+        "cagar budaya", "museum", "event pemuda", "tempat rekreasi"
     ],
     "Dinas Pemberdayaan Perempuan, Perlindungan Anak dan Keluarga Berencana": [
         "perempuan", "anak", "kekerasan", "kdrt", "kb", "keluarga berencana",
-        "perlindungan anak", "bkb", "posyandu balita", "gender"
+        "perlindungan anak", "bkb", "posyandu balita", "gender", "pelecehan",
+        "trafficking", "eksploitasi anak", "ibu hamil", "pernikahan dini"
     ],
 }
 
 EMERGENCY_KEYWORDS = [
     "darurat", "kebakaran", "ambruk", "longsor", "korban", "bahaya",
-    "kecelakaan", "rusak parah", "putus", "meledak", "banjir bandang", "mati"
+    "kecelakaan", "rusak parah", "putus", "meledak", "banjir bandang", "mati",
+    "terbakar", "tenggelam", "tersengat", "amblas", "gas bocor", "runtuh", "ledakan"
 ]
 
 IMPORTANT_KEYWORDS = [
@@ -122,7 +159,7 @@ IMPORTANT_KEYWORDS = [
 def analyze_report_ai(judul: str, isi: str, db: Session) -> Tuple[Optional[int], str]:
     text_lower = f"{judul} {isi}".lower()
     import re
-    tokens = set(re.findall(r"\b[a-z]+\b", text_lower))  # single-word tokens for typo matching
+    tokens = set(re.findall(r"\b[a-z]+\b", text_lower))  # single-word tokens for exact and typo matching
 
     # 1. Determine Urgency (substring match, robust for multi-word)
     urgensi = "normal"
@@ -132,9 +169,8 @@ def analyze_report_ai(judul: str, isi: str, db: Session) -> Tuple[Optional[int],
         urgensi = "penting"
 
     # 2. Determine Department via Smart Routing
-    #    Match keywords via substring. For single-word keywords, also apply fuzzy
-    #    matching (cutoff 0.8) to tolerate typos (e.g. "smpah" -> "sampah").
-    #    Multi-word keywords are matched by substring only (fuzzy on phrases is noisy).
+    #    Phrase keywords (with space): substring in text_lower.
+    #    Single-word keywords: exact token match, or fuzzy match (cutoff 0.85, len >= 5) to tolerate typos.
     from difflib import get_close_matches
     best_dept_name = None
     max_matches = 0
@@ -142,14 +178,17 @@ def analyze_report_ai(judul: str, isi: str, db: Session) -> Tuple[Optional[int],
     for dept_name, keywords in KEYWORDS_DEPT_MAP.items():
         matches = 0
         for kw in keywords:
-            if kw in text_lower:
-                matches += 1
-            elif " " not in kw and len(kw) <= 6:
-                # single-word keyword (short only to avoid morphologically noisy matches): fuzzy match
-                for tok in tokens:
-                    if get_close_matches(tok, [kw], n=1, cutoff=0.8):
-                        matches += 1
-                        break
+            if " " in kw:
+                if kw in text_lower:
+                    matches += 1
+            else:
+                if kw in tokens:
+                    matches += 1
+                elif len(kw) >= 5:
+                    for tok in tokens:
+                        if abs(len(tok) - len(kw)) <= 1 and get_close_matches(tok, [kw], n=1, cutoff=0.85):
+                            matches += 1
+                            break
         if matches > max_matches:
             max_matches = matches
             best_dept_name = dept_name
@@ -157,8 +196,22 @@ def analyze_report_ai(judul: str, isi: str, db: Session) -> Tuple[Optional[int],
     dept_id = None
     if best_dept_name:
         dept_obj = db.query(Department).filter(Department.nama_dinas == best_dept_name).first()
+        if not dept_obj:
+            dept_obj = db.query(Department).filter(
+                Department.nama_dinas.ilike(f"%{best_dept_name.split(',')[0]}%")
+            ).first()
         if dept_obj:
             dept_id = dept_obj.id
+
+    # Fallback jika tidak ada keyword spesifik yang cocok (0 match)
+    if not dept_id:
+        fallback_dept = db.query(Department).filter(
+            Department.nama_dinas == "Dinas Komunikasi dan Informatika"
+        ).first()
+        if not fallback_dept:
+            fallback_dept = db.query(Department).first()
+        if fallback_dept:
+            dept_id = fallback_dept.id
 
     return dept_id, urgensi
 

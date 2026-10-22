@@ -1,0 +1,16 @@
+1.000
+10. Setelah berhasil menyimpan produk, maka terdapat pemberitahuan seperti di bawah
+ini dan kemudian pilih "Kembali"
+11.46
+Satuan Kapasitas
+Pcs
+Apakah anda sudah memiliki sertifikat Standar
+Nasional Indonesia (SNI)?
+O Ya
+• Tidak
+Apakah bahan atau proses produksinya halal?
+• Ya
+Berhasil Menyimpan Produk
+Produk telah berhasil disimpan untuk bidang
+usaha ini!
+Kembali

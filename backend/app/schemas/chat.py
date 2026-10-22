@@ -1,15 +1,35 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, Extra
+from typing import List, Optional, Any
 from datetime import datetime
 
 class ChatRequest(BaseModel):
-    prompt: str = Field(..., min_length=1, max_length=500, description="Pertanyaan warga (1-500 karakter)")
+    pertanyaan: Optional[str] = Field(None, min_length=1, max_length=500)
+    prompt: Optional[str] = Field(None, min_length=1, max_length=500)
+
+    model_config = {"extra": "ignore"}
+
+    def get_query(self) -> str:
+        return (self.pertanyaan or self.prompt or "").strip()
+
+class Sumber(BaseModel):
+    no: Optional[int]
+    judul: Optional[str]
+    konteks: Optional[str]
+    layanan: Optional[str]
+    halaman: Optional[str]
 
 class ChatResponse(BaseModel):
-    id: int
-    user_id: int
+    jawaban: str
+    intent: Optional[str]
+    mode: Optional[str]
+    sumber: Optional[List[Sumber]]
+
+class ChatHistoryItem(BaseModel):
     prompt: str
     response: str
-    timestamp: datetime
+    timestamp: Any
 
-    class Config:
-        from_attributes = True
+class ChatHistoryOut(BaseModel):
+    results: List[ChatHistoryItem]
+    count: int
+

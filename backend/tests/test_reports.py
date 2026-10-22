@@ -170,3 +170,64 @@ def test_upload_foto_invalid_mime(client, warga_headers, _uploads_dir):
     assert upload_res.status_code == 422
     assert "diizinkan" in upload_res.json()["detail"].lower()
 
+
+def test_submit_report_kampus_and_emergency(client, warga_headers):
+    """Laporan fasilitas kampus terbakar harus ter-routing ke Dinas Pendidikan dengan urgensi darurat."""
+    payload = {
+        "judul": "Fasilitas Kampus ada yang rusak/terbakar",
+        "isi_laporan": "Fasilitas Kampus ada yang rusak/terbakar di gedung perkuliahan",
+    }
+    response = client.post("/api/v1/reports/", json=payload, headers=warga_headers)
+    assert response.status_code == 201
+    data = response.json()
+    assert data["urgensi"] == "darurat"
+    assert data["dept_id"] is not None
+
+    # Verifikasi nama dinasnya adalah Dinas Pendidikan
+    depts = client.get("/api/v1/departments/").json()
+    routed_dept = next(d for d in depts if d["id"] == data["dept_id"])
+    assert routed_dept["nama_dinas"] == "Dinas Pendidikan"
+
+
+def test_submit_report_typo_fuzzy_routing(client, warga_headers):
+    """Laporan dengan typo 'Tanah Longsot' harus tetap ter-routing ke Dinas PU Sumber Daya Air."""
+    payload = {
+        "judul": "Tanah Longsot",
+        "isi_laporan": "Tanah Longsot di Daerah lereng sungai, terjadi longsor besar",
+    }
+    response = client.post("/api/v1/reports/", json=payload, headers=warga_headers)
+    assert response.status_code == 201
+    data = response.json()
+    assert data["urgensi"] == "darurat"
+    assert data["dept_id"] is not None
+
+    depts = client.get("/api/v1/departments/").json()
+    routed_dept = next(d for d in depts if d["id"] == data["dept_id"])
+    assert routed_dept["nama_dinas"] == "Dinas Pekerjaan Umum Sumber Daya Air"
+
+
+def test_submit_report_fallback_routing(client, warga_headers):
+    """Laporan tanpa kata kunci spesifik harus fallback ke Dinas Komunikasi dan Informatika."""
+    payload = {
+        "judul": "Informasi Umum",
+        "isi_laporan": "Halo selamat siang mohon konfirmasi",
+    }
+    response = client.post("/api/v1/reports/", json=payload, headers=warga_headers)
+    assert response.status_code == 201
+    data = response.json()
+    assert data["dept_id"] is not None
+
+    depts = client.get("/api/v1/departments/").json()
+    routed_dept = next(d for d in depts if d["id"] == data["dept_id"])
+    assert routed_dept["nama_dinas"] == "Dinas Komunikasi dan Informatika"
+
+
+def test_sync_routing_endpoint(client, super_admin_headers):
+    """Super admin dapat memicu sync-routing untuk laporan yang belum ter-routing."""
+    response = client.post("/api/v1/reports/sync-routing", headers=super_admin_headers)
+    assert response.status_code == 200
+    res_data = response.json()
+    assert res_data["status"] == "success"
+    assert "total_unrouted_found" in res_data
+    assert "total_updated" in res_data
+

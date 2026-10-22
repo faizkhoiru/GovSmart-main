@@ -13,7 +13,7 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
       timeout: 20s
       retries: 10
 
@@ -33,12 +33,32 @@ services:
       - MYSQL_DB=govsmart
       - SECRET_KEY=supersecretkeygovsmart2026!
       - ACCESS_TOKEN_EXPIRE_MINUTES=1440
+      - CHATBOT_URL=http://host.docker.internal:8001
+      - CHATBOT_INTERNAL_TOKEN=${CHATBOT_INTERNAL_TOKEN:-govsmart-dev-token}
+      - CHATBOT_TIMEOUT=180
     volumes:
-      # Volume persisten untuk foto bukti upload (maks 5 MB per file sesuai PRD)
+      - ./backend:/app
       - uploads_data:/app/uploads
     depends_on:
       db:
         condition: service_healthy
+
+  chatbot:
+    build:
+      context: ./govsmart-chatbot
+      dockerfile: Dockerfile
+    container_name: govsmart_chatbot
+    restart: always
+    ports:
+      - "8001:8001"
+    environment:
+      - CHATBOT_INTERNAL_TOKEN=${CHATBOT_INTERNAL_TOKEN:-govsmart-dev-token}
+      - LLM_BASE_URL=${LLM_BASE_URL:-}
+      - LLM_MODEL=${LLM_MODEL:-}
+      - LLM_API_KEY=${LLM_API_KEY:-}
+    volumes:
+      # Index RAG read-only. Rebuild image bila kode service berubah.
+      - ./govsmart-chatbot/data:/app/data:ro
 
 volumes:
   mysql_data:
