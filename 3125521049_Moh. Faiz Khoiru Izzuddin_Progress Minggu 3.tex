@@ -1,0 +1,916 @@
+%===============================================================
+% LAPORAN KEMAJUAN MINGGUAN — MINGGU KE-3
+% Workshop Pemrograman Framework
+% GovSmart — Sistem Pengaduan & Layanan Digital Kabupaten Lamongan
+%===============================================================
+
+\documentclass[12pt,a4paper]{article}
+
+% ---- Packages ----
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[bahasa]{babel}
+\usepackage[left=3cm, right=2.5cm, top=2.5cm, bottom=2.5cm]{geometry}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{tcolorbox}
+\usepackage{fontawesome5}
+\usepackage{parskip}
+\usepackage{microtype}
+\usepackage{caption}
+\usepackage{float}
+\usepackage{multirow}
+
+% ---- Warna ----
+\definecolor{accent}{HTML}{1E40AF}
+\definecolor{accentlight}{HTML}{EFF6FF}
+\definecolor{success}{HTML}{059669}
+\definecolor{successlight}{HTML}{ECFDF5}
+\definecolor{warning}{HTML}{D97706}
+\definecolor{warninglight}{HTML}{FFFBEB}
+\definecolor{codebg}{HTML}{F8FAFC}
+\definecolor{codefg}{HTML}{1E293B}
+\definecolor{borderblue}{HTML}{BFDBFE}
+\definecolor{gray}{HTML}{64748B}
+
+% ---- Hyperref ----
+\hypersetup{
+  colorlinks=true,
+  linkcolor=accent,
+  urlcolor=accent,
+  pdftitle={Laporan Kemajuan Minggu 3 - GovSmart},
+  pdfauthor={Moh. Faiz Khoiru Izzuddin},
+  pdfsubject={Workshop Pemrograman Framework},
+}
+
+% ---- Header / Footer ----
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textcolor{gray}{GovSmart --- Laporan Kemajuan Minggu 3}}
+\fancyhead[R]{\small\textcolor{gray}{Workshop Pemrograman Framework}}
+\fancyfoot[C]{\small\textcolor{gray}{\thepage}}
+\renewcommand{\headrulewidth}{0.5pt}
+\renewcommand{\headrule}{\hbox to\headwidth{\color{borderblue}\leaders\hrule height \headrulewidth\hfill}}
+
+% ---- Section Format ----
+\titleformat{\section}
+  {\large\bfseries\color{accent}}
+  {\thesection.}{0.75em}{}
+  [\vspace{2pt}\color{borderblue}\hrule\vspace{4pt}]
+
+\titleformat{\subsection}
+  {\normalsize\bfseries\color{accent!80!black}}
+  {\thesubsection.}{0.6em}{}
+
+\titleformat{\subsubsection}
+  {\normalsize\bfseries\color{codefg}}
+  {\thesubsubsection.}{0.5em}{}
+
+% ---- Listing / Code ----
+\lstset{
+  backgroundcolor=\color{codebg},
+  basicstyle=\ttfamily\footnotesize\color{codefg},
+  breaklines=true,
+  breakatwhitespace=true,
+  frame=single,
+  framesep=6pt,
+  rulecolor=\color{borderblue},
+  xleftmargin=12pt,
+  xrightmargin=6pt,
+  aboveskip=10pt,
+  belowskip=6pt,
+  showstringspaces=false,
+  tabsize=2,
+  keywordstyle=\color{accent}\bfseries,
+  commentstyle=\color{gray}\itshape,
+  stringstyle=\color{success},
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  numbersep=8pt,
+}
+
+% ---- tcolorbox styles ----
+\tcbuselibrary{skins,breakable}
+
+\newtcolorbox{infobox}[1][]{
+  enhanced,
+  colback=accentlight,
+  colframe=accent,
+  fonttitle=\bfseries\small,
+  title=#1,
+  arc=6pt,
+  left=8pt, right=8pt, top=6pt, bottom=6pt,
+  breakable
+}
+
+\newtcolorbox{successbox}[1][]{
+  enhanced,
+  colback=successlight,
+  colframe=success,
+  fonttitle=\bfseries\small,
+  title=#1,
+  arc=6pt,
+  left=8pt, right=8pt, top=6pt, bottom=6pt,
+  breakable
+}
+
+\newtcolorbox{warningbox}[1][]{
+  enhanced,
+  colback=warninglight,
+  colframe=warning,
+  fonttitle=\bfseries\small,
+  title=#1,
+  arc=6pt,
+  left=8pt, right=8pt, top=6pt, bottom=6pt,
+  breakable
+}
+
+% ---- Dokumen ----
+\begin{document}
+
+%------------------------------------------------------------
+% HALAMAN JUDUL
+%------------------------------------------------------------
+\begin{titlepage}
+  \centering
+  \vspace*{1.5cm}
+
+  {\Huge\bfseries\color{accent} LAPORAN KEMAJUAN\\[6pt]
+   \Large WORKSHOP PEMROGRAMAN FRAMEWORK}\\[0.4cm]
+  {\large\color{gray}\rule{12cm}{1.5pt}}\\[0.6cm]
+
+  {\LARGE\bfseries GovSmart}\\[0.2cm]
+  {\large\color{gray}
+    Sistem Pengaduan \& Layanan Digital\\
+    Pemerintah Kabupaten Lamongan}\\[0.8cm]
+
+  \begin{tcolorbox}[
+    enhanced, width=10cm,
+    colback=accentlight, colframe=accent,
+    arc=10pt, boxrule=1.2pt,
+    fontupper=\bfseries\large\color{accent},
+    halign=center
+  ]
+    PERKEMBANGAN MINGGU KE-3
+  \end{tcolorbox}
+
+  \vspace{1.5cm}
+
+  \begin{tabular}{ll}
+    \textbf{Nama}          & : Moh.\ Faiz Khoiru Izzuddin \\[4pt]
+    \textbf{NIM}           & : 3125521049 \\[4pt]
+    \textbf{Program Studi} & : Teknik Informatika \\[4pt]
+    \textbf{Mata Kuliah}   & : Workshop Pemrograman Framework \\[4pt]
+    \textbf{Periode}       & : Minggu Ke-3 \\[4pt]
+    \textbf{Tanggal}       & : Oktober 2026 \\
+  \end{tabular}
+
+  \vfill
+  {\small\color{gray}
+    Laporan ini merupakan dokumentasi perkembangan proyek GovSmart\\
+    sebagai bagian dari tugas Workshop Pemrograman Framework.}
+\end{titlepage}
+
+%------------------------------------------------------------
+% DAFTAR ISI
+%------------------------------------------------------------
+\tableofcontents
+\newpage
+
+%------------------------------------------------------------
+% 1. RINGKASAN EKSEKUTIF
+%------------------------------------------------------------
+\section{Ringkasan Eksekutif}
+
+Pada minggu ketiga pengerjaan proyek \textbf{GovSmart}, fokus utama diarahkan pada
+\textbf{penyelesaian menyeluruh lapisan antarmuka pengguna (\textit{frontend})} berbasis
+React + Vite, setelah fondasi backend FastAPI berhasil dibangun pada minggu-minggu sebelumnya.
+Seluruh fitur interaktif yang direncanakan kini telah terimplementasi secara penuh dan
+terintegrasi dengan API backend melalui mekanisme \textit{reverse proxy} Vite.
+
+\begin{successbox}[Pencapaian Utama Minggu 3]
+  \begin{itemize}[leftmargin=1.5em, itemsep=3pt]
+    \item \textbf{Portal Autentikasi Glassmorphism} --- Halaman login/registrasi
+          dengan animasi sliding panel selesai diimplementasikan.
+    \item \textbf{Halaman Beranda Hero MSN-Style} --- Tampilan utama bergaya portal
+          berita modern dengan latar gambar Lamongan.
+    \item \textbf{Modul Pengaduan Warga Lengkap} --- Form pengaduan dengan GPS
+          auto-fill, drag-and-drop upload foto, dan feed laporan publik.
+    \item \textbf{Integrasi Peta Interaktif Leaflet} --- Peta sebaran laporan
+          dengan pin warna per dinas.
+    \item \textbf{Dasbor Admin \& Super Admin} --- Manajemen laporan, ubah status,
+          audit log, CRUD admin dinas.
+    \item \textbf{AI Chatbot Widget} --- \textit{Floating chatbot} terhubung ke
+          endpoint AI backend.
+    \item \textbf{Sistem Notifikasi Toast} --- Umpan balik real-time untuk setiap
+          aksi pengguna.
+    \item \textbf{Desain Responsif} --- Media queries untuk tampilan mobile dan tablet.
+  \end{itemize}
+\end{successbox}
+
+\vspace{0.5em}
+Total baris kode yang ditulis pada minggu ini mencapai lebih dari \textbf{2.900 baris}
+(1.908 baris JSX di \texttt{App.jsx} + 1.000 baris CSS di \texttt{index.css}), menjadikan
+minggu ini sebagai periode paling produktif dalam siklus pengembangan frontend proyek ini.
+
+%------------------------------------------------------------
+% 2. RECAP MINGGU SEBELUMNYA
+%------------------------------------------------------------
+\section{Rekap Perkembangan Minggu Sebelumnya}
+
+Sebelum membahas pencapaian minggu ketiga, berikut adalah ringkasan kondisi proyek
+yang telah dicapai hingga akhir minggu kedua:
+
+\begin{infobox}[Status Akhir Minggu 2]
+  \begin{itemize}[leftmargin=1.5em, itemsep=3pt]
+    \item Backend FastAPI telah berjalan lengkap dengan endpoint autentikasi JWT,
+          laporan, dinas, admin, chatbot AI, dan audit log.
+    \item Skema database PostgreSQL telah selesai dengan tabel \texttt{users},
+          \texttt{reports}, \texttt{departments}, dan \texttt{audit\_logs}.
+    \item Integrasi AI (Gemini API) untuk \textit{smart routing} laporan dan chatbot
+          sudah aktif.
+    \item Frontend masih dalam kondisi awal/scaffolding --- belum memiliki tampilan
+          yang lengkap dan interaktif.
+    \item Kontainerisasi Docker sudah dikonfigurasi namun belum diuji penuh.
+  \end{itemize}
+\end{infobox}
+
+%------------------------------------------------------------
+% 3. IMPLEMENTASI FRONTEND MINGGU 3
+%------------------------------------------------------------
+\section{Implementasi Frontend Minggu Ke-3}
+
+\subsection{Arsitektur dan Struktur File Frontend}
+
+Frontend GovSmart menggunakan pendekatan \textit{single-file component} dimana seluruh
+logika, state management, dan tampilan dikelola dalam satu file utama \texttt{App.jsx},
+didukung oleh \texttt{index.css} untuk semua style global.
+
+\begin{lstlisting}[language=bash, caption=Struktur direktori frontend]
+frontend/
+  src/
+    App.jsx        # Komponen utama (1908 baris JSX)
+    index.css      # Global CSS & Design System (1000 baris)
+    main.jsx       # Entry point React
+  public/
+    bg-lamongan.jpg  # Latar gambar hero
+  vite.config.js     # Konfigurasi Vite + Proxy API
+  package.json
+\end{lstlisting}
+
+\subsubsection{Dependensi Utama Frontend}
+
+\begin{center}
+\begin{tabular}{llp{6.5cm}}
+  \toprule
+  \textbf{Paket} & \textbf{Versi} & \textbf{Fungsi} \\
+  \midrule
+  react & 18.x & Library UI utama \\
+  react-dom & 18.x & Rendering DOM \\
+  vite & 5.x & Build tool \& dev server \\
+  lucide-react & latest & Icon SVG modern \\
+  react-leaflet & 4.x & Komponen peta interaktif \\
+  leaflet & 1.9.4 & Peta OpenStreetMap \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Design System dan CSS Global}
+
+Seluruh desain dibangun di atas \textbf{Design System berbasis CSS Variables} yang
+didefinisikan dalam \texttt{:root} di \texttt{index.css}. Pendekatan ini memungkinkan
+konsistensi warna, ukuran, dan bayangan di seluruh komponen.
+
+\begin{lstlisting}[language=CSS, caption=CSS Variables (Design Tokens) pada index.css]
+:root {
+  --bg-primary:       #f0f4f8;
+  --bg-surface:       #ffffff;
+  --accent-primary:   #1e40af;   /* Biru pemerintah */
+  --accent-secondary: #b45309;
+  --text-main:        #000000;
+  --text-muted:       #1f2937;
+  --shadow-glow:      0 4px 12px rgba(30, 64, 175, 0.2);
+  --shadow-lg:        0 10px 25px -5px rgba(0,0,0,0.15);
+  --radius-xl:        16px;
+  --radius-lg:        12px;
+}
+\end{lstlisting}
+
+Tipografi menggunakan \textbf{Outfit} dari Google Fonts yang diimpor secara dinamis,
+memberikan tampilan modern dan profesional yang sesuai untuk portal pemerintahan.
+
+\begin{lstlisting}[language=CSS, caption=Import Font Outfit]
+@import url("https://fonts.googleapis.com/css2?
+  family=Outfit:wght@300;400;500;600;700;800&display=swap");
+
+* {
+  box-sizing: border-box;
+  font-family: "Outfit", sans-serif;
+}
+\end{lstlisting}
+
+Latar belakang menggunakan teknik \textbf{Fixed Background Image with Gradient Overlay},
+menampilkan foto Kabupaten Lamongan yang tetap meski halaman digulir:
+
+\begin{lstlisting}[language=CSS, caption=Latar belakang halaman utama]
+body {
+  background-image:
+    linear-gradient(
+      to bottom,
+      rgba(0,0,0,0.6) 0%,
+      rgba(0,0,0,0) 30%,
+      rgba(0,0,0,0.1) 100%
+    ),
+    url("/bg-lamongan.jpg");
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
+\end{lstlisting}
+
+\subsection{Modul Autentikasi (Login \& Registrasi)}
+
+Portal autentikasi diimplementasikan dengan desain \textbf{Glassmorphism} dua panel
+yang menampilkan panel visual kiri (branding GovSmart) dan panel kanan (form interaktif).
+Peralihan antara mode \textit{login} dan \textit{register} menggunakan animasi
+\textbf{sliding CSS} tanpa library tambahan.
+
+\subsubsection{Fitur Portal Autentikasi}
+
+\begin{itemize}[leftmargin=2em, itemsep=4pt]
+  \item \textbf{Dua Panel Split:} Panel kiri berisi branding dan statistik layanan;
+        panel kanan berisi form autentikasi.
+  \item \textbf{Animasi Sliding:} Transisi halus antar form login dan register
+        menggunakan \texttt{translateX} CSS dan state \texttt{authMode}.
+  \item \textbf{Validasi Error:} Pesan error detail dari backend ditampilkan secara
+        user-friendly (mis.\ validasi NIK, email, password minimal karakter).
+  \item \textbf{Auto-Login Pasca Register:} Setelah registrasi sukses, pengguna
+        diarahkan ke mode login secara otomatis.
+  \item \textbf{Persistent Session:} Token JWT disimpan di \texttt{localStorage}
+        dan di-\textit{restore} saat halaman dimuat ulang.
+  \item \textbf{Ambient Glow Effect:} Dua elemen dekoratif berbentuk lingkaran
+        blur berwarna kuning dan hijau sebagai efek ambient.
+\end{itemize}
+
+\begin{lstlisting}[language=CSS, caption=Sliding panel transition CSS]
+.auth-form-panel {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transform: translateX(32px);
+  transition:
+    transform 0.48s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.34s ease,
+    visibility 0.34s ease;
+}
+
+/* Panel aktif tampil, panel non-aktif geser keluar */
+.auth-form-track:not(.is-register) .auth-form-panel:first-child,
+.auth-form-track.is-register .auth-form-panel:last-child {
+  opacity: 1;
+  transform: translateX(0);
+}
+\end{lstlisting}
+
+\subsubsection{Alur Autentikasi Frontend}
+
+\begin{lstlisting}[language=JavaScript, caption=Handler login dengan JWT dan role detection]
+const handleLogin = async (e) => {
+  e.preventDefault();
+  // 1. Kirim credentials ke endpoint OAuth2
+  const res = await fetch("/api/v1/auth/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: formData,
+  });
+  const data = await res.json();
+
+  // 2. Simpan token ke localStorage
+  localStorage.setItem("govsmart_token", data.access_token);
+  setToken(data.access_token);
+
+  // 3. Deteksi role melalui endpoint /me
+  const profileRes = await fetch("/api/v1/admin/me", {
+    headers: { Authorization: `Bearer ${data.access_token}` },
+  });
+  const profile = await profileRes.json();
+  setUserRole(profile.role); // 'warga' | 'admin' | 'super_admin'
+  setUserEmail(profile.email);
+};
+\end{lstlisting}
+
+\subsection{Halaman Beranda Hero (MSN-Style)}
+
+Setelah login berhasil, pengguna disambut dengan tampilan \textbf{Hero Section}
+bergaya portal berita modern ala MSN. Halaman ini hanya muncul saat
+\texttt{mainView === "options"}.
+
+\subsubsection{Elemen Halaman Beranda}
+
+\begin{enumerate}[leftmargin=2em, itemsep=4pt]
+  \item \textbf{Navbar Solid Putih:} Berisi logo GovSmart AI, info pengguna yang
+        sedang login (email + role), dan tombol Keluar.
+  \item \textbf{Hero Section Transparan:} Judul besar dengan \textit{text-shadow}
+        tebal agar terbaca di atas gambar Lamongan.
+  \item \textbf{Search Bar Dekoratif:} \textit{Pill-shaped} search bar putih
+        dengan bayangan besar sebagai elemen visual.
+  \item \textbf{Quick Links Row:} Dua atau satu ikon navigasi cepat berbentuk
+        lingkaran dengan latar \textit{frosted glass} --- navigasi ke Pengaduan
+        atau Pertanyaan (untuk warga), atau ke Dasbor Admin (untuk admin/super\_admin).
+  \item \textbf{Content Board Melengkung:} Panel putih besar melengkung di bagian
+        bawah sebagai transisi dari hero ke konten.
+\end{enumerate}
+
+\begin{lstlisting}[language=CSS, caption=Animasi entrance fade-in-up]
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.hero-msn    { animation: fade-in-up 0.6s ease-out; }
+.content-board { animation: fade-in-up 0.8s ease-out; }
+\end{lstlisting}
+
+\subsection{Modul Pengaduan Warga}
+
+Modul pengaduan adalah fitur inti aplikasi yang dapat diakses oleh warga terdaftar.
+Halaman ini menggunakan layout \textbf{dua kolom} (grid 1fr 1fr): kolom kiri berisi
+form pengaduan, kolom kanan menampilkan feed laporan publik.
+
+\subsubsection{Form Pengaduan Baru}
+
+Form pengaduan memiliki fitur-fitur berikut:
+
+\begin{enumerate}[leftmargin=2em, itemsep=6pt]
+
+  \item \textbf{Input Judul \& Deskripsi:} Field teks standar dengan validasi
+        HTML5 (\texttt{required}).
+
+  \item \textbf{GPS Auto-Fill Koordinat:}
+        Tombol \textit{``Gunakan Lokasi Saya''} memanfaatkan Geolocation API browser
+        untuk mengisi otomatis latitude dan longitude dengan presisi 6 desimal.
+        \begin{lstlisting}[language=JavaScript, caption=Handler GPS auto-fill]
+const handleUseGPS = () => {
+  setGpsLoading(true);
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      setLat(pos.coords.latitude.toFixed(6));
+      setLong(pos.coords.longitude.toFixed(6));
+      setGpsLoading(false);
+    },
+    () => {
+      notify("Gagal mendapatkan lokasi.");
+      setGpsLoading(false);
+    }
+  );
+};
+        \end{lstlisting}
+
+  \item \textbf{Drag \& Drop Upload Foto:}
+        Area unggah foto mendukung \textit{drag-and-drop} dengan visual feedback
+        (border dan background berubah saat file di-drag). File diunggah ke
+        endpoint \texttt{/api/v1/reports/\{id\}/upload-foto} secara otomatis
+        setelah laporan berhasil dibuat.
+        \begin{lstlisting}[language=JavaScript, caption=Drag-drop handler]
+onDrop={(e) => {
+  e.preventDefault();
+  setIsDragging(false);
+  const file = e.dataTransfer.files[0];
+  if (file && ["image/jpeg","image/png","image/webp"]
+      .includes(file.type)) {
+    setFotoFile(file);
+  }
+}}
+        \end{lstlisting}
+
+  \item \textbf{Konfirmasi Sukses dengan Info AI:}
+        Setelah laporan dikirim, ditampilkan panel konfirmasi hijau berisi
+        tingkat urgensi yang dianalisis AI (darurat/penting/normal) dan
+        nama dinas yang menerima laporan (hasil \textit{smart routing} AI).
+
+\end{enumerate}
+
+\subsubsection{Feed Pengaduan Publik}
+
+Panel kanan menampilkan daftar semua laporan yang ada di sistem secara \textit{real-time}
+(di-refresh otomatis setelah submit). Setiap kartu laporan menampilkan:
+badge urgensi berwarna, judul laporan, isi ringkas, nama dinas tujuan, status terkini,
+dan tanggal dibuat.
+
+\begin{lstlisting}[language=JavaScript, caption=Fetch laporan dari API]
+const fetchReports = async () => {
+  setLoadingReports(true);
+  const headers = token
+    ? { Authorization: `Bearer ${token}` }
+    : {};
+  const res = await fetch("/api/v1/reports/", { headers });
+  if (res.ok) setReports(await res.json());
+  setLoadingReports(false);
+};
+\end{lstlisting}
+
+\subsubsection{Badge Status Urgensi}
+
+\begin{center}
+\begin{tabular}{lll}
+  \toprule
+  \textbf{Nilai Urgensi} & \textbf{Warna Latar} & \textbf{Warna Teks} \\
+  \midrule
+  darurat & Merah muda (\#fff1f2) & Merah (\#e11d48) \\
+  penting & Kuning muda (\#fffbeb) & Amber (\#d97706) \\
+  normal  & Hijau muda (\#ecfdf5) & Hijau (\#059669) \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Modul Pertanyaan --- AI Chatbot Halaman Penuh}
+
+Modul Pertanyaan menampilkan antarmuka chatbot AI dalam mode halaman penuh
+(bukan widget \textit{floating}). Fitur ini dapat diakses warga untuk bertanya
+mengenai panduan layanan publik, prosedur perizinan UMKM/NIB, dan informasi dinas.
+
+\begin{itemize}[leftmargin=2em, itemsep=4pt]
+  \item Area pesan bergulir dengan tinggi tetap 400px.
+  \item Bubble chat user (kanan, biru) dan AI (kiri, putih).
+  \item \textbf{Typing Indicator:} Tiga titik animasi bounce saat AI sedang memproses.
+  \item Pesan awal dari AI muncul otomatis saat halaman dibuka.
+\end{itemize}
+
+\begin{lstlisting}[language=CSS, caption=Animasi typing indicator]
+.typing-dot {
+  width: 8px; height: 8px;
+  background: var(--text-dim);
+  border-radius: 50%;
+  animation: typing-bounce 1.4s infinite ease-in-out both;
+}
+@keyframes typing-bounce {
+  0%, 80%, 100% { transform: scale(0); }
+  40%           { transform: scale(1); }
+}
+\end{lstlisting}
+
+\subsection{Dasbor Admin \& Super Admin}
+
+Pengguna dengan role \texttt{admin} atau \texttt{super\_admin} diarahkan ke
+\textbf{Dasbor Manajemen Pengaduan} yang terdiri dari beberapa panel:
+
+\subsubsection{Panel 1: Registrasi Admin Dinas (Super Admin only)}
+
+Hanya dapat diakses oleh \texttt{super\_admin}. Form 4-kolom untuk membuat akun
+admin baru: NIP Aparatur, Email Dinas, Password, dan pilihan Dinas. Data dikirim
+ke endpoint \texttt{POST /api/v1/admin/admin-dinas}.
+
+\subsubsection{Panel 2: Daftar Admin Dinas Terdaftar (Super Admin only)}
+
+Tabel daftar semua admin dinas yang terdaftar dengan kolom ID, NIP, Email, Dinas,
+Status (Aktif/Non-aktif), dan Aksi (Edit/Hapus).
+
+\begin{itemize}[leftmargin=2em, itemsep=4pt]
+  \item \textbf{Edit Admin:} Modal popup untuk mengubah NIP, email, password, dan dinas.
+  \item \textbf{Hapus/Nonaktifkan Admin:} Konfirmasi \texttt{window.confirm()} sebelum
+        pemanggilan \texttt{DELETE /api/v1/admin/admin-dinas/\{id\}}.
+\end{itemize}
+
+\subsubsection{Panel 3: Peta Sebaran Laporan Interaktif}
+
+Peta interaktif menggunakan \textbf{React Leaflet} dengan tile dari OpenStreetMap,
+berpusat pada koordinat Kabupaten Lamongan \texttt{[-7.1189, 112.4109]}.
+
+\begin{itemize}[leftmargin=2em, itemsep=4pt]
+  \item Setiap laporan yang memiliki koordinat ditampilkan sebagai pin khusus.
+  \item Pin berwarna berbeda per dinas (8 warna dari palet \texttt{DEPT\_COLORS}).
+  \item \textbf{Custom Marker:} SVG ikon dokumen berbentuk teardrop dengan warna
+        dinas masing-masing.
+  \item \textbf{Popup Info:} Klik pin menampilkan judul laporan, nama dinas,
+        tingkat urgensi, dan status.
+  \item \textbf{Legenda Peta:} Deretan badge warna-dinas di atas peta.
+\end{itemize}
+
+\begin{lstlisting}[language=JavaScript, caption=Custom Leaflet marker per dinas]
+const DEPT_COLORS = [
+  "#ef4444", "#f97316", "#eab308", "#22c55e",
+  "#14b8a6", "#3b82f6", "#8b5cf6", "#ec4899"
+];
+
+const createReportIcon = (color) =>
+  L.divIcon({
+    className: "report-map-marker",
+    html: `<div style="--marker-color:${color}">
+             <svg viewBox="0 0 24 24">
+               <path d="M14 2H6a2 2 0 0 0-2 2v16..." />
+             </svg>
+           </div>`,
+    iconSize: [32, 40],
+    iconAnchor: [16, 40],
+    popupAnchor: [0, -38],
+  });
+\end{lstlisting}
+
+\subsubsection{Panel 4: Tabel Daftar Pengaduan Masuk}
+
+Tabel komprehensif semua laporan yang masuk dengan kolom ID, Urgensi AI,
+Judul Laporan, Status, dan Aksi. Setiap baris memiliki dua tombol aksi:
+
+\begin{itemize}[leftmargin=2em, itemsep=4pt]
+  \item \textbf{Ubah Status:} Membuka modal untuk mengubah status laporan
+        (diterima \textrightarrow{} diproses \textrightarrow{} selesai / ditolak).
+  \item \textbf{Audit Log:} Membuka modal riwayat perubahan status laporan
+        lengkap dengan timestamp dan ID admin yang mengubah.
+\end{itemize}
+
+\subsection{Modal Interaktif}
+
+Tiga jenis modal diimplementasikan dengan komponen yang konsisten:
+
+\begin{center}
+\begin{longtable}{p{3.5cm}p{4cm}p{5cm}}
+  \toprule
+  \textbf{Modal} & \textbf{Trigger} & \textbf{Fungsi} \\
+  \midrule
+  Ubah Status & Tombol ``Ubah Status'' & Dropdown pilihan status baru \\
+  Audit Log & Tombol ``Audit Log'' & Riwayat perubahan status + timestamp \\
+  Edit Admin Dinas & Tombol ``Edit'' di tabel admin & Form edit NIP, email, password, dinas \\
+  \bottomrule
+\end{longtable}
+\end{center}
+
+\subsection{AI Chatbot Widget (Floating)}
+
+Di samping halaman Pertanyaan, GovSmart juga menyediakan \textbf{floating chatbot widget}
+yang dapat diakses dari halaman mana pun setelah login. Widget ini berada di pojok
+kanan bawah layar.
+
+\begin{itemize}[leftmargin=2em, itemsep=4pt]
+  \item Tombol bulat biru 64px dengan ikon Bot dari Lucide.
+  \item Panel chat 400x600px muncul di atas tombol dengan animasi.
+  \item Pesan AI dan pengguna ditampilkan dalam gelembung chat.
+  \item Terhubung ke endpoint \texttt{POST /api/v1/chat/}.
+  \item Token Bearer disertakan secara otomatis jika pengguna sudah login.
+\end{itemize}
+
+\begin{lstlisting}[language=CSS, caption=Styling chatbot trigger button]
+.chatbot-trigger {
+  position: fixed;
+  bottom: 2.5rem;
+  right: 2.5rem;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--accent-primary);
+  box-shadow: 0 10px 25px rgba(30, 64, 175, 0.4);
+  z-index: 90;
+}
+.chatbot-trigger:hover {
+  transform: scale(1.05);
+  background: #1e3a8a;
+}
+\end{lstlisting}
+
+\subsection{Sistem Notifikasi Toast}
+
+Sistem notifikasi \textit{toast} non-blocking diimplementasikan menggunakan state
+React tanpa dependensi library eksternal. Toast muncul di pojok kanan atas dengan
+animasi slide-in dan hilang otomatis setelah 4,5 detik.
+
+\begin{itemize}[leftmargin=2em, itemsep=4pt]
+  \item \textbf{Toast Sukses:} Border kiri hijau, ikon CheckCircle.
+  \item \textbf{Toast Error:} Border kiri merah, ikon AlertTriangle.
+  \item Dapat ditutup manual dengan tombol $\times$.
+  \item Mendukung beberapa toast sekaligus (stack vertikal).
+\end{itemize}
+
+\begin{lstlisting}[language=JavaScript, caption=Fungsi notify dengan auto-dismiss]
+const notify = (message, type = "error") => {
+  const id = Date.now() + Math.random();
+  setNotifications((items) =>
+    [...items, { id, message, type }]);
+  setTimeout(
+    () => setNotifications((items) =>
+      items.filter((item) => item.id !== id)),
+    4500
+  );
+};
+\end{lstlisting}
+
+\begin{lstlisting}[language=CSS, caption=Animasi toast masuk]
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(-8px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.toast { animation: toast-in 0.25s ease-out; }
+\end{lstlisting}
+
+\subsection{Desain Responsif}
+
+Semua komponen utama telah dioptimalkan untuk berbagai ukuran layar menggunakan
+\textit{CSS Media Queries}:
+
+\begin{center}
+\begin{tabular}{lll}
+  \toprule
+  \textbf{Breakpoint} & \textbf{Target} & \textbf{Penyesuaian} \\
+  \midrule
+  \texttt{max-width: 860px} & Tablet & Portal auth 1-kolom, padding berkurang \\
+  \texttt{max-width: 520px} & Mobile & Border-radius hilang, padding minimal \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+%------------------------------------------------------------
+% 4. STATE MANAGEMENT
+%------------------------------------------------------------
+\section{Manajemen State React}
+
+Seluruh state aplikasi dikelola menggunakan \texttt{useState} dan \texttt{useEffect}
+dari React hooks. Tidak ada library state management eksternal (seperti Redux)
+yang digunakan --- hal ini menjaga ukuran \textit{bundle} tetap kecil.
+
+\begin{center}
+\begin{longtable}{p{4.5cm}p{7cm}}
+  \toprule
+  \textbf{State Variable} & \textbf{Kegunaan} \\
+  \midrule
+  \texttt{mainView} & Navigasi antar halaman (options/pengaduan/pertanyaan/admin) \\
+  \texttt{token, userRole, userEmail} & Data sesi pengguna yang login \\
+  \texttt{reports, departments} & Data laporan dan dinas dari API \\
+  \texttt{notifications} & Antrian pesan toast \\
+  \texttt{selectedReport, showAuditModal} & State modal admin \\
+  \texttt{lat, long, gpsLoading} & State GPS auto-fill \\
+  \texttt{fotoFile, isDragging} & State drag-and-drop foto \\
+  \texttt{chatMessages, chatLoading} & State percakapan chatbot \\
+  \texttt{adminDinasList, editingAdmin} & State manajemen admin dinas \\
+  \bottomrule
+\end{longtable}
+\end{center}
+
+%------------------------------------------------------------
+% 5. INTEGRASI BACKEND
+%------------------------------------------------------------
+\section{Integrasi Frontend--Backend}
+
+Komunikasi antara frontend React dan backend FastAPI dilakukan melalui
+\textbf{Fetch API} bawaan browser. Konfigurasi \textit{proxy} di \texttt{vite.config.js}
+meneruskan semua request \texttt{/api/*} ke server backend:
+
+\begin{lstlisting}[language=JavaScript, caption=Vite proxy config untuk API]
+// vite.config.js
+export default defineConfig({
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      }
+    }
+  }
+})
+\end{lstlisting}
+
+\begin{center}
+\begin{longtable}{p{3cm}p{3cm}p{6cm}}
+  \toprule
+  \textbf{Endpoint} & \textbf{Metode} & \textbf{Digunakan Oleh} \\
+  \midrule
+  \texttt{/api/v1/auth/login} & POST & handleLogin \\
+  \texttt{/api/v1/auth/register} & POST & handleRegister \\
+  \texttt{/api/v1/admin/me} & GET & Deteksi role setelah login \\
+  \texttt{/api/v1/reports/} & GET / POST & fetchReports, handleSubmitReport \\
+  \texttt{/api/v1/reports/\{id\}/upload-foto} & POST & Upload foto bukti \\
+  \texttt{/api/v1/reports/\{id\}/status} & PATCH & handleUpdateStatus \\
+  \texttt{/api/v1/departments/} & GET & fetchDepartments \\
+  \texttt{/api/v1/admin/admin-dinas} & GET / POST & Manajemen admin dinas \\
+  \texttt{/api/v1/admin/admin-dinas/\{id\}} & PUT / DELETE & Edit, hapus admin \\
+  \texttt{/api/v1/admin/audit-logs/\{id\}} & GET & handleViewAuditLogs \\
+  \texttt{/api/v1/chat/} & POST & handleSendChat \\
+  \bottomrule
+\end{longtable}
+\end{center}
+
+%------------------------------------------------------------
+% 6. KENDALA & SOLUSI
+%------------------------------------------------------------
+\section{Kendala yang Dihadapi dan Solusi}
+
+\begin{enumerate}[leftmargin=2em, itemsep=10pt]
+
+  \item \textbf{Leaflet Default Icon Broken pada Bundler Vite}\\
+        Ikon marker bawaan Leaflet tidak muncul karena Vite me-resolve URL aset
+        secara berbeda dibanding webpack. \\
+        \textit{Solusi:} Menghapus \texttt{\_getIconUrl} dari prototype dan
+        men-override ikon secara eksplisit menggunakan CDN unpkg:
+        \begin{lstlisting}[language=JavaScript]
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+});
+        \end{lstlisting}
+
+  \item \textbf{Autofill Browser Mengubah Warna Input}\\
+        Browser Chromium menerapkan warna latar kuning pada field yang di-autofill,
+        merusak tampilan form autentikasi. \\
+        \textit{Solusi:} Menggunakan pseudo-selector \texttt{:-webkit-autofill}
+        dengan override warna paksa:
+        \begin{lstlisting}[language=CSS]
+.auth-input:-webkit-autofill {
+  -webkit-text-fill-color: #000000 !important;
+  background-color: #ffffff !important;
+}
+        \end{lstlisting}
+
+  \item \textbf{Upload Foto Bergantung pada ID Laporan yang Baru Dibuat}\\
+        API upload foto membutuhkan ID laporan yang baru dibuat. \\
+        \textit{Solusi:} Upload foto dilakukan secara berurutan setelah respons
+        \texttt{POST /reports/} sukses, menggunakan \texttt{data.id} dari respons.
+
+  \item \textbf{CORS pada Development}\\
+        Request dari \texttt{localhost:5173} ke \texttt{localhost:8000} diblokir CORS. \\
+        \textit{Solusi:} Menggunakan fitur proxy Vite sehingga semua request ke
+        \texttt{/api} diteruskan oleh Vite server tanpa masalah CORS.
+
+\end{enumerate}
+
+%------------------------------------------------------------
+% 7. RINGKASAN TAMPILAN
+%------------------------------------------------------------
+\section{Ringkasan Tampilan Halaman Aplikasi}
+
+\begin{center}
+\begin{longtable}{p{3.8cm}p{3.8cm}p{5cm}}
+  \toprule
+  \textbf{Halaman/Modul} & \textbf{Role yang Bisa Akses} & \textbf{Elemen Utama} \\
+  \midrule
+  Login / Register & Semua (belum login) & 2-panel glassmorphism, sliding animation \\
+  Beranda Pilihan & Semua yang sudah login & Hero foto Lamongan, quick links \\
+  Form Pengaduan & Warga & Form + GPS + Drag-drop foto + Feed publik \\
+  Pertanyaan AI & Warga & Chatbot full-page \\
+  Dasbor Admin & Admin, Super Admin & Tabel laporan, peta, ubah status \\
+  Dasbor Super Admin & Super Admin saja & + Form \& tabel manajemen Admin Dinas \\
+  \bottomrule
+\end{longtable}
+\end{center}
+
+%------------------------------------------------------------
+% 8. RENCANA MINGGU BERIKUTNYA
+%------------------------------------------------------------
+\section{Rencana Pengembangan Minggu Berikutnya}
+
+Dengan selesainya implementasi frontend secara menyeluruh, rencana pada minggu
+keempat mencakup:
+
+\begin{enumerate}[leftmargin=2em, itemsep=6pt]
+  \item \textbf{Pengujian Integrasi End-to-End:} Pengujian alur lengkap dari
+        registrasi warga, pengiriman laporan, hingga penanganan oleh admin.
+  \item \textbf{Penyempurnaan UX:} Menambahkan \textit{loading skeleton} pada
+        feed laporan dan tabel admin saat data sedang di-fetch.
+  \item \textbf{Optimasi Performa:} Lazy loading komponen berat seperti peta
+        Leaflet menggunakan \texttt{React.lazy()} dan \texttt{Suspense}.
+  \item \textbf{Pengujian Responsivitas:} Pengujian di berbagai perangkat
+        (mobile, tablet) dan perbaikan bug tampilan.
+  \item \textbf{Deployment \& Docker:} Menguji penuh konfigurasi Docker Compose
+        (frontend + backend + PostgreSQL) dan deployment ke server.
+  \item \textbf{Dokumentasi Teknis:} Melengkapi dokumentasi API dan panduan
+        instalasi proyek.
+\end{enumerate}
+
+%------------------------------------------------------------
+% 9. KESIMPULAN
+%------------------------------------------------------------
+\section{Kesimpulan}
+
+Minggu ketiga merupakan fase implementasi paling intensif dalam siklus pengembangan
+proyek GovSmart. Seluruh fitur antarmuka pengguna yang direncanakan telah berhasil
+diimplementasikan secara penuh, mulai dari portal autentikasi glassmorphism yang
+elegan, modul pengaduan lengkap dengan fitur GPS dan upload foto, peta interaktif
+sebaran laporan, hingga dasbor administrasi multi-level.
+
+Kode frontend yang dihasilkan ($\pm$2.900 baris JSX + CSS) bersifat
+\textbf{production-ready} dengan design system yang konsisten, manajemen state
+yang terstruktur, dan integrasi penuh dengan semua endpoint API backend yang telah
+dibangun sebelumnya.
+
+Proyek GovSmart kini memiliki fondasi frontend yang solid dan siap untuk
+memasuki fase pengujian, optimasi, dan deployment pada minggu-minggu berikutnya.
+
+\begin{infobox}[Catatan Tambahan]
+  Seluruh kode sumber proyek GovSmart tersedia di direktori kerja
+  \texttt{GovSmart-main/} dengan struktur monorepo yang memisahkan
+  \texttt{frontend/} dan \texttt{backend/} secara jelas. Untuk menjalankan
+  proyek, cukup menjalankan \texttt{docker-compose up} dari direktori root.
+\end{infobox}
+
+\vspace{1em}
+\noindent\rule{\textwidth}{0.5pt}\\[0.3em]
+{\small\color{gray}
+Laporan ini dibuat sebagai bagian dari dokumentasi akademik\\
+Workshop Pemrograman Framework --- Teknik Informatika}
+
+\end{document}

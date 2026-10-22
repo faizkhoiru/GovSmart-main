@@ -997,3 +997,150 @@ body {
     flex-wrap: wrap;
   }
 }
+
+/* Signed-in portal theme, matched to the login glass and blue backdrop. */
+.portal-shell {
+  --accent-primary: #1d4ed8;
+  --accent-secondary: #f6c85f;
+  --text-main: #f8fafc;
+  --text-muted: rgba(255, 255, 255, 0.78);
+  --text-dim: rgba(255, 255, 255, 0.64);
+  min-height: 100vh;
+  color: #f8fafc;
+  background:
+    linear-gradient(135deg, rgba(15, 46, 94, 0.72), rgba(7, 28, 58, 0.88)),
+    url("/bg-lamongan.jpg") center/cover fixed no-repeat;
+}
+
+.portal-navbar {
+  --text-main: #ffffff;
+  --text-muted: rgba(255, 255, 255, 0.78);
+  position: sticky;
+  top: 0;
+  background: rgba(5, 31, 68, 0.78);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 12px 30px rgba(2, 15, 41, 0.2);
+  backdrop-filter: blur(18px);
+}
+
+.portal-navbar .brand-logo {
+  color: #ffffff;
+}
+
+.portal-navbar .text-accent-primary {
+  color: #f6c85f;
+}
+
+.portal-navbar button {
+  color: #f6c85f !important;
+}
+
+.portal-content {
+  color: #ffffff;
+}
+
+.portal-content > div[style*="align-items: center"] > h1 {
+  color: #ffffff !important;
+  text-shadow: 0 3px 18px rgba(2, 15, 41, 0.5);
+}
+
+.portal-shell .glass-panel {
+  --text-main: #14213d;
+  --text-muted: #475569;
+  --text-dim: #64748b;
+  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.56);
+  box-shadow: 0 24px 55px rgba(2, 15, 41, 0.2);
+  backdrop-filter: blur(18px);
+}
+
+.portal-shell .option-card {
+  background: rgba(255, 255, 255, 0.94);
+}
+
+.portal-shell .option-card:hover {
+  box-shadow: 0 28px 60px rgba(2, 15, 41, 0.32);
+}
+
+.portal-shell .modal-content,
+.portal-shell .toast {
+  --text-main: #14213d;
+  --text-muted: #475569;
+  --text-dim: #64748b;
+}
+
+.portal-shell .modal-content {
+  color: #14213d;
+  border-color: rgba(255, 255, 255, 0.65);
+}
+
+.portal-shell .nav-btn:not(.nav-btn-primary) {
+  color: #ffffff;
+}
+
+.portal-shell .glass-panel .nav-btn:not(.nav-btn-primary),
+.portal-shell .modal-content .nav-btn:not(.nav-btn-primary) {
+  color: #334155;
+}
+
+.portal-shell .nav-btn-primary {
+  background: linear-gradient(135deg, #1d4ed8, #2563eb);
+  border-color: transparent;
+  box-shadow: 0 10px 24px rgba(29, 78, 216, 0.24);
+}
+
+.portal-shell .nav-btn-primary:hover {
+  background: linear-gradient(135deg, #1749a8, #1d4ed8);
+}
+
+.portal-shell .chat-header {
+  color: #ffffff;
+  background: linear-gradient(135deg, #123d78, #1d4ed8);
+  border-bottom-color: rgba(255, 255, 255, 0.2);
+}
+
+.portal-shell .chatbot-trigger {
+  color: #14213d;
+  background: #f6c85f;
+  box-shadow: 0 12px 30px rgba(2, 15, 41, 0.35);
+}
+
+.portal-shell .chatbot-trigger:hover {
+  background: #ffda7a;
+}
+
+.portal-report-layout {
+  grid-template-columns: 1fr 1fr;
+}
+
+@media (max-width: 860px) {
+  .portal-navbar {
+    padding: 1rem 1.25rem;
+  }
+
+  .portal-content {
+    padding: 1.25rem !important;
+  }
+
+  .portal-report-layout {
+    grid-template-columns: 1fr !important;
+    gap: 1.5rem !important;
+  }
+}
+
+@media (max-width: 520px) {
+  .portal-navbar {
+    align-items: flex-start;
+    gap: 0.75rem;
+    flex-direction: column;
+  }
+
+  .portal-navbar > div:last-child > span {
+    font-size: 0.82rem !important;
+  }
+
+  .portal-shell .option-card {
+    width: min(100%, 320px);
+  }
+}

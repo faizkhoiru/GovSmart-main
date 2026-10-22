@@ -787,15 +787,15 @@ export default function App() {
   if (mainView === "options") {
     return (
       <div
+        className="portal-shell"
         style={{
           minHeight: "100vh",
           display: "flex",
           flexDirection: "column",
-          background: "var(--bg-primary)",
         }}
       >
         <ToastViewport notifications={notifications} dismiss={dismissNotification} />
-        <header className="navbar-solid">
+        <header className="navbar-solid portal-navbar">
           <div className="brand-logo">
             <Sparkles className="w-6 h-6 text-accent-primary" />
             <span>GovSmart AI</span>
@@ -827,6 +827,7 @@ export default function App() {
         </header>
 
         <div
+          className="portal-content"
           style={{
             flex: 1,
             display: "flex",
@@ -911,15 +912,15 @@ export default function App() {
 
   return (
     <div
+      className="portal-shell"
       style={{
         minHeight: "100vh",
         display: "flex",
         flexDirection: "column",
-        background: "var(--bg-primary)",
       }}
     >
       <ToastViewport notifications={notifications} dismiss={dismissNotification} />
-      <header className="navbar-solid">
+      <header className="navbar-solid portal-navbar">
         <div
           className="brand-logo"
           onClick={() => setMainView("options")}
@@ -955,6 +956,7 @@ export default function App() {
       </header>
 
       <div
+        className="portal-content"
         style={{
           padding: "2rem",
           maxWidth: "1200px",
@@ -973,6 +975,7 @@ export default function App() {
 
         {mainView === "pengaduan" && (
           <div
+            className="portal-report-layout"
             style={{
               display: "grid",
               gridTemplateColumns: "1fr 1fr",
