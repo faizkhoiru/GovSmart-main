@@ -28,31 +28,31 @@ DEFAULT_DEPARTMENTS = [
 
 KEYWORDS_DEPT_MAP = {
     "Dinas Pendidikan": [
-        "sekolah", "guru", "murid", "siswa", "beasiswa", "gedung sekolah",
-        "seragam", "ijazah", "sd", "smp", "sma", "smk", "pendidikan", "belajar",
-        "kampus", "universitas", "mahasiswa", "dosen", "kuliah", "fakultas",
+        "sekolah", "sekolahh", "guru", "gruru", "murid", "siswa", "beasiswa", "beasiswaa", "gedung sekolah",
+        "seragam", "ijazah", "ijazahh", "sd", "smp", "sma", "smk", "pendidikan", "pendidkan", "belajar",
+        "kampus", "universitas", "mahasiswa", "mhs", "dosen", "kuliah", "kuliah", "fakultas", "sekolahan", "sekolah rusak",
         "ruang kelas", "kelas", "gedung kuliah", "paud", "tk", "madrasah",
         "fasilitas kampus", "fasilitas sekolah", "fasilitas pendidikan", "akademik",
         "buku pelajaran", "bop", "bosda", "dana bos", "tawuran pelajar"
     ],
     "Dinas Kesehatan": [
-        "posyandu", "puskesmas", "rumah sakit", "obat", "dokter", "ambulans",
-        "penyakit", "demam", "dbd", "stunting", "kesehatan", "pasien", "vaksin",
-        "bidan", "perawat", "bpjs kesehatan", "fasilitas kesehatan", "faskes",
+        "posyandu", "puskesmas", "puskes", "rumah sakit", "rumahsakit", "obat", "dokter", "dokterr", "ambulans",
+        "penyakit", "demam", "dbd", "stunting", "kesehatan", "kesehtan", "pasien", "vaksin",
+        "bidan", "perawat", "bpjs kesehatan", "bpjs", "fasilitas kesehatan", "faskes", "puskes", "rs", "rumahsakit", "kesehatan warga",
         "gizi buruk", "wabah", "medis", "imunisasi", "apotek", "infeksi", "virus",
         "diare", "poliklinik", "tenaga medis", "pelayanan medis", "igd"
     ],
     "Dinas Kependudukan dan Pencatatan Sipil": [
         "ktp", "e-ktp", "kk", "kartu keluarga", "akta", "suket", "pindahan",
         "akte kelahiran", "pernikahan", "perceraian", "kependudukan", "dukcapil",
-        "akte kematian", "kia", "kartu identitas anak", "legalisir", "nik",
-        "domisili", "surat pindah", "identitas kependudukan", "ikd"
+        "akte kematian", "kia", "kartu identitas anak", "legalisir", "nik", "ktp hilang", "ktp rusak", "kk hilang", "kk rusak", "dukcapil", "adminduk",
+        "domisili", "surat pindah", "identitas kependudukan", "ikd", "capil", "catatan sipil", "akta lahir", "akta kematian"
     ],
     "Dinas Sosial": [
         "bansos", "bantuan sosial", "kemiskinan", "fakir miskin", "lansia",
         "disabilitas", "yatim", "anak terlantar", "pkh", "bpnt", "sosial",
         "gelandangan", "pengemis", "gepeng", "panti asuhan", "bantuan bencana",
-        "keluarga prasejahtera", "tuna wisma", "orang terlantar", "sembako"
+        "keluarga prasejahtera", "tuna wisma", "orang terlantar", "sembako", "bantuan", "bantuan warga", "kartu indonesia sehat", "kip", "penerima bansos"
     ],
     "Dinas Pemberdayaan Masyarakat dan Desa": [
         "desa", "dusun", "bumdes", "kelurahan", "dana desa", "musyawarah desa",
@@ -63,7 +63,7 @@ KEYWORDS_DEPT_MAP = {
     "Dinas Pekerjaan Umum Bina Marga": [
         "jalan rusak", "jalan ambruk", "pengerasan jalan", "berlubang",
         "lubang", "aspal", "trotoar", "infrastruktur", "jembatan", "bina marga",
-        "jalanan", "jalan raya", "jembatan rusak", "jembatan ambruk", "jalan putus",
+        "jalanan", "jalan raya", "jembatan rusak", "jembatan ambruk", "jalan putus", "jalan rusak parah", "jalan berlubang", "jalan jelek", "aspal rusak", "akses jalan",
         "jalan amblas", "jalan ambles", "jalan retak", "jalan cor", "jalan bolong",
         "gorong-gorong jalan", "jalan kabupaten"
     ],
@@ -71,7 +71,7 @@ KEYWORDS_DEPT_MAP = {
         "drainase", "got", "selokan", "irigasi", "sungai", "banjir", "saluran air",
         "sumber daya air", "waduk", "dam", "tanggul", "pompa air",
         "longsor", "tanah", "lumpur", "lereng", "bencana alam", "tanah longsor",
-        "abrasi", "tanggul jebol", "kali", "rawa", "genangan air", "saluran pembuangan",
+        "abrasi", "tanggul jebol", "kali", "rawa", "genangan air", "saluran pembuangan", "banjir rumah", "banjir jalan", "air meluap", "sungai meluap", "got mampet", "selokan mampet",
         "kali mampet", "erosi", "pintu air"
     ],
     "Dinas Perumahan Rakyat, Kawasan Permukiman dan Cipta Karya": [
@@ -120,7 +120,7 @@ KEYWORDS_DEPT_MAP = {
     "Dinas Satuan Polisi Pamong Praja": [
         "pedagang kaki lima", "pkl", "ketertiban", "kebisingan", "razia",
         "satpol", "penertiban", "pelanggaran perda", "liar", "bangunan liar",
-        "kebakaran", "terbakar", "damkar", "pemadam kebakaran", "pemadam",
+        "kebakaran", "kebkaran", "kebakran", "kebakaran rumah", "kebakaran gedung", "terbakar", "damkar", "pemadam kebakaran", "pemadam",
         "api", "hangus", "tawuran", "miras", "gangguan ketertiban", "prostitusi"
     ],
     "Dinas Ketahanan Pangan dan Pertanian": [
@@ -160,6 +160,16 @@ def analyze_report_ai(judul: str, isi: str, db: Session) -> Tuple[Optional[int],
     text_lower = f"{judul} {isi}".lower()
     import re
     tokens = set(re.findall(r"\b[a-z]+\b", text_lower))  # single-word tokens for exact and typo matching
+    # Common typos only; avoid broad correction that can misroute reports.
+    typo_aliases = {
+        "kebkaran": "kebakaran", "kebakran": "kebakaran", "terbakarrr": "terbakar",
+        "kesehtan": "kesehatan", "kesehataan": "kesehatan", "puskes": "puskesmas",
+        "sekolahh": "sekolah", "pendidkan": "pendidikan", "beasiswaa": "beasiswa",
+        "dokterr": "dokter", "jalanann": "jalanan", "berlubng": "berlubang",
+        "sampahh": "sampah", "lingkungn": "lingkungan", "banjirr": "banjir",
+        "perizinan": "perizinan", "perijinan": "perizinan", "dukcapill": "dukcapil",
+    }
+    tokens.update(typo_aliases[token] for token in list(tokens) if token in typo_aliases)
 
     # 1. Determine Urgency (substring match, robust for multi-word)
     urgensi = "normal"

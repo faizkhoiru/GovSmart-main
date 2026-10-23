@@ -102,3 +102,28 @@ def seed_super_admin(db: Session):
         )
         db.add(super_admin)
         db.commit()
+
+
+def seed_admin_dinas(db: Session, per_department: int = 2):
+    """Create idempotent demo admin accounts for every seeded department."""
+    departments = db.query(Department).order_by(Department.id).all()
+    password_hash = get_password_hash("AdminDinas123!")
+    created = 0
+
+    for department in departments:
+        for account_number in range(1, per_department + 1):
+            email = f"admin.dinas{department.id}.{account_number}@govsmart.go.id"
+            if get_user_by_email(db, email):
+                continue
+            db.add(User(
+                email=email,
+                nik_or_nip=f"19900000000000{department.id:02d}{account_number:02d}",
+                password_hash=password_hash,
+                role="admin",
+                dept_id=department.id,
+            ))
+            created += 1
+
+    if created:
+        db.commit()
+    return created

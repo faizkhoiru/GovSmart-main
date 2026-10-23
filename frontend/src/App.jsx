@@ -35,6 +35,32 @@ L.Icon.Default.mergeOptions({
 });
 
 // Warna pin per dinas
+const formatDate = (value, options = {}) => {
+  if (!value) return "-";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "-" : date.toLocaleString("id-ID", options);
+};
+
+const renderChatText = (text) => {
+  const blocks = String(text || "").split(/\n{2,}/);
+  return blocks.map((block, index) => {
+    const lines = block.split("\n").map((line) => line.trim()).filter(Boolean);
+    const isList = lines.length > 1 && lines.every((line) => /^([-*•]|\d+[.)])\s+/.test(line));
+    if (isList) {
+      const ordered = lines.every((line) => /^\d+[.)]\s+/.test(line));
+      const Tag = ordered ? "ol" : "ul";
+      return (
+        <Tag key={index} className="chat-list">
+          {lines.map((line, lineIndex) => (
+            <li key={lineIndex}>{line.replace(/^([-*•]|\d+[.)])\s+/, "")}</li>
+          ))}
+        </Tag>
+      );
+    }
+    return <p key={index}>{block}</p>;
+  });
+};
+
 const DEPT_COLORS = [
   "#ef4444", "#f97316", "#eab308", "#22c55e",
   "#14b8a6", "#3b82f6", "#8b5cf6", "#ec4899"
@@ -111,6 +137,7 @@ export default function App() {
   // Warga Form State
   const [judul, setJudul] = useState("");
   const [isiLaporan, setIsiLaporan] = useState("");
+  const [reportDeptId, setReportDeptId] = useState("");
   const [lat, setLat] = useState("");
   const [long, setLong] = useState("");
   const [submitSuccess, setSubmitSuccess] = useState(null);
@@ -171,7 +198,8 @@ export default function App() {
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
       const params = new URLSearchParams();
       if (statusFilter !== "all") params.set("status", statusFilter);
-      const res = await fetch(`/api/v1/reports/?${params}`, { headers });
+      if (userRole === "warga") params.set("limit", "5");
+       const res = await fetch(`/api/v1/reports/?${params}`, { headers });
       if (res.ok) {
         const data = await res.json();
         setReports(data);
@@ -399,6 +427,7 @@ export default function App() {
       const body = {
         judul,
         isi_laporan: isiLaporan,
+        dept_id: reportDeptId ? parseInt(reportDeptId, 10) : null,
         lat: lat ? parseFloat(lat) : null,
         long: long ? parseFloat(long) : null,
       };
@@ -421,6 +450,7 @@ export default function App() {
       setSubmitSuccess(data);
       setJudul("");
       setIsiLaporan("");
+      setReportDeptId("");
       setLat("");
       setLong("");
 
@@ -507,6 +537,27 @@ export default function App() {
     );
   };
 
+  const handleCancelReport = async (reportId) => {
+    if (!window.confirm("Batalkan pengaduan ini?")) return;
+    try {
+      const res = await fetch(`/api/v1/reports/${reportId}/cancel`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        const detail = Array.isArray(err.detail)
+          ? err.detail.map((item) => item.msg).join(", ")
+          : err.detail;
+        throw new Error(detail || "Gagal membatalkan pengaduan");
+      }
+      await fetchReports();
+      notify("Pengaduan berhasil dibatalkan.", "success");
+    } catch (e) {
+      notify(e.message);
+    }
+  };
+
   // Status Update Handler
   const handleUpdateStatus = async (reportId) => {
     try {
@@ -552,7 +603,7 @@ export default function App() {
       r.lat || "",
       r.long || "",
       `"${(r.catatan_petugas || "").replace(/"/g, '""')}"`,
-      `"${new Date(r.created_at).toLocaleString('id-ID')}"`
+      `"${formatDate(r.created_at)}"`
     ]);
     const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
     const encodedUri = encodeURI(csvContent);
@@ -1241,6 +1292,21 @@ export default function App() {
                   />
                 </div>
                 <div className="form-group">
+                  <label className="form-label">Dinas Tujuan (Opsional)</label>
+                  <select
+                    className="form-input"
+                    value={reportDeptId}
+                    onChange={(e) => setReportDeptId(e.target.value)}
+                  >
+                    <option value="">Otomatis oleh AI</option>
+                    {departments.map((department) => (
+                      <option key={department.id} value={department.id}>
+                        {department.nama_dinas}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-group">
                   <label className="form-label">Isi Detail Laporan</label>
                   <textarea
                     className="form-textarea"
@@ -1579,11 +1645,19 @@ export default function App() {
                         {departments.find((d) => d.id === report.dept_id)?.nama_dinas || "AI Auto-Routing"}
                       </span>
                       <span>
-                        {new Date(report.created_at).toLocaleDateString(
-                          "id-ID",
-                        )}
+                        {formatDate(report.created_at, { dateStyle: "medium" })}
                       </span>
                     </div>
+                    {userRole === "warga" && report.status === "diterima" && (
+                      <button
+                        type="button"
+                        className="nav-btn"
+                        onClick={() => handleCancelReport(report.id)}
+                        style={{ marginTop: "1rem", color: "#dc2626", borderColor: "#fecaca" }}
+                      >
+                        Batalkan Pengaduan
+                      </button>
+                    )}
                   </div>
                 ))
               )}
@@ -1653,7 +1727,7 @@ export default function App() {
                     border: msg.role === "user" ? "none" : "1px solid #e2e8f0",
                   }}
                 >
-                  {msg.text}
+                  {renderChatText(msg.text)}
                 </div>
               ))}
               {chatLoading && (
@@ -2313,7 +2387,7 @@ export default function App() {
                     style={{ fontSize: "0.9rem", color: "var(--text-muted)" }}
                   >
                     Oleh User ID #{log.admin_id} &bull;{" "}
-                    {new Date(log.created_at).toLocaleString("id-ID")}
+                    {formatDate(log.created_at)}
                   </div>
                   <div
                     style={{

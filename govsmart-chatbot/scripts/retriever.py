@@ -133,10 +133,21 @@ class Retriever:
 
     def _encode_query(self, q):
         if self._model is None:
-            from sentence_transformers import SentenceTransformer
-            self._model = SentenceTransformer(self.model_name, device="cpu")
-            self._model.max_seq_length = 512
+            try:
+                from sentence_transformers import SentenceTransformer
+            except ImportError:
+                # Runtime image intentionally omits Torch; BM25 remains usable.
+                self._model = False
+            else:
+                self._model = SentenceTransformer(self.model_name, device="cpu")
+                self._model.max_seq_length = 512
+        if self._model is False:
+            return None
         return self._model.encode(["query: " + q], normalize_embeddings=True)[0].astype("float32")
+
+    def _dense_scores(self, query):
+        encoded = self._encode_query(query)
+        return self.emb @ encoded if encoded is not None else np.zeros(len(self.chunks), dtype="float32")
 
     def search(self, query, k=5, koleksi=None, pool=40, tetangga=0):
         """-> list dict: chunk, skor (RRF x bobot), dense (cosine).
@@ -149,7 +160,7 @@ class Retriever:
             mask = np.ones(len(self.chunks), dtype=bool)
         else:
             mask = np.isin(self.koleksi, [koleksi] if isinstance(koleksi, str) else list(koleksi))
-        dense = self.emb @ self._encode_query(query)
+        dense = self._dense_scores(query)
         bm = self.bm25.scores(tokenize(query))
         dense_m = np.where(mask, dense, -np.inf)
         bm_m = np.where(mask, bm, -np.inf)
@@ -203,6 +214,179 @@ EVAL = [
     {"q": "Berapa karakter minimal isi laporan pengaduan?", "koleksi": "aplikasi",
      "docs": ["faq_aplikasi", "panduan_pelaporan"], "kata": "20"},
 ]
+
+# Variasi uji bahasa normal, santai, singkatan, dan typo ringan.
+# Variasi dipakai untuk evaluasi router/retriever, bukan fakta baru.
+_VARIANT_SEEDS = [
+    ("Berapa lama proses registrasi KKPR?", "pemerintah"),
+    ("Apa syarat registrasi KKPR?", "pemerintah"),
+    ("Berapa biaya pengurusan izin?", "pemerintah"),
+    ("Bagaimana cara mengurus NIB?", "pemerintah"),
+    ("Apa syarat membuat PBG?", "pemerintah"),
+    ("Bagaimana cara daftar akun GovSmart?", "aplikasi"),
+    ("Berapa digit NIK untuk membuat akun?", "aplikasi"),
+    ("Bagaimana cara membuat pengaduan?", "aplikasi"),
+    ("Bagaimana cara upload foto laporan?", "aplikasi"),
+    ("Apa arti Pancasila?", "kenegaraan"),
+    ("Apa bahasa negara Indonesia?", "kenegaraan"),
+    ("Bagaimana aturan bendera Merah Putih?", "kenegaraan"),
+    ("Apa itu Persetujuan Lingkungan?", "pemerintah"),
+    ("Bagaimana cara mengurus izin reklame?", "pemerintah"),
+    ("Apa syarat izin usaha UMKM?", "pemerintah"),
+    ("Bagaimana prosedur pelayanan publik?", "pemerintah"),
+    ("Apa itu standar pelayanan?", "pemerintah"),
+    ("Bagaimana cara mengurus KTP?", "pemerintah"),
+    ("Apa syarat membuat Kartu Keluarga?", "pemerintah"),
+    ("Bagaimana cara mengubah data kependudukan?", "pemerintah"),
+    ("Apa fungsi DPMPTSP?", "pemerintah"),
+    ("Bagaimana cara melapor jalan rusak?", "pemerintah"),
+    ("Bagaimana cara melapor sampah menumpuk?", "pemerintah"),
+    ("Apa layanan Dinas Kesehatan?", "pemerintah"),
+    ("Bagaimana cara menghubungi dinas terkait?", "pemerintah"),
+    ("Apa saja fitur pengaduan GovSmart?", "aplikasi"),
+    ("Bagaimana cara melihat status laporan?", "aplikasi"),
+    ("Bagaimana cara membatalkan pengaduan?", "aplikasi"),
+    ("Berapa batas panjang pertanyaan chatbot?", "aplikasi"),
+    ("Bagaimana cara mengganti password?", "aplikasi"),
+    ("Apa yang dilakukan jika login gagal?", "aplikasi"),
+    ("Bagaimana cara keluar dari akun?", "aplikasi"),
+    ("Apakah foto bukti wajib diunggah?", "aplikasi"),
+    ("Bagaimana cara menggunakan lokasi GPS?", "aplikasi"),
+    ("Apa arti Negara Kesatuan Republik Indonesia?", "kenegaraan"),
+    ("Kapan Proklamasi Kemerdekaan Indonesia dibacakan?", "kenegaraan"),
+    ("Apa makna Bhinneka Tunggal Ika?", "kenegaraan"),
+    ("Apa lambang negara Indonesia?", "kenegaraan"),
+    ("Apa fungsi UUD 1945?", "kenegaraan"),
+    ("Apa saja sila dalam Pancasila?", "kenegaraan"),
+    ("Apa makna persatuan Indonesia?", "kenegaraan"),
+    ("Apa arti bela negara?", "kenegaraan"),
+    ("Siapa yang merumuskan dasar negara?", "kenegaraan"),
+    ("Apa itu wawasan kebangsaan?", "kenegaraan"),
+    ("Bagaimana cara daftar OSS?", "pemerintah"),
+    ("Apa dokumen untuk izin usaha?", "pemerintah"),
+    ("Bagaimana proses izin mendirikan bangunan?", "pemerintah"),
+    ("Apa itu AMDAL?", "pemerintah"),
+    ("Apa itu SPPL?", "pemerintah"),
+    ("Bagaimana mengurus izin operasional?", "pemerintah"),
+    ("Apa layanan Dinas Perhubungan?", "pemerintah"),
+    ("Bagaimana melaporkan lampu jalan mati?", "pemerintah"),
+    ("Bagaimana melaporkan drainase tersumbat?", "pemerintah"),
+    ("Bagaimana melaporkan banjir?", "pemerintah"),
+    ("Bagaimana mengurus bantuan sosial?", "pemerintah"),
+    ("Apa syarat mendapatkan bantuan UMKM?", "pemerintah"),
+    ("Bagaimana mengurus akta kelahiran?", "pemerintah"),
+    ("Bagaimana mengurus akta kematian?", "pemerintah"),
+    ("Bagaimana memperbaiki data KK?", "pemerintah"),
+    ("Bagaimana cara daftar layanan kesehatan?", "pemerintah"),
+    ("Apa itu layanan publik daerah?", "pemerintah"),
+    ("Bagaimana cara mengajukan laporan warga?", "aplikasi"),
+    ("Apakah laporan warga bisa dibatalkan?", "aplikasi"),
+    ("Mengapa laporan saya belum diproses?", "aplikasi"),
+    ("Bagaimana melihat dinas tujuan laporan?", "aplikasi"),
+    ("Apa yang harus ditulis di isi laporan?", "aplikasi"),
+    ("Apakah lokasi laporan wajib diisi?", "aplikasi"),
+    ("Apa format foto bukti yang diterima?", "aplikasi"),
+    ("Bagaimana jika lupa password akun?", "aplikasi"),
+    ("Mengapa akun saya tidak bisa login?", "aplikasi"),
+    ("Bagaimana cara mendaftar sebagai warga?", "aplikasi"),
+    ("Apa tujuan dibuatnya GovSmart?", "aplikasi"),
+    ("Apa hubungan Pancasila dan UUD 1945?", "kenegaraan"),
+    ("Apa makna lambang Garuda Pancasila?", "kenegaraan"),
+    ("Mengapa bahasa Indonesia menjadi bahasa negara?", "kenegaraan"),
+    ("Apa arti persamaan kedudukan warga negara?", "kenegaraan"),
+    ("Apa kewajiban warga negara?", "kenegaraan"),
+    ("Apa hak warga negara menurut UUD?", "kenegaraan"),
+    ("Apa makna Sumpah Pemuda?", "kenegaraan"),
+    ("Apa tujuan Proklamasi Kemerdekaan?", "kenegaraan"),
+    ("Apa yang dimaksud konstitusi?", "kenegaraan"),
+    ("Bagaimana menjaga persatuan Indonesia?", "kenegaraan"),
+    ("Bagaimana cara mengurus izin usaha online?", "pemerintah"),
+    ("Apa perbedaan NIB dan izin usaha?", "pemerintah"),
+    ("Bagaimana cara cek status perizinan?", "pemerintah"),
+    ("Apa syarat izin praktik tenaga kesehatan?", "pemerintah"),
+    ("Bagaimana mengurus izin lingkungan?", "pemerintah"),
+    ("Apa yang dimaksud pelayanan terpadu?", "pemerintah"),
+    ("Bagaimana cara mendapatkan informasi dinas?", "pemerintah"),
+    ("Ke mana melapor jika ada pungutan liar?", "pemerintah"),
+    ("Bagaimana melapor fasilitas umum rusak?", "pemerintah"),
+    ("Bagaimana melapor pohon tumbang?", "pemerintah"),
+    ("Bagaimana melapor sungai tercemar?", "pemerintah"),
+    ("Bagaimana melapor jalan tergenang?", "pemerintah"),
+    ("Bagaimana melapor jembatan rusak?", "pemerintah"),
+    ("Bagaimana melapor lampu lalu lintas rusak?", "pemerintah"),
+    ("Bagaimana melapor parkir liar?", "pemerintah"),
+    ("Apa layanan Dinas Sosial?", "pemerintah"),
+    ("Apa layanan Dinas Pendidikan?", "pemerintah"),
+    ("Apa layanan Dinas Lingkungan Hidup?", "pemerintah"),
+    ("Apa layanan Dinas Perhubungan?", "pemerintah"),
+    ("Bagaimana cara mengirim pengaduan baru?", "aplikasi"),
+    ("Apa yang terjadi setelah laporan dikirim?", "aplikasi"),
+    ("Bagaimana mengetahui laporan sudah diterima?", "aplikasi"),
+    ("Apa arti status diterima?", "aplikasi"),
+    ("Apa arti status diproses?", "aplikasi"),
+    ("Apa arti status selesai?", "aplikasi"),
+    ("Apa arti status ditolak?", "aplikasi"),
+    ("Apa arti status dibatalkan?", "aplikasi"),
+    ("Berapa banyak riwayat laporan yang ditampilkan?", "aplikasi"),
+    ("Apakah laporan tanpa foto bisa dikirim?", "aplikasi"),
+    ("Apakah koordinat lokasi wajib diisi?", "aplikasi"),
+    ("Bagaimana memilih dinas tujuan laporan?", "aplikasi"),
+    ("Mengapa laporan diarahkan ke dinas tertentu?", "aplikasi"),
+    ("Bagaimana memperbarui halaman laporan?", "aplikasi"),
+    ("Apakah data NIK saya aman?", "aplikasi"),
+    ("Bagaimana menjaga keamanan akun?", "aplikasi"),
+    ("Apa yang dilakukan chatbot GovSmart?", "aplikasi"),
+    ("Bagaimana menanyakan informasi kepada chatbot?", "aplikasi"),
+    ("Mengapa jawaban chatbot memakai sumber?", "aplikasi"),
+    ("Apa arti Negara Kesatuan?", "kenegaraan"),
+    ("Apa tujuan negara Indonesia?", "kenegaraan"),
+    ("Apa kedudukan Pancasila bagi negara?", "kenegaraan"),
+    ("Apa isi sila pertama Pancasila?", "kenegaraan"),
+    ("Apa isi sila kedua Pancasila?", "kenegaraan"),
+    ("Apa isi sila ketiga Pancasila?", "kenegaraan"),
+    ("Apa isi sila keempat Pancasila?", "kenegaraan"),
+    ("Apa isi sila kelima Pancasila?", "kenegaraan"),
+    ("Apa makna warna merah pada bendera?", "kenegaraan"),
+    ("Apa makna warna putih pada bendera?", "kenegaraan"),
+    ("Apa arti lambang Garuda?", "kenegaraan"),
+    ("Apa makna semboyan Bhinneka Tunggal Ika?", "kenegaraan"),
+    ("Apa yang dimaksud kedaulatan rakyat?", "kenegaraan"),
+    ("Apa peran warga negara dalam demokrasi?", "kenegaraan"),
+    ("Mengapa hukum dasar negara diperlukan?", "kenegaraan"),
+    ("Apa perbedaan UUD dan undang-undang?", "kenegaraan"),
+    ("Apa makna kemerdekaan bagi Indonesia?", "kenegaraan"),
+    ("Apa peran bahasa Indonesia dalam persatuan?", "kenegaraan"),
+    ("Apa itu identitas nasional?", "kenegaraan"),
+    ("Bagaimana menerapkan nilai Pancasila?", "kenegaraan"),
+]
+_VARIANT_FORMS = [
+    "{}", "Tolong jelaskan {}", "Saya mau tahu: {}", "Mohon info {}",
+    "gmn {}", "brp {}", "apa syaratnya kalau {}", "bisa bantu {}",
+    "{} ya?", "{} dong",
+]
+QUESTION_VARIANTS = []
+_VARIANT_TYPOS = {
+    "Tolong jelaskan": "Tlg jelaskan", "Bagaimana": "Bgmn", "Berapa": "Brp",
+    "syarat": "syrat", "izin": "ijin", "pengaduan": "pngaduan",
+    "aplikasi": "aplkasi", "Pancasila": "Pancsila", "Indonesia": "Indonesa",
+    "Bagaimana": "Bgmn", "Apa": "Apaa", "cara": "cra", "melapor": "mlapor",
+    "layanan": "layann", "negara": "negraa",
+}
+for _seed, _koleksi in _VARIANT_SEEDS:
+    for _form in _VARIANT_FORMS:
+        _q = _form.format(_seed)
+        QUESTION_VARIANTS.append({"q": _q, "koleksi": _koleksi, "jenis": "normal"})
+        _typo_q = _q
+        for _wrong, _right in _VARIANT_TYPOS.items():
+            if _wrong in _typo_q:
+                _typo_q = _typo_q.replace(_wrong, _right)
+                break
+        if _typo_q != _q:
+            QUESTION_VARIANTS.append({"q": _typo_q, "koleksi": _koleksi, "jenis": "typo"})
+
+# EVAL keeps only questions with known expected documents; variants are a separate
+# router/retriever smoke corpus and must not be counted as factual ground truth.
+QUESTION_VARIANTS = QUESTION_VARIANTS[:400]
 
 
 def run_eval(r, k=5):

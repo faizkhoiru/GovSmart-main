@@ -16,6 +16,37 @@ def _uploads_dir(monkeypatch):
     monkeypatch.setattr(upload_mod, "UPLOAD_DIR", tmp)
     yield tmp
 
+def test_submit_report_typo_kebkaran_routes_to_satpol(client, warga_headers):
+    response = client.post("/api/v1/reports/", json={
+        "judul": "Kebkaran",
+        "isi_laporan": "Kebkaran terjadi di rumah warga dan membutuhkan pemadam segera.",
+    }, headers=warga_headers)
+    assert response.status_code == 201
+    dept = next(d for d in client.get("/api/v1/departments/").json() if d["id"] == response.json()["dept_id"])
+    assert dept["nama_dinas"] == "Dinas Satuan Polisi Pamong Praja"
+
+
+def test_submit_report_manual_department_routing(client, warga_headers):
+    depts = client.get("/api/v1/departments/").json()
+    target = next(d for d in depts if d["nama_dinas"] == "Dinas Kesehatan")
+    response = client.post("/api/v1/reports/", json={
+        "judul": "Pelayanan kesehatan terganggu",
+        "isi_laporan": "Pelayanan kesehatan di puskesmas terganggu dan perlu segera ditindaklanjuti.",
+        "dept_id": target["id"],
+    }, headers=warga_headers)
+    assert response.status_code == 201
+    assert response.json()["dept_id"] == target["id"]
+
+
+def test_submit_report_rejects_unknown_department(client, warga_headers):
+    response = client.post("/api/v1/reports/", json={
+        "judul": "Dinas tujuan tidak valid",
+        "isi_laporan": "Isi pengaduan minimal dua puluh karakter untuk pengujian.",
+        "dept_id": 999999,
+    }, headers=warga_headers)
+    assert response.status_code == 422
+
+
 def test_submit_report_ai_routing_and_urgency(client, warga_headers):
     payload = {
         "judul": "Jalan berlubang parah dan ambruk di Babat",
@@ -220,6 +251,39 @@ def test_submit_report_fallback_routing(client, warga_headers):
     depts = client.get("/api/v1/departments/").json()
     routed_dept = next(d for d in depts if d["id"] == data["dept_id"])
     assert routed_dept["nama_dinas"] == "Dinas Komunikasi dan Informatika"
+
+
+def test_warga_history_limited_and_can_cancel_before_processing(client, warga_headers):
+    for index in range(6):
+        response = client.post("/api/v1/reports/", json={
+            "judul": f"Pengaduan nomor {index + 1}",
+            "isi_laporan": "Isi pengaduan minimal dua puluh karakter untuk pengujian.",
+        }, headers=warga_headers)
+        assert response.status_code == 201
+
+    history = client.get("/api/v1/reports/history", headers=warga_headers)
+    assert history.status_code == 200
+    assert len(history.json()) == 5
+
+    report_id = history.json()[0]["id"]
+    cancel = client.post(f"/api/v1/reports/{report_id}/cancel", headers=warga_headers)
+    assert cancel.status_code == 200
+    assert cancel.json()["status"] == "dibatalkan"
+
+
+def test_warga_cannot_cancel_processed_report(client, warga_headers, super_admin_headers):
+    report = client.post("/api/v1/reports/", json={
+        "judul": "Pengaduan untuk diuji",
+        "isi_laporan": "Isi pengaduan minimal dua puluh karakter untuk pengujian.",
+    }, headers=warga_headers).json()
+    response = client.patch(
+        f"/api/v1/reports/{report['id']}/status",
+        json={"status": "diproses"},
+        headers=super_admin_headers,
+    )
+    assert response.status_code == 200
+    cancel = client.post(f"/api/v1/reports/{report['id']}/cancel", headers=warga_headers)
+    assert cancel.status_code == 409
 
 
 def test_sync_routing_endpoint(client, super_admin_headers):

@@ -35,6 +35,28 @@ def create_report(db: Session, report_in: ReportCreate, user_id: int):
 def get_report_by_id(db: Session, report_id: int):
     return db.query(Report).filter(Report.id == report_id).first()
 
+
+def cancel_report(db: Session, report: Report):
+    report.status = "dibatalkan"
+    db.commit()
+    db.refresh(report)
+    create_audit_log(db, report_id=report.id, admin_id=None, status_baru="dibatalkan")
+    return report
+
+
+MAKE_REPORT_HISTORY_LIMIT = 5
+
+
+def get_report_history(db: Session, user_id: int):
+    return (
+        db.query(Report)
+        .filter(Report.user_id == user_id)
+        .order_by(Report.id.desc())
+        .limit(MAKE_REPORT_HISTORY_LIMIT)
+        .all()
+    )
+
+
 def get_reports(
     db: Session,
     skip: int = 0,

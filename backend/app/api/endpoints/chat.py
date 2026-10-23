@@ -65,7 +65,7 @@ async def ask_chatbot(
     if resp.status_code != 200:
         raise HTTPException(503, detail={"kode":"CHATBOT_UNAVAILABLE","pesan":"Gagal komunikasi dengan chatbot.","fields":[]})
     body = resp.json()
-    jawaban = mask_pii(body.get("jawaban",""))[:500]
+    jawaban = mask_pii(body.get("jawaban",""))[:2000]
     crud_chat.create(db, user_id=user_id, prompt=pertanyaan, response=jawaban)
     chat_res = {k:body[k] for k in ("jawaban","intent","mode") if k in body}
     if "sumber" in body:

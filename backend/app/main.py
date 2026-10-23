@@ -4,14 +4,15 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 from app.core.config import settings
-from app.database import engine, Base, SessionLocal
+from app.database import engine, Base, SessionLocal, ensure_schema_compatibility
 import app.models  # Register models
 from app.crud.department import seed_departments
-from app.crud.user import seed_super_admin
+from app.crud.user import seed_super_admin, seed_admin_dinas
 from app.api.api import api_router
 
 # Create database tables automatically
 Base.metadata.create_all(bind=engine)
+ensure_schema_compatibility()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -20,6 +21,7 @@ async def lifespan(app: FastAPI):
     try:
         seed_departments(db)
         seed_super_admin(db)
+        seed_admin_dinas(db)
     except Exception as e:
         print(f"Error during database seeding: {e}")
     finally:

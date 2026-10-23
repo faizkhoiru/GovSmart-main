@@ -4,10 +4,18 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 from app.database import get_db
 from app.schemas.report import ReportCreate, ReportUpdateStatus, ReportResponse
-from app.crud.report import create_report, get_report_by_id, get_reports, update_report_status
+from app.crud.report import (
+    create_report,
+    get_report_by_id,
+    get_reports,
+    get_report_history,
+    cancel_report,
+    update_report_status,
+)
 from app.api.deps import get_current_user, get_current_active_admin
 from app.models.user import User
 from app.models.report import Report
+from app.crud.department import get_department
 from app.core.upload import validate_and_save_upload
 
 router = APIRouter()
@@ -18,6 +26,8 @@ def submit_report(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    if report_in.dept_id is not None and not get_department(db, report_in.dept_id):
+        raise HTTPException(status_code=422, detail="Dinas tujuan tidak ditemukan")
     return create_report(db, report_in, user_id=current_user.id)
 
 @router.get("/", response_model=List[ReportResponse])
@@ -33,6 +43,8 @@ def list_reports(
     # Warga only sees their own reports. Admin dinas only sees reports routed to their dinas.
     user_id_filter = current_user.id if current_user.role == "warga" else None
     dept_id_filter = current_user.dept_id if current_user.role == "admin" else dept_id
+    if current_user.role == "warga":
+        limit = min(limit, 5)
 
     return get_reports(
         db=db,
@@ -43,6 +55,30 @@ def list_reports(
         status=status,
         urgensi=urgensi
     )
+
+@router.get("/history", response_model=List[ReportResponse])
+def my_report_history(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return get_report_history(db, current_user.id)
+
+
+@router.post("/{report_id}/cancel", response_model=ReportResponse)
+def cancel_my_report(
+    report_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    report = get_report_by_id(db, report_id)
+    if not report:
+        raise HTTPException(status_code=404, detail="Laporan tidak ditemukan")
+    if current_user.role != "warga" or report.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Hanya pemilik laporan yang dapat membatalkan laporan")
+    if report.status != "diterima":
+        raise HTTPException(status_code=409, detail="Laporan hanya dapat dibatalkan sebelum diproses")
+    return cancel_report(db, report)
+
 
 @router.get("/{report_id}", response_model=ReportResponse)
 def get_report_detail(
@@ -76,7 +112,7 @@ def get_my_notifications(
             Report.dept_id == current_user.dept_id,
             Report.status.in_(["diterima", "diproses"]),
         )
-        .order_by(desc(Report.created_at))
+        .order_by(desc(Report.id))
         .limit(limit)
         .all()
     )

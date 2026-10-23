@@ -196,7 +196,7 @@ SINONIM = {"lama": ["jangka", "waktu", "hari"], "waktu": ["jangka", "hari"], "bi
            "bayar": ["biaya", "tarif", "retribusi"]}
 
 
-def cuplikan(teks, query, panjang=500):
+def cuplikan(teks, query, panjang=1400):
     """Ambil potongan teks sepanjang `panjang` yang paling banyak memuat kata pertanyaan (termasuk padanannya)."""
     if len(teks) <= panjang:
         return teks
@@ -281,8 +281,8 @@ class GovSmartChatbot:
         baris, tampil = [awalan or "Saya menemukan informasi terkait berikut di dokumen:"], []
         for h, s in list(zip(dipakai, sumber))[:2]:
             c = h["chunk"]
-            baris.append(f"\n[{s['no']}] {c['judul']}" + (f" ({c['produk']})" if c.get("produk") else "")
-                         + f", hal {s['halaman']}:\n{cuplikan(c['teks'], q)}")
+            judul = c["judul"] + (f" ({c['produk']})" if c.get("produk") else "")
+            baris.append(f"\n[{s['no']}] {judul}, halaman {s['halaman']}\n{cuplikan(c['teks'], q)}")
             tampil.append(s)
         return "\n".join(baris), tampil
 
@@ -341,8 +341,15 @@ class GovSmartChatbot:
             return self._hasil(t0, "jawab", teks, mode="ekstraktif_galat", **info)
 
         dikutip = {int(n) for n in re.findall(r"\[(\d+)\]", jawaban)}
-        if dikutip:
-            info["sumber"] = [s for s in sumber if s["no"] in dikutip]
+        nomor_valid = {s["no"] for s in sumber}
+        if not dikutip or not dikutip.issubset(nomor_valid):
+            # Tanpa rujukan valid, jangan kirim jawaban generatif yang tidak terverifikasi.
+            teks, info["sumber"] = self.jawab_ekstraktif(
+                dipakai, sumber, q_norm,
+                "Informasi berikut diambil langsung dari dokumen yang tersedia:"
+            )
+            return self._hasil(t0, "jawab", teks, mode="ekstraktif_guardrail", **info)
+        info["sumber"] = [s for s in sumber if s["no"] in dikutip]
         return self._hasil(t0, "jawab", jawaban, mode="llm", **info)
 
 
