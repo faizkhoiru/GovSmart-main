@@ -86,3 +86,11 @@ def chat_history(
     rows = crud_chat.history(db, user_id=current_user.id, limit=limit, offset=offset)
     return {"results": rows, "count": len(rows)}
 
+@router.delete("/history", status_code=204)
+def chat_clear_history(
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user),
+):
+    crud_chat.clear_history(db, user_id=current_user.id)
+    return None
+

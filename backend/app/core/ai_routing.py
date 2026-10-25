@@ -1,4 +1,4 @@
-from typing import Tuple, Optional
+from typing import Tuple, Optional, cast
 # pyrefly: ignore [missing-import]
 from sqlalchemy.orm import Session
 from app.models.department import Department
@@ -160,7 +160,7 @@ def analyze_report_ai(judul: str, isi: str, db: Session) -> Tuple[Optional[int],
     text_lower = f"{judul} {isi}".lower()
     import re
     tokens = set(re.findall(r"\b[a-z]+\b", text_lower))  # single-word tokens for exact and typo matching
-    # Common typos only; avoid broad correction that can misroute reports.
+    # Common typos mapping
     typo_aliases = {
         "kebkaran": "kebakaran", "kebakran": "kebakaran", "terbakarrr": "terbakar",
         "kesehtan": "kesehatan", "kesehataan": "kesehatan", "puskes": "puskesmas",
@@ -168,18 +168,22 @@ def analyze_report_ai(judul: str, isi: str, db: Session) -> Tuple[Optional[int],
         "dokterr": "dokter", "jalanann": "jalanan", "berlubng": "berlubang",
         "sampahh": "sampah", "lingkungn": "lingkungan", "banjirr": "banjir",
         "perizinan": "perizinan", "perijinan": "perizinan", "dukcapill": "dukcapil",
+        "jlan": "jalan", "jln": "jalan", "jallan": "jalan", "rukas": "rusak",
+        "russak": "rusak", "berlubah": "berlubang", "berlubag": "berlubang",
+        "jembataan": "jembatan", "drainse": "drainase", "selokaan": "selokan",
     }
     tokens.update(typo_aliases[token] for token in list(tokens) if token in typo_aliases)
+    normalized_text = " ".join(typo_aliases.get(w, w) for w in re.findall(r"\b[a-z]+\b", text_lower))
 
     # 1. Determine Urgency (substring match, robust for multi-word)
     urgensi = "normal"
-    if any(word in text_lower for word in EMERGENCY_KEYWORDS):
+    if any(word in normalized_text or word in text_lower for word in EMERGENCY_KEYWORDS):
         urgensi = "darurat"
-    elif any(word in text_lower for word in IMPORTANT_KEYWORDS):
+    elif any(word in normalized_text or word in text_lower for word in IMPORTANT_KEYWORDS):
         urgensi = "penting"
 
     # 2. Determine Department via Smart Routing
-    #    Phrase keywords (with space): substring in text_lower.
+    #    Phrase keywords (with space): substring in normalized_text or text_lower.
     #    Single-word keywords: exact token match, or fuzzy match (cutoff 0.85, len >= 5) to tolerate typos.
     from difflib import get_close_matches
     best_dept_name = None
@@ -189,7 +193,7 @@ def analyze_report_ai(judul: str, isi: str, db: Session) -> Tuple[Optional[int],
         matches = 0
         for kw in keywords:
             if " " in kw:
-                if kw in text_lower:
+                if kw in normalized_text or kw in text_lower:
                     matches += 1
             else:
                 if kw in tokens:
@@ -223,7 +227,7 @@ def analyze_report_ai(judul: str, isi: str, db: Session) -> Tuple[Optional[int],
         if fallback_dept:
             dept_id = fallback_dept.id
 
-    return dept_id, urgensi
+    return cast(Optional[int], dept_id), urgensi
 
 def generate_ai_chatbot_response(prompt: str) -> str:
     p_lower = prompt.lower()

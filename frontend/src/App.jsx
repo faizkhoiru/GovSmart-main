@@ -116,6 +116,54 @@ export default function App() {
     setNotifications((items) => items.filter((item) => item.id !== id));
   };
 
+  // State edit laporan (benar: deklarasi di atas return/if)
+  const [editReportModal, setEditReportModal] = useState({ open: false, report: null });
+  const [editJudul, setEditJudul] = useState("");
+  const [editIsi, setEditIsi] = useState("");
+  const [editDeptId, setEditDeptId] = useState("");
+  const [editLat, setEditLat] = useState("");
+  const [editLong, setEditLong] = useState("");
+
+  const openEditModal = (report) => {
+    setEditReportModal({ open: true, report });
+    setEditJudul(report.judul || "");
+    setEditIsi(report.isi_laporan || "");
+    setEditDeptId(report.dept_id ? String(report.dept_id) : "");
+    setEditLat(report.lat || "");
+    setEditLong(report.long || "");
+  };
+
+  const handleEditReport = async (e) => {
+    e.preventDefault();
+    if (!token || !editReportModal.report) return;
+    try {
+      const body = {
+        judul: editJudul,
+        isi_laporan: editIsi,
+        dept_id: editDeptId ? parseInt(editDeptId, 10) : null,
+        lat: editLat ? parseFloat(editLat) : null,
+        long: editLong ? parseFloat(editLong) : null,
+      };
+      const res = await fetch(`/api/v1/reports/${editReportModal.report.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.detail || "Gagal update laporan");
+      }
+      setEditReportModal({ open: false, report: null });
+      fetchReports();
+      notify("Laporan berhasil diedit.", "success");
+    } catch (e) {
+      notify(e.message);
+    }
+  };
+
   const [mainView, setMainView] = useState("options"); // 'options' | 'pengaduan' | 'pertanyaan' | 'admin'
   const [token, setToken] = useState(
     localStorage.getItem("govsmart_token") || "",
@@ -160,6 +208,9 @@ export default function App() {
   const [auditLogs, setAuditLogs] = useState([]);
   const [showAuditModal, setShowAuditModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [feedbackFile, setFeedbackFile] = useState(null);
+  const [feedbackUploading, setFeedbackUploading] = useState(false);
+  const [feedbackUploadMsg, setFeedbackUploadMsg] = useState("");
 
   const QUICK_PROMPTS = [
     "Berapa lama proses registrasi KKPR?",
@@ -178,6 +229,9 @@ export default function App() {
   const [editingAdmin, setEditingAdmin] = useState(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const [statusFilter, setStatusFilter] = useState("all"); // 'all' | 'diterima' | 'diproses' | 'selesai' | 'ditolak'
+  const [dateFilter, setDateFilter] = useState("all"); // 'all' | 'day' | 'week' | 'month' | 'year'
+  const [customStartDate, setCustomStartDate] = useState("");
+  const [customEndDate, setCustomEndDate] = useState("");
   const [editForm, setEditForm] = useState({ nip: "", email: "", password: "", dept_id: "" });
 
   // AI Chatbot Widget State
@@ -191,6 +245,45 @@ export default function App() {
   ]);
   const [chatLoading, setChatLoading] = useState(false);
 
+  // Helper: compute date range from dateFilter / customStartDate / customEndDate
+  const getPeriodRange = () => {
+    const now = new Date();
+    let start = null;
+    let end = null;
+
+    switch (dateFilter) {
+      case "day":
+        start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        end = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+        break;
+      case "week":
+        const dayOfWeek = now.getDay();
+        start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - dayOfWeek);
+        end = new Date(start);
+        end.setDate(end.getDate() + 7);
+        break;
+      case "month":
+        start = new Date(now.getFullYear(), now.getMonth(), 1);
+        end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        end.setDate(end.getDate() + 1);
+        break;
+      case "year":
+        start = new Date(now.getFullYear(), 0, 1);
+        end = new Date(now.getFullYear() + 1, 0, 1);
+        break;
+      case "custom":
+        if (customStartDate) start = new Date(customStartDate);
+        if (customEndDate) {
+          end = new Date(customEndDate);
+          end.setDate(end.getDate() + 1);
+        }
+        break;
+      default:
+        break;
+    }
+    return { start, end };
+  };
+
   // Fetch Reports & Departments
   const fetchReports = async () => {
     setLoadingReports(true);
@@ -199,6 +292,13 @@ export default function App() {
       const params = new URLSearchParams();
       if (statusFilter !== "all") params.set("status", statusFilter);
       if (userRole === "warga") params.set("limit", "5");
+
+      // Date filter: hitung start/end date berdasarkan periode yang dipilih
+      const { start, end } = getPeriodRange();
+
+      if (start) params.set("start_date", start.toISOString().split("T")[0]);
+      if (end) params.set("end_date", end.toISOString().split("T")[0]);
+
        const res = await fetch(`/api/v1/reports/?${params}`, { headers });
       if (res.ok) {
         const data = await res.json();
@@ -273,7 +373,7 @@ export default function App() {
       fetchReports();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [statusFilter]);
+  }, [statusFilter, dateFilter, customStartDate, customEndDate]);
 
   useEffect(() => {
     fetchReports();
@@ -587,44 +687,127 @@ export default function App() {
     }
   };
 
-  // Export CSV Handler
-  const handleExportCSV = () => {
+  // Feedback Upload Handler (Admin Dinas)
+  const handleUploadFeedback = async (e) => {
+    e.preventDefault();
+    if (!feedbackFile || !token || !selectedReport) return;
+    setFeedbackUploading(true);
+    setFeedbackUploadMsg("");
+    try {
+      const formData = new FormData();
+      formData.append("foto", feedbackFile);
+      const res = await fetch(`/api/v1/reports/${selectedReport.id}/upload-feedback`, {
+        method: "POST",
+        headers: { Authorization: "Bearer " + token },
+        body: formData,
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.detail || "Gagal upload feedback");
+      }
+      const data = await res.json();
+      setSelectedReport(data);
+      setFeedbackFile(null);
+      setFeedbackUploadMsg("✅ Dokumen feedback berhasil diunggah!");
+      notify("Dokumen feedback berhasil diunggah.", "success");
+    } catch (e) {
+      setFeedbackUploadMsg(`❌ ${e.message}`);
+      notify(e.message);
+    } finally {
+      setFeedbackUploading(false);
+    }
+  };
+
+  // Export CSV Handler — gunakan backend export endpoint (filter sudah termasuk)
+  const handleExportCSV = async () => {
     if (!reports || reports.length === 0) {
       notify("Tidak ada data laporan untuk diekspor.");
       return;
     }
-    const headers = ["ID", "Judul", "Urgensi", "Dinas", "Status", "Lokasi_Lat", "Lokasi_Long", "Catatan_Petugas", "Tanggal"];
-    const rows = filteredReports.map((r) => [
-      r.id,
-      `"${(r.judul || "").replace(/"/g, '""')}"`,
-      r.urgensi,
-      `"${departments.find((d) => d.id === r.dept_id)?.nama_dinas || 'Auto-Routing'}"`,
-      r.status,
-      r.lat || "",
-      r.long || "",
-      `"${(r.catatan_petugas || "").replace(/"/g, '""')}"`,
-      `"${formatDate(r.created_at)}"`
-    ]);
-    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `govsmart_laporan_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    notify("Berkas CSV laporan berhasil diunduh.", "success");
+    try {
+      const params = new URLSearchParams();
+      if (userRole === "warga") params.set("limit", "5");
+      // Date filter via backend export
+      const { start, end } = getPeriodRange();
+      if (start) params.set("start_date", start.toISOString().split("T")[0]);
+      if (end) params.set("end_date", end.toISOString().split("T")[0]);
+      if (statusFilter !== "all") params.set("status", statusFilter);
+      if (userRole === "warga" && departments.length > 0) {
+        const myDept = departments.find((d) => d.id === userDeptId);
+        if (myDept) params.set("dept_id", myDept.id);
+      }
+
+      const res = await fetch(`/api/v1/reports/export/csv?${params}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.detail || "Gagal mengekspor CSV");
+      }
+      const blob = new Blob([await res.text()], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      link.href = window.URL.createObjectURL(blob);
+      link.download = `govsmart_laporan_${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      notify("Berkas CSV laporan berhasil diunduh.", "success");
+    } catch (e) {
+      notify(e.message);
+    }
+  };
+
+  // Export PDF Handler — fetch dengan token lalu buka sebagai blob di tab baru (print-to-PDF)
+  const handleExportPDF = async () => {
+    if (!reports || reports.length === 0) {
+      notify("Tidak ada data laporan untuk diekspor.");
+      return;
+    }
+    try {
+      const params = new URLSearchParams();
+      const { start, end } = getPeriodRange();
+      if (start) params.set("start_date", start.toISOString().split("T")[0]);
+      if (end) params.set("end_date", end.toISOString().split("T")[0]);
+      if (statusFilter !== "all") params.set("status", statusFilter);
+
+      const res = await fetch(`/api/v1/reports/export/html?${params}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || "Gagal mengekspor PDF");
+      }
+      const html = await res.text();
+      const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+      const url = window.URL.createObjectURL(blob);
+      const win = window.open(url, "_blank");
+      // Auto-revoke URL setelah tab terbuka
+      if (win) setTimeout(() => window.URL.revokeObjectURL(url), 10000);
+      notify("Halaman laporan terbuka. Gunakan Ctrl+P / Cmd+P untuk cetak sebagai PDF.", "success");
+    } catch (e) {
+      notify(e.message);
+    }
   };
 
   // Clear Chat Handler
-  const handleClearChat = () => {
+  const handleClearChat = async () => {
     setChatMessages([
       {
         role: "ai",
         text: "Halo! Percakapan telah dibersihkan. Ada yang bisa saya bantu seputar perizinan UMKM, layanan dinas, atau informasi Kabupaten Lamongan?",
       },
     ]);
-    notify("Riwayat obrolan di layar telah dibersihkan.", "success");
+    // Juga hapus riwayat dari backend supaya tidak muncul lagi setelah refresh
+    const currentToken = token || localStorage.getItem("govsmart_token");
+    if (currentToken) {
+      try {
+        await fetch("/api/v1/chat/history", {
+          method: "DELETE",
+          headers: { Authorization: "Bearer " + currentToken },
+        });
+      } catch (_) { /* backend clear opsional */ }
+    }
+    notify("Riwayat obrolan di layar dan di database telah dibersihkan.", "success");
   };
 
   // Fetch Audit Logs
@@ -1507,6 +1690,57 @@ export default function App() {
                   ))}
                 </div>
 
+                {/* Date Period Filter + Export Buttons — untuk admin dan admin dinas */}
+                {(userRole === "admin" || userRole === "admin_dinas") && (
+                <div style={{ display: "flex", gap: "1rem", alignItems: "center", flexWrap: "wrap", padding: "0.75rem 0", borderBottom: "1px solid var(--border-color)" }}>
+                  <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "var(--text-muted)", whiteSpace: "nowrap" }}>Filter Periode:</label>
+                  <select
+                    value={dateFilter}
+                    onChange={(e) => { setDateFilter(e.target.value); if (e.target.value !== "custom") { setCustomStartDate(""); setCustomEndDate(""); } }}
+                    style={{ padding: "0.3rem 0.6rem", borderRadius: "6px", border: "1px solid var(--border-color)", background: "var(--glass-bg)", color: "var(--text-primary)", fontSize: "0.85rem" }}
+                  >
+                    <option value="all">Semua Waktu</option>
+                    <option value="day">Hari Ini</option>
+                    <option value="week">Minggu Ini</option>
+                    <option value="month">Bulan Ini</option>
+                    <option value="year">Tahun Ini</option>
+                    <option value="custom">Rentang Khusus</option>
+                  </select>
+                  {dateFilter === "custom" && (
+                    <>
+                      <input
+                        type="date"
+                        value={customStartDate}
+                        onChange={(e) => setCustomStartDate(e.target.value)}
+                        style={{ padding: "0.3rem 0.6rem", borderRadius: "6px", border: "1px solid var(--border-color)", background: "var(--glass-bg)", color: "var(--text-primary)", fontSize: "0.85rem" }}
+                      />
+                      <span style={{ color: "var(--text-muted)" }}>sd</span>
+                      <input
+                        type="date"
+                        value={customEndDate}
+                        onChange={(e) => setCustomEndDate(e.target.value)}
+                        style={{ padding: "0.3rem 0.6rem", borderRadius: "6px", border: "1px solid var(--border-color)", background: "var(--glass-bg)", color: "var(--text-primary)", fontSize: "0.85rem" }}
+                      />
+                    </>
+                  )}
+                  <div style={{ flex: "auto" }} />
+                  <button
+                    onClick={handleExportCSV}
+                    className="nav-btn"
+                    style={{ padding: "0.3rem 0.8rem", fontSize: "0.8rem", display: "flex", alignItems: "center", gap: "0.3rem" }}
+                  >
+                    📎 Export CSV
+                  </button>
+                  <button
+                    onClick={handleExportPDF}
+                    className="nav-btn"
+                    style={{ padding: "0.3rem 0.8rem", fontSize: "0.8rem", display: "flex", alignItems: "center", gap: "0.3rem" }}
+                  >
+                    📄 Export PDF
+                  </button>
+                </div>
+                )}
+
                 {filteredReports.length === 0 ? (
                   <div className="glass-panel" style={{ padding: "2rem", textAlign: "center", color: "var(--text-muted)", fontSize: "0.95rem" }}>
                     {searchQuery
@@ -1604,6 +1838,46 @@ export default function App() {
                         {report.catatan_petugas}
                       </div>
                     )}
+                    {/* Tombol lihat dokumen feedback dari admin dinas — hanya untuk warga */}
+                    {userRole === "warga" && report.foto_feedback && (
+                      <div
+                        style={{
+                          marginBottom: "0.85rem",
+                          padding: "0.75rem 1rem",
+                          background: "rgba(59, 130, 246, 0.07)",
+                          borderLeft: "4px solid #3b82f6",
+                          borderRadius: "6px",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "0.75rem",
+                        }}
+                      >
+                        <span style={{ fontSize: "0.85rem", color: "var(--text-main)", fontWeight: 600, flex: 1 }}>
+                          📎 Dokumen Feedback Dinas tersedia
+                        </span>
+                        <a
+                          href={`/uploads/${report.foto_feedback}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "0.35rem",
+                            padding: "0.35rem 0.85rem",
+                            background: "#3b82f6",
+                            color: "white",
+                            borderRadius: "7px",
+                            fontSize: "0.82rem",
+                            fontWeight: 700,
+                            textDecoration: "none",
+                            whiteSpace: "nowrap",
+                            boxShadow: "0 1px 4px rgba(59,130,246,0.25)",
+                          }}
+                        >
+                          🔍 Lihat Dokumen
+                        </a>
+                      </div>
+                    )}
                     {report.lat && report.long && (
                       <div style={{ marginBottom: "0.85rem" }}>
                         <a
@@ -1649,14 +1923,24 @@ export default function App() {
                       </span>
                     </div>
                     {userRole === "warga" && report.status === "diterima" && (
-                      <button
-                        type="button"
-                        className="nav-btn"
-                        onClick={() => handleCancelReport(report.id)}
-                        style={{ marginTop: "1rem", color: "#dc2626", borderColor: "#fecaca" }}
-                      >
-                        Batalkan Pengaduan
-                      </button>
+                      <>
+                        <button
+                          type="button"
+                          className="nav-btn"
+                          onClick={() => openEditModal(report)}
+                          style={{ marginTop: "1rem", marginRight: "1rem" }}
+                        >
+                          Edit Pengaduan
+                        </button>
+                        <button
+                          type="button"
+                          className="nav-btn"
+                          onClick={() => handleCancelReport(report.id)}
+                          style={{ marginTop: "1rem", color: "#dc2626", borderColor: "#fecaca" }}
+                        >
+                          Batalkan Pengaduan
+                        </button>
+                      </>
                     )}
                   </div>
                 ))
@@ -2057,12 +2341,7 @@ export default function App() {
               <div className="glass-panel" style={{ padding: "1.5rem" }}>
                 <div
                   style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    flexWrap: "wrap",
-                    gap: "1rem",
-                    marginBottom: "1.5rem",
+                    marginBottom: "1.25rem",
                   }}
                 >
                   <h2
@@ -2074,40 +2353,91 @@ export default function App() {
                   >
                     Daftar Pengaduan Masuk
                   </h2>
-                  <button
-                    type="button"
-                    className="nav-btn"
-                    onClick={handleExportCSV}
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "0.4rem",
-                      padding: "0.45rem 1rem",
-                      fontSize: "0.85rem",
-                      fontWeight: 600,
-                    }}
-                    title="Unduh seluruh data laporan ke format CSV / Excel"
-                  >
-                    <Download size={15} /> Ekspor CSV
-                  </button>
                 </div>
 
-                {/* Search Bar Admin */}
-                <div style={{ position: "relative", marginBottom: "1.25rem" }}>
-                  <Search size={16} style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
-                  <input
-                    type="text"
-                    className="form-input"
-                    placeholder="Filter laporan berdasarkan kata kunci atau ID..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    style={{ paddingLeft: "2.3rem", fontSize: "0.9rem" }}
-                  />
+                {/* Filter Tombol Status */}
+                <div
+                  style={{
+                    display: "flex",
+                    gap: "0.5rem",
+                    flexWrap: "wrap",
+                    marginBottom: "0.75rem",
+                  }}
+                >
+                  {["all", "diterima", "diproses", "selesai", "ditolak"].map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => setStatusFilter(s)}
+                      className="nav-btn"
+                      style={{
+                        padding: "0.3rem 0.8rem",
+                        fontSize: "0.82rem",
+                        fontWeight: 600,
+                        background: statusFilter === s ? "var(--accent-emerald)" : "transparent",
+                        color: statusFilter === s ? "white" : "var(--text-muted)",
+                        borderColor: statusFilter === s ? "var(--accent-emerald)" : "var(--border-color)",
+                        borderRadius: "8px",
+                      }}
+                    >
+                      {s === "all" ? "Semua" : s.charAt(0).toUpperCase() + s.slice(1)}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Filter Periode + Export PDF */}
+                <div style={{ display: "flex", gap: "1rem", alignItems: "center", flexWrap: "wrap", padding: "0.75rem 0", marginBottom: "1rem", borderBottom: "1px solid var(--border-color)" }}>
+                  <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "var(--text-muted)", whiteSpace: "nowrap" }}>Filter Periode:</label>
+                  <select
+                    value={dateFilter}
+                    onChange={(e) => { setDateFilter(e.target.value); if (e.target.value !== "custom") { setCustomStartDate(""); setCustomEndDate(""); } }}
+                    style={{ padding: "0.3rem 0.6rem", borderRadius: "6px", border: "1px solid var(--border-color)", background: "var(--glass-bg)", color: "var(--text-primary)", fontSize: "0.85rem" }}
+                  >
+                    <option value="all">Semua Waktu</option>
+                    <option value="day">Hari Ini</option>
+                    <option value="week">Minggu Ini</option>
+                    <option value="month">Bulan Ini</option>
+                    <option value="year">Tahun Ini</option>
+                    <option value="custom">Rentang Khusus</option>
+                  </select>
+                  {dateFilter === "custom" && (
+                    <>
+                      <input
+                        type="date"
+                        value={customStartDate}
+                        onChange={(e) => setCustomStartDate(e.target.value)}
+                        style={{ padding: "0.3rem 0.6rem", borderRadius: "6px", border: "1px solid var(--border-color)", background: "var(--glass-bg)", color: "var(--text-primary)", fontSize: "0.85rem" }}
+                      />
+                      <span style={{ color: "var(--text-muted)" }}>s/d</span>
+                      <input
+                        type="date"
+                        value={customEndDate}
+                        onChange={(e) => setCustomEndDate(e.target.value)}
+                        style={{ padding: "0.3rem 0.6rem", borderRadius: "6px", border: "1px solid var(--border-color)", background: "var(--glass-bg)", color: "var(--text-primary)", fontSize: "0.85rem" }}
+                      />
+                    </>
+                  )}
+                  <div style={{ flex: "auto" }} />
+                  <button
+                    onClick={handleExportCSV}
+                    className="nav-btn"
+                    style={{ padding: "0.3rem 0.8rem", fontSize: "0.8rem", display: "inline-flex", alignItems: "center", gap: "0.3rem" }}
+                    title="Unduh data laporan ke format CSV / Excel"
+                  >
+                    <Download size={13} /> CSV
+                  </button>
+                  <button
+                    onClick={handleExportPDF}
+                    className="nav-btn"
+                    style={{ padding: "0.3rem 0.8rem", fontSize: "0.8rem", display: "inline-flex", alignItems: "center", gap: "0.3rem" }}
+                    title="Cetak laporan ke PDF via browser"
+                  >
+                    📄 PDF
+                  </button>
                 </div>
 
                 {filteredReports.length === 0 ? (
                   <p style={{ textAlign: "center", color: "var(--text-muted)", padding: "2rem" }}>
-                    {searchQuery ? `Tidak ada laporan yang cocok dengan kata kunci "${searchQuery}".` : "Belum ada pengaduan masuk."}
+                    {statusFilter !== "all" || dateFilter !== "all" ? `Tidak ada laporan yang cocok dengan filter yang dipilih.` : "Belum ada pengaduan masuk."}
                   </p>
                 ) : (
                   <table
@@ -2315,6 +2645,54 @@ export default function App() {
                 style={{ resize: "vertical" }}
               />
             </div>
+            {/* Preview dokumen feedback jika sudah ada */}
+            {selectedReport.foto_feedback && (
+              <div style={{ marginBottom: "1rem" }}>
+                <p style={{ fontSize: "0.8rem", fontWeight: 600, color: "var(--text-muted)", marginBottom: "0.25rem" }}>
+                  Dokumen Feedback yang Diupload:
+                </p>
+                {selectedReport.foto_feedback.toLowerCase().endsWith(".pdf") ? (
+                  <a
+                    href={"/uploads/" + selectedReport.foto_feedback}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem", fontSize: "0.9rem", color: "var(--accent-primary)" }}
+                  >
+                    📎 Buka Dokumen PDF
+                  </a>
+                ) : (
+                  <img
+                    src={"/uploads/" + selectedReport.foto_feedback}
+                    alt="Foto Feedback"
+                    style={{ maxWidth: "100%", maxHeight: "120px", borderRadius: "8px", objectFit: "cover", border: "1px solid var(--border-color)", cursor: "pointer" }}
+                    onClick={() => window.open("/uploads/" + selectedReport.foto_feedback, "_blank")}
+                  />
+                )}
+              </div>
+            )}
+            {/* Upload dokumen/foto feedback dari admin dinas */}
+            <form onSubmit={handleUploadFeedback} style={{ marginTop: "1rem" }}>
+              <label className="form-label">Upload Dokumen/Foto Feedback (Opsional)</label>
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp,application/pdf"
+                onChange={(e) => setFeedbackFile(e.target.files[0] || null)}
+                style={{ marginBottom: "0.5rem" }}
+              />
+              {feedbackUploadMsg && (
+                <p style={{ fontSize: "0.8rem", marginTop: "0.3rem", color: feedbackUploadMsg.startsWith("✅") ? "#059669" : "#dc2626", fontWeight: 600 }}>
+                  {feedbackUploadMsg}
+                </p>
+              )}
+              <button
+                type="submit"
+                className="nav-btn"
+                style={{ padding: "0.4rem 0.85rem", fontSize: "0.82rem" }}
+                disabled={feedbackUploading || !feedbackFile}
+              >
+                {feedbackUploading ? "Mengupload..." : "Upload Feedback"}
+              </button>
+            </form>
             <div
               style={{
                 display: "flex",
@@ -2471,6 +2849,45 @@ export default function App() {
                 <button type="submit" className="nav-btn nav-btn-primary">
                   Simpan Perubahan
                 </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {editReportModal.open && (
+        <div className="modal-overlay" style={{ position: "fixed", zIndex: 50, left: 0, top: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.25)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div className="glass-panel" style={{ width: 420, maxWidth: "95vw", padding: 28, borderRadius: 16, boxShadow: "0 4px 32px rgba(0,0,0,0.15)" }}>
+            <h2 style={{ fontSize: "1.2rem", fontWeight: 700, marginBottom: 16 }}>Edit Laporan</h2>
+            <form onSubmit={handleEditReport}>
+              <div className="form-group">
+                <label className="form-label">Judul</label>
+                <input type="text" className="form-input" value={editJudul} onChange={(e) => setEditJudul(e.target.value)} required />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Dinas Tujuan (Opsional)</label>
+                <select className="form-input" value={editDeptId} onChange={(e) => setEditDeptId(e.target.value)}>
+                  <option value="">Otomatis oleh AI</option>
+                  {departments.map((department) => (
+                    <option key={department.id} value={department.id}>{department.nama_dinas}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Isi Laporan</label>
+                <textarea className="form-textarea" rows={4} value={editIsi} onChange={(e) => setEditIsi(e.target.value)} required />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Latitude (Opsional)</label>
+                <input type="number" step="any" className="form-input" value={editLat} onChange={(e) => setEditLat(e.target.value)} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Longitude (Opsional)</label>
+                <input type="number" step="any" className="form-input" value={editLong} onChange={(e) => setEditLong(e.target.value)} />
+              </div>
+              <div style={{ marginTop: 20, display: "flex", justifyContent: "flex-end", gap: 12 }}>
+                <button type="button" className="nav-btn" onClick={() => setEditReportModal({ open: false, report: null })}>Batal</button>
+                <button type="submit" className="nav-btn nav-btn-primary">Simpan Perubahan</button>
               </div>
             </form>
           </div>

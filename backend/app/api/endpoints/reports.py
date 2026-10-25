@@ -1,14 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query, UploadFile, File
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
-from typing import List, Optional
+from typing import List, Optional, cast
 from app.database import get_db
-from app.schemas.report import ReportCreate, ReportUpdateStatus, ReportResponse
+from app.schemas.report import ReportCreate, ReportUpdate, ReportUpdateStatus, ReportResponse
 from app.crud.report import (
     create_report,
     get_report_by_id,
     get_reports,
     get_report_history,
+    update_report,
     cancel_report,
     update_report_status,
 )
@@ -16,7 +17,7 @@ from app.api.deps import get_current_user, get_current_active_admin
 from app.models.user import User
 from app.models.report import Report
 from app.crud.department import get_department
-from app.core.upload import validate_and_save_upload
+from app.core.upload import validate_and_save_upload, IMAGE_MIME_TYPES, IMAGE_EXTENSIONS, FEEDBACK_MIME_TYPES, FEEDBACK_EXTENSIONS
 
 router = APIRouter()
 
@@ -28,7 +29,7 @@ def submit_report(
 ):
     if report_in.dept_id is not None and not get_department(db, report_in.dept_id):
         raise HTTPException(status_code=422, detail="Dinas tujuan tidak ditemukan")
-    return create_report(db, report_in, user_id=current_user.id)
+    return create_report(db, report_in, user_id=cast(int, current_user.id))
 
 @router.get("/", response_model=List[ReportResponse])
 def list_reports(
@@ -37,6 +38,8 @@ def list_reports(
     dept_id: Optional[int] = Query(None, description="Filter berdasarkan ID Dinas"),
     status: Optional[str] = Query(None, description="Filter status: diterima, diproses, selesai, ditolak"),
     urgensi: Optional[str] = Query(None, description="Filter urgensi: normal, penting, darurat"),
+    start_date: Optional[str] = Query(None, description="Filter dari tanggal (ISO format: YYYY-MM-DD)"),
+    end_date: Optional[str] = Query(None, description="Filter sampai tanggal (ISO format: YYYY-MM-DD)"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -53,7 +56,9 @@ def list_reports(
         user_id=user_id_filter,
         dept_id=dept_id_filter,
         status=status,
-        urgensi=urgensi
+        urgensi=urgensi,
+        start_date=start_date,
+        end_date=end_date
     )
 
 @router.get("/history", response_model=List[ReportResponse])
@@ -61,7 +66,26 @@ def my_report_history(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    return get_report_history(db, current_user.id)
+    return get_report_history(db, cast(int, current_user.id))
+
+
+@router.put("/{report_id}", response_model=ReportResponse)
+def edit_my_report(
+    report_id: int,
+    report_in: ReportUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    report = get_report_by_id(db, report_id)
+    if not report:
+        raise HTTPException(status_code=404, detail="Laporan tidak ditemukan")
+    if current_user.role != "warga" or report.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Hanya pemilik laporan yang dapat mengedit laporan")
+    if report.status != "diterima":
+        raise HTTPException(status_code=409, detail="Laporan hanya dapat diedit sebelum diproses")
+    if report_in.dept_id is not None and not get_department(db, report_in.dept_id):
+        raise HTTPException(status_code=422, detail="Dinas tujuan tidak ditemukan")
+    return update_report(db, report, report_in)
 
 
 @router.post("/{report_id}/cancel", response_model=ReportResponse)
@@ -142,7 +166,7 @@ def change_report_status(
         db,
         report,
         status_baru=status_in.status,
-        admin_id=current_admin.id,
+        admin_id=cast(int, current_admin.id),
         catatan_petugas=status_in.catatan_petugas
     )
 
@@ -170,14 +194,51 @@ def upload_foto_bukti(
             detail="Hanya pemilik laporan yang dapat mengupload foto bukti."
         )
 
-    # Validasi MIME, ekstensi, ukuran, dan simpan file
-    saved_filename = validate_and_save_upload(foto)
+    # Validasi MIME, ekstensi, ukuran, dan simpan file (hanya gambar untuk bukti)
+    saved_filename = validate_and_save_upload(
+        foto,
+        allowed_mime_types=IMAGE_MIME_TYPES,
+        allowed_extensions=IMAGE_EXTENSIONS,
+        allowed_label="JPEG, PNG, WEBP",
+    )
 
     # Simpan nama file ke database
     setattr(report, "foto_bukti", saved_filename)
     db.commit()
     db.refresh(report)
 
+    return report
+
+@router.post("/{report_id}/upload-feedback", response_model=ReportResponse)
+def upload_foto_feedback(
+    report_id: int,
+    foto: UploadFile = File(..., description="Dokumen/foto feedback dari admin dinas (JPEG/PNG/WEBP/PDF, maks 5 MB)"),
+    db: Session = Depends(get_db),
+    current_admin: User = Depends(get_current_active_admin)
+):
+    """
+    Upload dokumen/foto sebagai feedback/bukti dukung dari admin dinas
+    terhadap laporan pengguna.
+    - Hanya admin dinas yang bertugas (report.dept_id == current_admin.dept_id) yang boleh.
+    - Tipe file: JPEG, PNG, WEBP, PDF. Ukuran maksimum: 5 MB.
+    """
+    report = get_report_by_id(db, report_id)
+    if not report:
+        raise HTTPException(status_code=404, detail="Laporan tidak ditemukan")
+    if report.dept_id != current_admin.dept_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Hanya admin dinas yang bertugas pada laporan ini yang dapat mengupload feedback."
+        )
+    saved_filename = validate_and_save_upload(
+        foto,
+        allowed_mime_types=FEEDBACK_MIME_TYPES,
+        allowed_extensions=FEEDBACK_EXTENSIONS,
+        allowed_label="JPEG, PNG, WEBP, PDF",
+    )
+    setattr(report, "foto_feedback", saved_filename)
+    db.commit()
+    db.refresh(report)
     return report
 
 @router.post("/sync-routing")
@@ -196,7 +257,7 @@ def sync_unrouted_reports(
     details = []
 
     for rep in unrouted:
-        dept_id, urgensi = analyze_report_ai(rep.judul, rep.isi_laporan, db)
+        dept_id, urgensi = analyze_report_ai(cast(str, rep.judul), cast(str, rep.isi_laporan), db)
         setattr(rep, "dept_id", dept_id)
         if urgensi:
             setattr(rep, "urgensi", urgensi)
@@ -228,7 +289,7 @@ def reroute_single_report(
     if not report:
         raise HTTPException(status_code=404, detail="Laporan tidak ditemukan")
 
-    dept_id, urgensi = analyze_report_ai(report.judul, report.isi_laporan, db)
+    dept_id, urgensi = analyze_report_ai(cast(str, report.judul), cast(str, report.isi_laporan), db)
     setattr(report, "dept_id", dept_id)
     if urgensi:
         setattr(report, "urgensi", urgensi)
@@ -236,3 +297,172 @@ def reroute_single_report(
     db.commit()
     db.refresh(report)
     return report
+
+
+@router.get("/export/csv")
+def export_reports_csv(
+    dept_id: Optional[int] = Query(None, description="Filter berdasarkan ID Dinas"),
+    status: Optional[str] = Query(None, description="Filter status"),
+    urgensi: Optional[str] = Query(None, description="Filter urgensi"),
+    start_date: Optional[str] = Query(None, description="Filter dari tanggal (YYYY-MM-DD)"),
+    end_date: Optional[str] = Query(None, description="Filter sampai tanggal (YYYY-MM-DD)"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Export laporan yang sudah difilter ke format CSV.
+    Hanya bisa diakses oleh admin, admin dinas, atau super admin.
+    """
+    if current_user.role not in ("admin", "admin_dinas", "super_admin"):
+        raise HTTPException(status_code=403, detail="Tidak memiliki akses untuk mengekspor laporan")
+
+    # super_admin & admin bisa lihat semua dinas; admin_dinas hanya dinasnya sendiri
+    if current_user.role == "admin_dinas":
+        dept_filter = current_user.dept_id
+    elif dept_id is not None:
+        dept_filter = dept_id
+    else:
+        dept_filter = None
+
+    reports = get_reports(
+        db=db,
+        skip=0,
+        limit=10000,
+        dept_id=dept_filter,
+        status=status,
+        urgensi=urgensi,
+        start_date=start_date,
+        end_date=end_date
+    )
+
+    import csv
+    import io
+    from datetime import datetime
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["ID", "Judul", "Isi Laporan", "Urgensi", "Dinas", "Status", "Lokasi Lat", "Lokasi Long", "Catatan Petugas", "Tanggal Dibuat", "Nama Pengguna"])
+    for r in reports:
+        dept = get_department(db, cast(int, r.dept_id)) if r.dept_id else None
+        dept_name = dept.nama_dinas if dept else "Auto-Routing"
+        writer.writerow([
+            r.id,
+            r.judul,
+            r.isi_laporan,
+            r.urgensi,
+            dept_name,
+            r.status,
+            r.lat or "",
+            r.long or "",
+            r.catatan_petugas or "",
+            r.created_at.isoformat() if r.created_at else "",
+            r.user.nama if r.user else ""
+        ])
+
+    response = output.getvalue().encode("utf-8-sig")
+    from fastapi.responses import Response as FastAPIResponse
+    return FastAPIResponse(
+        content=response,
+        media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename=govsmart_laporan_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"}
+    )
+
+
+@router.get("/export/html")
+def export_reports_html(
+    dept_id: Optional[int] = Query(None, description="Filter berdasarkan ID Dinas"),
+    status: Optional[str] = Query(None, description="Filter status"),
+    urgensi: Optional[str] = Query(None, description="Filter urgensi"),
+    start_date: Optional[str] = Query(None, description="Filter dari tanggal (YYYY-MM-DD)"),
+    end_date: Optional[str] = Query(None, description="Filter sampai tanggal (YYYY-MM-DD)"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Export laporan yang sudah difilter ke format HTML (bisa dicetak ke PDF via browser).
+    Hanya bisa diakses oleh admin, admin dinas, atau super admin.
+    """
+    if current_user.role not in ("admin", "admin_dinas", "super_admin"):
+        raise HTTPException(status_code=403, detail="Tidak memiliki akses untuk mengekspor laporan")
+
+    # super_admin & admin bisa lihat semua dinas; admin_dinas hanya dinasnya sendiri
+    if current_user.role == "admin_dinas":
+        dept_filter = current_user.dept_id
+    elif dept_id is not None:
+        dept_filter = dept_id
+    else:
+        dept_filter = None
+
+    reports = get_reports(
+        db=db,
+        skip=0,
+        limit=10000,
+        dept_id=dept_filter,
+        status=status,
+        urgensi=urgensi,
+        start_date=start_date,
+        end_date=end_date
+    )
+
+    from fastapi.responses import HTMLResponse
+    from datetime import datetime
+
+    rows_html = ""
+    for r in reports:
+        dept = get_department(db, cast(int, r.dept_id)) if r.dept_id else None
+        dept_name = dept.nama_dinas if dept else "Auto-Routing"
+        created = r.created_at.strftime("%d/%m/%Y %H:%M") if r.created_at else "-"
+        rows_html += f"""
+        <tr>
+            <td>{r.id}</td>
+            <td>{r.judul}</td>
+            <td>{r.urgensi}</td>
+            <td>{dept_name}</td>
+            <td>{r.status}</td>
+            <td>{r.lat or ''}, {r.long or ''}</td>
+            <td>{r.catatan_petugas or '-'}</td>
+            <td>{created}</td>
+        </tr>
+        """
+
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <title>Laporan GovSmart - {datetime.now().strftime('%d/%m/%Y %H:%M')}</title>
+        <style>
+            body {{ font-family: Arial, sans-serif; margin: 20px; }}
+            h1 {{ color: #1e3a8a; border-bottom: 2px solid #1e3a8a; padding-bottom: 10px; }}
+            table {{ border-collapse: collapse; width: 100%; margin-top: 20px; }}
+            th, td {{ border: 1px solid #ddd; padding: 8px; text-align: left; }}
+            th {{ background-color: #1e3a8a; color: white; }}
+            tr:nth-child(even) {{ background-color: #f2f2f2; }}
+            .export-info {{ color: #666; font-size: 0.9em; margin-bottom: 20px; }}
+        </style>
+    </head>
+    <body>
+        <h1>Laporan GovSmart</h1>
+        <p class="export-info">Dicetak pada: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}</p>
+        <p class="export-info">Total laporan: {len(reports)}</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Judul</th>
+                    <th>Urgensi</th>
+                    <th>Dinas</th>
+                    <th>Status</th>
+                    <th>Lokasi</th>
+                    <th>Catatan Petugas</th>
+                    <th>Tanggal</th>
+                </tr>
+            </thead>
+            <tbody>
+                {rows_html}
+            </tbody>
+        </table>
+    </body>
+    </html>
+    """
+    return HTMLResponse(content=html_content)

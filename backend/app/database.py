@@ -11,13 +11,22 @@ Base = declarative_base()
 
 
 def ensure_schema_compatibility():
-    """Repair the old MySQL audit schema created before admin_id became nullable."""
+    """Repair schema for evolved models (nullable cols, new columns)."""
     if engine.dialect.name != "mysql":
         return
+    inspector = inspect(engine)
+    table_names = inspector.get_table_names()
     with engine.begin() as connection:
-        if "audit_logs" not in inspect(connection).get_table_names():
-            return
-        connection.execute(text("ALTER TABLE audit_logs MODIFY COLUMN admin_id INT NULL"))
+        # Legacy: make admin_id nullable on audit_logs
+        if "audit_logs" in table_names:
+            cols = {c["name"] for c in inspector.get_columns("audit_logs")}
+            if "admin_id" in cols:
+                connection.execute(text("ALTER TABLE audit_logs MODIFY COLUMN admin_id INT NULL"))
+        # Add foto_feedback column to reports if not present
+        if "reports" in table_names:
+            cols = {c["name"] for c in inspector.get_columns("reports")}
+            if "foto_feedback" not in cols:
+                connection.execute(text("ALTER TABLE reports ADD COLUMN foto_feedback VARCHAR(255) NULL"))
 
 def get_db():
     db = SessionLocal()

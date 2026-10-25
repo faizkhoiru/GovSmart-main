@@ -14,3 +14,8 @@ def history(db:Session, user_id:int, limit:int, offset:int):
         {"prompt": r.prompt, "response": r.response, "timestamp": r.timestamp} for r in q.all()
     ]
 
+def clear_history(db:Session, user_id:int):
+    deleted = db.query(ChatHistory).filter_by(user_id=user_id).delete()
+    db.commit()
+    return deleted
+

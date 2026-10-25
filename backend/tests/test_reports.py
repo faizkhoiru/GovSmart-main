@@ -16,6 +16,16 @@ def _uploads_dir(monkeypatch):
     monkeypatch.setattr(upload_mod, "UPLOAD_DIR", tmp)
     yield tmp
 
+def test_submit_report_typo_jlan_rukas_routes_to_bina_marga(client, warga_headers):
+    response = client.post("/api/v1/reports/", json={
+        "judul": "Jlan rukas",
+        "isi_laporan": "Jlan rukas di Made membahayakan warga dan perlu diperbaiki.",
+    }, headers=warga_headers)
+    assert response.status_code == 201
+    dept = next(d for d in client.get("/api/v1/departments/").json() if d["id"] == response.json()["dept_id"])
+    assert dept["nama_dinas"] == "Dinas Pekerjaan Umum Bina Marga"
+
+
 def test_submit_report_typo_kebkaran_routes_to_satpol(client, warga_headers):
     response = client.post("/api/v1/reports/", json={
         "judul": "Kebkaran",
@@ -182,7 +192,11 @@ def test_upload_foto_success(client, warga_headers, _uploads_dir):
 
 
 def test_upload_foto_invalid_mime(client, warga_headers, _uploads_dir):
-    """Upload file PDF (bukan gambar) harus ditolak dengan 422."""
+    """Upload file PDF (bukan gambar) ke endpoint upload-foto warga harus ditolak dengan 422.
+
+    NOTE: endpoint upload-foto (Untuk warga) khusus foto bukti kerusakan, tidak menerima PDF.
+    PDF baru didukung di endpoint upload-feedback khusus admin dinas.
+    """
     # 1. Buat laporan terlebih dahulu
     rep_res = client.post("/api/v1/reports/", json={
         "judul": "Genangan Air di Jalan Protokol",
@@ -253,6 +267,20 @@ def test_submit_report_fallback_routing(client, warga_headers):
     assert routed_dept["nama_dinas"] == "Dinas Komunikasi dan Informatika"
 
 
+def test_warga_can_edit_report_before_processing(client, warga_headers):
+    created = client.post("/api/v1/reports/", json={
+        "judul": "Judul awal pengaduan",
+        "isi_laporan": "Isi awal pengaduan minimal dua puluh karakter.",
+    }, headers=warga_headers).json()
+    response = client.put(f"/api/v1/reports/{created['id']}", json={
+        "judul": "Judul pengaduan diperbaiki",
+        "isi_laporan": "Isi pengaduan yang sudah diperbaiki minimal dua puluh karakter.",
+        "dept_id": created["dept_id"],
+    }, headers=warga_headers)
+    assert response.status_code == 200
+    assert response.json()["judul"] == "Judul pengaduan diperbaiki"
+
+
 def test_warga_history_limited_and_can_cancel_before_processing(client, warga_headers):
     for index in range(6):
         response = client.post("/api/v1/reports/", json={
@@ -294,4 +322,146 @@ def test_sync_routing_endpoint(client, super_admin_headers):
     assert res_data["status"] == "success"
     assert "total_unrouted_found" in res_data
     assert "total_updated" in res_data
+
+
+def test_admin_dinas_upload_feedback_photo(client, db, warga_headers, super_admin_headers, _uploads_dir):
+    """Admin dinas dapat upload foto feedback untuk laporan di departemennya."""
+    import io
+    from app.crud.user import create_admin_dinas
+    from app.schemas.user import AdminDinasCreate
+
+    # 1. Warga buat laporan
+    rep_res = client.post("/api/v1/reports/", json={
+        "judul": "Jalan berlubang di depan sekolah",
+        "isi_laporan": "Jalan berlubang di depan sekolah dasar, butuh perbaikan segera karena membahayakan anak sekolah.",
+    }, headers=warga_headers)
+    assert rep_res.status_code == 201
+    report_id = rep_res.json()["id"]
+    routed_dept_id = rep_res.json()["dept_id"]
+
+    # 2. Super admin buat admin dinas untuk departemen yang sama
+    depts = client.get("/api/v1/departments/").json()
+    routed_dept = next(d for d in depts if d["id"] == routed_dept_id)
+    admin_in = AdminDinasCreate(
+        nip="198505052010012001",
+        email="admin.pu@lamongan.go.id",
+        password="AdminPassword123!",
+        dept_id=routed_dept["id"]
+    )
+    client.post("/api/v1/admin/admin-dinas", json={
+        "nip": admin_in.nip,
+        "email": admin_in.email,
+        "password": admin_in.password,
+        "dept_id": admin_in.dept_id
+    }, headers=super_admin_headers)
+
+    token = create_access_token(subject=admin_in.email)
+    admin_headers = {"Authorization": f"Bearer {token}"}
+
+    # 3. Admin dinas upload foto feedback
+    fake_jpeg = io.BytesIO(b'\xff\xd8\xff\xe0' + b'\x00' * 100)
+    upload_res = client.post(
+        f"/api/v1/reports/{report_id}/upload-feedback",
+        files={"foto": ("feedback.jpg", fake_jpeg, "image/jpeg")},
+        headers=admin_headers
+    )
+    assert upload_res.status_code == 200
+    data = upload_res.json()
+    assert data["foto_feedback"] is not None
+    assert data["foto_feedback"].endswith(".jpg")
+    assert os.path.exists(os.path.join(_uploads_dir, data["foto_feedback"]))
+
+
+def test_admin_dinas_upload_feedback_denied_cross_department(client, db, warga_headers, super_admin_headers):
+    """Admin dinas tidak boleh upload feedback untuk laporan di departemen lain."""
+    import io
+    from app.crud.user import create_admin_dinas
+    from app.schemas.user import AdminDinasCreate
+
+    # Warga buat laporan
+    rep_res = client.post("/api/v1/reports/", json={
+        "judul": "Jalan berlubang di depan sekolah",
+        "isi_laporan": "Jalan berlubang di depan sekolah dasar, butuh perbaikan segera karena membahayakan anak sekolah.",
+    }, headers=warga_headers)
+    report_id = rep_res.json()["id"]
+    routed_dept_id = rep_res.json()["dept_id"]
+
+    # Buat admin dinas di DEPARTEMEN LAIN
+    depts = client.get("/api/v1/departments/").json()
+    other_dept = next(d for d in depts if d["id"] != routed_dept_id)
+    admin_in = AdminDinasCreate(
+        nip="198505052010012002",
+        email="admin.other@lamongan.go.id",
+        password="AdminPassword123!",
+        dept_id=other_dept["id"]
+    )
+    client.post("/api/v1/admin/admin-dinas", json={
+        "nip": admin_in.nip,
+        "email": admin_in.email,
+        "password": admin_in.password,
+        "dept_id": admin_in.dept_id
+    }, headers=super_admin_headers)
+    token = create_access_token(subject=admin_in.email)
+    admin_headers = {"Authorization": f"Bearer {token}"}
+
+    # Coba upload foto feedback -> harus 403
+    fake_jpeg = io.BytesIO(b'\xff\xd8\xff\xe0' + b'\x00' * 100)
+    upload_res = client.post(
+        f"/api/v1/reports/{report_id}/upload-feedback",
+        files={"foto": ("feedback.jpg", fake_jpeg, "image/jpeg")},
+        headers=admin_headers
+    )
+    assert upload_res.status_code == 403
+    assert "feedback" in upload_res.json()["detail"].lower()
+
+
+def test_admin_dinas_upload_feedback_pdf_allowed(client, db, warga_headers, super_admin_headers, _uploads_dir):
+    """Admin dinas dapat upload PDF sebagai feedback dokumen."""
+    import io
+    from app.crud.user import create_admin_dinas
+    from app.schemas.user import AdminDinasCreate
+
+    rep_res = client.post("/api/v1/reports/", json={
+        "judul": "Jalan berlubang di depan sekolah",
+        "isi_laporan": "Jalan berlubang di depan sekolah dasar, butuh perbaikan segera karena membahayakan anak sekolah.",
+    }, headers=warga_headers)
+    report_id = rep_res.json()["id"]
+    routed_dept_id = rep_res.json()["dept_id"]
+
+    depts = client.get("/api/v1/departments/").json()
+    routed_dept = next(d for d in depts if d["id"] == routed_dept_id)
+    admin_in = AdminDinasCreate(
+        nip="198505052010012003",
+        email="admin.pu2@lamongan.go.id",
+        password="AdminPassword123!",
+        dept_id=routed_dept["id"]
+    )
+    client.post("/api/v1/admin/admin-dinas", json={
+        "nip": admin_in.nip,
+        "email": admin_in.email,
+        "password": admin_in.password,
+        "dept_id": admin_in.dept_id
+    }, headers=super_admin_headers)
+    token = create_access_token(subject=admin_in.email)
+    admin_headers = {"Authorization": f"Bearer {token}"}
+
+    fake_pdf = io.BytesIO(b'%PDF-1.4 fake content for feedback')
+    upload_res = client.post(
+        f"/api/v1/reports/{report_id}/upload-feedback",
+        files={"foto": ("feedback.pdf", fake_pdf, "application/pdf")},
+        headers=admin_headers
+    )
+    assert upload_res.status_code == 200
+    assert upload_res.json()["foto_feedback"].endswith(".pdf")
+
+
+def test_admin_dinas_upload_feedback_report_not_found(client, super_admin_headers):
+    """Upload feedback untuk laporan tidak ada harus 404."""
+    fake_jpeg = io.BytesIO(b'\xff\xd8\xff\xe0' + b'\x00' * 100)
+    upload_res = client.post(
+        f"/api/v1/reports/999999/upload-feedback",
+        files={"foto": ("feedback.jpg", fake_jpeg, "image/jpeg")},
+        headers=super_admin_headers
+    )
+    assert upload_res.status_code == 404
 

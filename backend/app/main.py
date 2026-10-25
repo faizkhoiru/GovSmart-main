@@ -37,13 +37,14 @@ app = FastAPI(
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
 import os
-UPLOAD_DIR = os.environ.get("GOVSMART_UPLOAD_DIR", "/app/uploads")
+UPLOAD_DIR = os.environ.get("GOVSMART_UPLOAD_DIR", os.path.join(os.path.dirname(os.path.dirname(__file__)), "uploads"))
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
-@app.get("/")
-def read_root():
-    return {"message": "Welcome to GovSmart API"}
+# Mount frontend build (dist) for production serving
+FRONTEND_DIST = os.environ.get("FRONTEND_DIST_DIR", "/app/frontend-dist")
+if os.path.isdir(FRONTEND_DIST):
+    app.mount("/", StaticFiles(directory=FRONTEND_DIST, html=True), name="frontend")
 
 @app.get("/health")
 def health_check():
