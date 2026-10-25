@@ -92,4 +92,5 @@ logs/
 *.pid
 *.zip.env
 *.zip
-
+# ─── Paper / Academic Publications ───────────────────────────
+paper/
