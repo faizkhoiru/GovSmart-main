@@ -27,6 +27,8 @@ def ensure_schema_compatibility():
             cols = {c["name"] for c in inspector.get_columns("reports")}
             if "foto_feedback" not in cols:
                 connection.execute(text("ALTER TABLE reports ADD COLUMN foto_feedback VARCHAR(255) NULL"))
+            if "created_at" not in cols:
+                connection.execute(text("ALTER TABLE reports ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP NULL"))
 
 def get_db():
     db = SessionLocal()

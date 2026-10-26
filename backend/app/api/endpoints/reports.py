@@ -342,9 +342,16 @@ def export_reports_csv(
     output = io.StringIO()
     writer = csv.writer(output)
     writer.writerow(["ID", "Judul", "Isi Laporan", "Urgensi", "Dinas", "Status", "Lokasi Lat", "Lokasi Long", "Catatan Petugas", "Tanggal Dibuat", "Nama Pengguna"])
+    user_cache = {}
     for r in reports:
         dept = get_department(db, cast(int, r.dept_id)) if r.dept_id else None
         dept_name = dept.nama_dinas if dept else "Auto-Routing"
+        if r.user_id not in user_cache:
+            u = db.query(User).filter(User.id == r.user_id).first()
+            user_cache[r.user_id] = u.email if u else f"User #{r.user_id}"
+        user_label = user_cache[r.user_id]
+        created_val = getattr(r, "created_at", None)
+        created_str = created_val.strftime("%Y-%m-%d %H:%M:%S") if created_val else ""
         writer.writerow([
             r.id,
             r.judul,
@@ -355,8 +362,8 @@ def export_reports_csv(
             r.lat or "",
             r.long or "",
             r.catatan_petugas or "",
-            r.created_at.isoformat() if r.created_at else "",
-            r.user.nama if r.user else ""
+            created_str,
+            user_label
         ])
 
     response = output.getvalue().encode("utf-8-sig")
@@ -411,7 +418,8 @@ def export_reports_html(
     for r in reports:
         dept = get_department(db, cast(int, r.dept_id)) if r.dept_id else None
         dept_name = dept.nama_dinas if dept else "Auto-Routing"
-        created = r.created_at.strftime("%d/%m/%Y %H:%M") if r.created_at else "-"
+        created_val = getattr(r, "created_at", None)
+        created = created_val.strftime("%d/%m/%Y %H:%M") if created_val else "-"
         rows_html += f"""
         <tr>
             <td>{r.id}</td>

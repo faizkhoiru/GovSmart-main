@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import Optional
+from datetime import datetime
 
 class ReportCreate(BaseModel):
     judul: str = Field(..., min_length=5, max_length=100, description="Judul laporan (5-100 karakter)")
@@ -35,6 +36,7 @@ class ReportResponse(BaseModel):
     catatan_petugas: Optional[str] = None
     # Nama file dokumen/foto feedback dari admin dinas (None jika belum ada)
     foto_feedback: Optional[str] = None
+    created_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True

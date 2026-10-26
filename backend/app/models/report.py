@@ -1,6 +1,8 @@
-from sqlalchemy import Integer, String, Text, Float, ForeignKey
+from sqlalchemy import Integer, String, Text, Float, ForeignKey, DateTime
 from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.sql import func
 from typing import Optional
+from datetime import datetime
 from app.database import Base
 
 class Report(Base):
@@ -21,3 +23,5 @@ class Report(Base):
     catatan_petugas: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     # Nama file dokumen/foto feedback dari admin dinas (nullable, JPEG/PNG/WEBP/PDF, maks 5 MB)
     foto_feedback: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    # Waktu pembuatan laporan
+    created_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=True)
