@@ -1,6 +1,6 @@
 {
   "model": "intfloat/multilingual-e5-small",
-  "n": 1080,
+  "n": 761,
   "dim": 384,
-  "chunks_sha1": "e64338c007b9b90f3dbc1d567f2e763e8e8d37b4"
+  "chunks_sha1": "4c448232966566f3bfc41709169a5ac735befa94"
 }

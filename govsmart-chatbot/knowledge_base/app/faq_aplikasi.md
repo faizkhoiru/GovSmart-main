@@ -9,6 +9,18 @@ GovSmart memiliki tiga jenis pengguna. Warga (masyarakat umum dan pelaku UMKM) d
 ## Bagaimana cara mendaftar akun di GovSmart?
 Buka halaman login, pilih "Daftar baru", lalu isi NIK (16 digit), email yang valid, dan password. Password minimal 8 karakter dan harus memuat huruf besar, huruf kecil, angka, dan simbol (contoh: !@#$%). NIK dan email tidak boleh sudah terdaftar. Setelah berhasil, Anda diminta masuk (login) dengan akun tersebut.
 
+## Bagaimana cara bikin akun atau registrasi pengguna baru?
+Untuk membuat atau membikin akun baru di GovSmart, buka halaman masuk dan klik tautan "Daftar Baru". Masukkan 16 digit NIK e-KTP, email aktif Anda, serta password kuat (minimal 8 karakter dengan huruf kapital, huruf kecil, angka, dan simbol). Tekan tombol Daftar untuk mengaktifkan akun.
+
+## Apa saja syarat dan kriteria password akun GovSmart?
+Ketentuan password yang aman di GovSmart:
+1. Panjang minimal 8 karakter.
+2. Memuat minimal 1 huruf besar (kapital A-Z).
+3. Memuat minimal 1 huruf kecil (a-z).
+4. Memuat minimal 1 angka (0-9).
+5. Memuat minimal 1 simbol unik atau tanda baca (seperti ! @ # $ % ^ & * _ + - =).
+Jika password tidak memenuhi syarat di atas, pendaftaran atau penggantian sandi akan ditolak sistem.
+
 ## Mengapa pendaftaran akun gagal?
 Pendaftaran gagal jika email atau NIK sudah pernah didaftarkan, format email tidak valid, atau password tidak memenuhi syarat (minimal 8 karakter dengan huruf besar, huruf kecil, angka, dan simbol). Periksa pesan kesalahan yang muncul di formulir.
 

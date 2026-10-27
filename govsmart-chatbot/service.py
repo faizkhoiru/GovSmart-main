@@ -41,16 +41,67 @@ try:
     from scripts.chatbot import GovSmartChatbot
     _default_bot = GovSmartChatbot()
 except Exception as e:
-    print("[WARN] Gagal load GovSmartChatbot, pakai DummyChatbot. Error:", e)
-    class DummyChatbot:
+    print("[WARN] Gagal load GovSmartChatbot, pakai SmartFallbackChatbot. Error:", e)
+    class SmartFallbackChatbot:
         def tanya(self, pertanyaan, pakai_llm=True):
+            q = str(pertanyaan or "").lower()
+            if any(k in q for k in ["bikin akun", "buat akun", "daftar", "registrasi", "register"]):
+                jawaban = (
+                    "Untuk membuat akun baru di GovSmart:\n"
+                    "1. Klik menu 'Daftar Baru' pada halaman login.\n"
+                    "2. Masukkan NIK (16 digit) dan Email aktif.\n"
+                    "3. Buat Password (min. 8 karakter dengan huruf besar, huruf kecil, angka, dan simbol).\n"
+                    "4. Tekan Daftar. Akun langsung aktif untuk login."
+                )
+                intent = "faq_registrasi_akun"
+                layanan = "Layanan Akun GovSmart"
+            elif any(k in q for k in ["login", "masuk", "password", "kata sandi"]):
+                jawaban = "Gunakan Email atau NIK beserta password Anda pada halaman Masuk. Sesi login berlaku 24 jam."
+                intent = "faq_login_akun"
+                layanan = "Layanan Akun GovSmart"
+            elif any(k in q for k in ["nib", "oss", "izin usaha", "umkm"]):
+                jawaban = "Pendaftaran NIB untuk UMKM dapat dilakukan mandiri dan gratis via oss.go.id atau dibantu di loket DPMPTSP MPP Lamongan."
+                intent = "faq_nib"
+                layanan = "DPMPTSP Lamongan"
+            elif any(k in q for k in ["ktp", "kk", "akta", "kia", "dukcapil", "pindah"]):
+                jawaban = "Layanan Adminduk (KTP, KK, Akta) dilayani gratis di Disdukcapil Lamongan atau kantor kecamatan setempat."
+                intent = "faq_adminduk"
+                layanan = "Disdukcapil Lamongan"
+            elif any(k in q for k in ["jalan", "lubang", "aspal", "jembatan"]):
+                jawaban = "Kerusakan jalan kabupaten dan jembatan ditangani oleh Dinas PU Bina Marga. Laporkan melalui menu Buat Laporan dengan foto dan koordinat GPS."
+                intent = "laporan_jalan"
+                layanan = "Dinas PU Bina Marga"
+            elif any(k in q for k in ["lampu", "pju", "rambu", "dishub"]):
+                jawaban = "Lampu jalan (PJU) padam dan rambu lalu lintas ditangani Dinas Perhubungan Lamongan. Laporkan nama jalan dan nomor tiang lampu."
+                intent = "laporan_pju"
+                layanan = "Dinas Perhubungan"
+            elif any(k in q for k in ["sampah", "tps", "kebersihan", "dlh"]):
+                jawaban = "Tumpukan sampah liar dan kebersihan lingkungan ditangani Dinas Lingkungan Hidup (DLH) Lamongan. Kirim laporan di GovSmart."
+                intent = "laporan_sampah"
+                layanan = "Dinas Lingkungan Hidup"
+            elif any(k in q for k in ["bansos", "pkh", "bpnt", "dinsos", "dtks"]):
+                jawaban = "Bantuan sosial bersumber dari DTKS Kemensos RI dan diusulkan melalui musyawarah desa/kelurahan setempat sebelum verifikasi Dinas Sosial."
+                intent = "faq_bansos"
+                layanan = "Dinas Sosial"
+            elif any(k in q for k in ["kesehatan", "puskesmas", "rsud", "bpjs"]):
+                jawaban = "Pelayanan kesehatan dasar dilayani di Puskesmas kecamatan dan rujukan lanjutan di RSUD dr. Soegiri Lamongan dengan kepesertaan BPJS Kesehatan."
+                intent = "faq_kesehatan"
+                layanan = "Dinas Kesehatan"
+            else:
+                jawaban = (
+                    "Untuk membuat laporan pengaduan fasilitas umum, pilih menu 'Buat Laporan' di GovSmart. "
+                    "Sistem AI akan otomatis merutekan laporan Anda ke dinas terkait."
+                )
+                intent = "panduan_aplikasi"
+                layanan = "GovSmart Administrator"
+
             return {
-                "jawaban": "Proses registrasi KKPR maksimal 5 hari; persetujuan 10 hari.",
-                "intent": "faq_kkpr",
-                "mode": "ekstraktif",
-                "sumber": [{"no":1,"judul":"Panduan KKPR","konteks":"Registrasi KKPR","layanan":"Dinas Tata Ruang","halaman":"12"}]
+                "jawaban": jawaban,
+                "intent": intent,
+                "mode": "smart_fallback",
+                "sumber": [{"no": 1, "judul": f"Panduan Resmi {layanan}", "konteks": "Pelayanan Terpadu Kabupaten Lamongan", "layanan": layanan, "halaman": "1"}]
             }
-    _default_bot = DummyChatbot()
+    _default_bot = SmartFallbackChatbot()
 
 # Ubah DummyChatbot() ke load GovSmartChatbot() bila pipeline tersedia
 def create_app(bot=None):

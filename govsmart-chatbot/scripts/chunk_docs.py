@@ -45,6 +45,8 @@ DOC_META = {
         "Perbup Lamongan No. 40 Tahun 2025 tentang SOP Pelayanan Perizinan", "peraturan"),
     "sk_dpmptsp_lamongan_standar_pelayanan_2026": (
         "SK DPMPTSP Lamongan tentang Standar Pelayanan 2026", "peraturan"),
+    "layanan_publik_lamongan": (
+        "Panduan Pelayanan Publik Organisasi Perangkat Daerah Kab. Lamongan", "panduan"),
     "uu_24_2009_bendera_bahasa_lambang": (
         "UU No. 24 Tahun 2009 tentang Bendera, Bahasa, dan Lambang Negara serta Lagu Kebangsaan",
         "peraturan"),

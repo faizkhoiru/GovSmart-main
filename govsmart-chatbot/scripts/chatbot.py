@@ -102,16 +102,32 @@ KENAL_RE = re.compile(r"siapa\s+(?:kamu|anda)|(?:kamu|anda)\s+siapa|(?:kamu|anda
 
 # Kata kunci per koleksi (regex). Mendukung ejaan umum dan variasi kata.
 KATA_KUNCI = {
-    "aplikasi": [r"govsmart", r"aplikasi", r"akun", r"login", r"\w*lapor\w*", r"\w*aduan\w*", r"nik",
-                 r"password", r"kata\s+sandi", r"chatbot", r"dasbor", r"dashboard", r"fitur", r"unggah", r"upload"],
-    "pemerintah": [r"\w*izin\w*", r"\w*ijin\w*", r"nib", r"oss", r"kkpr", r"pbg", r"slf", r"retribusi", r"dpmptsp", r"dinas",
-                   r"bupati", r"pemkab", r"pelayanan\s+publik", r"standar\s+pelayanan", r"sop", r"perbup", r"perda",
-                   r"umkm", r"tata\s+ruang", r"amdal", r"sppl", r"reklame", r"persetujuan\s+lingkungan", r"lamongan",
-                   r"ktp", r"kartu\s+keluarga", r"\bkk\b", r"akta", r"kependudukan", r"dukcapil", r"dispendukcapil"],
-    "kenegaraan": [r"pancasila\w*", r"uud\w*", r"undang-undang\s+dasar", r"bendera", r"merah\s+putih", r"lambang\s+negara",
-                   r"garuda", r"bhinneka\w*", r"lagu\s+kebangsaan", r"indonesia\s+raya", r"bahasa\s+negara",
-                   r"proklamasi", r"\w*merdeka\w*", r"bpupk\w*", r"ppki\w*", r"sumpah\s+pemuda", r"nasionalis\w*",
-                   r"wawasan\s+kebangsaan", r"nkri", r"konstitusi", r"sila", r"pahlawan", r"bela\s+negara"],
+    "aplikasi": [
+        r"govsmart", r"aplikasi", r"akun", r"login", r"\w*lapor\w*", r"\w*aduan\w*", r"nik",
+        r"password", r"kata\s+sandi", r"chatbot", r"dasbor", r"dashboard", r"fitur", r"unggah", r"upload",
+        r"daftar", r"registrasi", r"register", r"masuk", r"keluar", r"logout", r"profil",
+        r"urgensi", r"darurat", r"status", r"audit\s+log", r"foto\s+bukti", r"koordinat", r"peta"
+    ],
+    "pemerintah": [
+        r"\w*izin\w*", r"\w*ijin\w*", r"nib", r"oss", r"kkpr", r"pbg", r"slf", r"retribusi", r"dpmptsp", r"dinas",
+        r"bupati", r"pemkab", r"pelayanan\s+publik", r"standar\s+pelayanan", r"sop", r"perbup", r"perda",
+        r"umkm", r"tata\s+ruang", r"amdal", r"sppl", r"reklame", r"persetujuan\s+lingkungan", r"lamongan",
+        r"ktp", r"kartu\s+keluarga", r"\bkk\b", r"akta", r"kependudukan", r"dukcapil", r"dispendukcapil", r"kia", r"adminduk",
+        r"jalan", r"jembatan", r"aspal", r"lubang", r"bina\s+marga", r"pupr",
+        r"lampu", r"pju", r"penerangan", r"dishub", r"perhubungan", r"rambu", r"traffic",
+        r"sampah", r"kebersihan", r"dlh", r"lingkungan\s+hidup", r"limbah", r"tps", r"tpa",
+        r"bansos", r"pkh", r"bpnt", r"blt", r"dtks", r"sosial", r"dinsos", r"miskin",
+        r"kesehatan", r"puskesmas", r"rsud", r"bpjs", r"dinkes", r"obat", r"dokter", r"stunting",
+        r"sekolah", r"pendidikan", r"beasiswa", r"guru", r"disdik",
+        r"satpol", r"satpol\s+pp", r"razia", r"ketertiban", r"pengemis", r"gepeng",
+        r"pupuk", r"pertanian", r"panen", r"nelayan", r"perikanan", r"loker", r"disnaker"
+    ],
+    "kenegaraan": [
+        r"pancasila\w*", r"uud\w*", r"undang-undang\s+dasar", r"bendera", r"merah\s+putih", r"lambang\s+negara",
+        r"garuda", r"bhinneka\w*", r"lagu\s+kebangsaan", r"indonesia\s+raya", r"bahasa\s+negara",
+        r"proklamasi", r"\w*merdeka\w*", r"bpupk\w*", r"ppki\w*", r"sumpah\s+pemuda", r"nasionalis\w*",
+        r"wawasan\s+kebangsaan", r"nkri", r"konstitusi", r"sila", r"pahlawan", r"bela\s+negara"
+    ],
 }
 KW_RX = {k: re.compile(r"\b(?:" + "|".join(v) + r")\b", re.I) for k, v in KATA_KUNCI.items()}
 
@@ -190,10 +206,19 @@ def panggil_llm(messages, timeout=None):
 
 # ------------------------------------------------------------------ cuplikan untuk mode ekstraktif
 # Kata dalam pertanyaan -> kata yang dipakai dokumen (hanya untuk memilih bagian teks yang ditampilkan)
-SINONIM = {"lama": ["jangka", "waktu", "hari"], "waktu": ["jangka", "hari"], "biaya": ["tarif", "retribusi"],
-           "syarat": ["persyaratan"], "persyaratan": ["syarat"], "daftar": ["registrasi", "pendaftaran"],
-           "prosedur": ["mekanisme", "sistem"], "cara": ["mekanisme", "prosedur", "langkah"],
-           "bayar": ["biaya", "tarif", "retribusi"]}
+SINONIM = {
+    "lama": ["jangka", "waktu", "hari"], "waktu": ["jangka", "hari"], "biaya": ["tarif", "retribusi"],
+    "syarat": ["persyaratan"], "persyaratan": ["syarat"], "daftar": ["registrasi", "pendaftaran"],
+    "prosedur": ["mekanisme", "sistem"], "cara": ["mekanisme", "prosedur", "langkah"],
+    "bayar": ["biaya", "tarif", "retribusi"],
+    "bikin": ["buat", "membuat", "pendaftaran", "daftar", "pengurusan"],
+    "buat": ["bikin", "membuat", "daftar", "pengajuan"],
+    "akun": ["pengguna", "user", "registrasi", "profil"],
+    "masuk": ["login", "akses"], "login": ["masuk", "akses"],
+    "mati": ["padam", "rusak"], "padam": ["mati", "rusak"],
+    "rusak": ["berlubang", "rusak", "amblas"], "lubang": ["berlubang", "rusak"],
+    "sampah": ["kebersihan", "limbah", "tps"],
+}
 
 
 def cuplikan(teks, query, panjang=1400):
