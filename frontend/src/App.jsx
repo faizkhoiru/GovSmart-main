@@ -26,6 +26,10 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/+$/, "");
+const apiUrl = (path) => `${API_BASE_URL}${path}`;
+const apiFetch = (path, options) => fetch(apiUrl(path), options);
+
 // Fix leaflet default icon
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -144,7 +148,7 @@ export default function App() {
         lat: editLat ? parseFloat(editLat) : null,
         long: editLong ? parseFloat(editLong) : null,
       };
-      const res = await fetch(`/api/v1/reports/${editReportModal.report.id}`, {
+      const res = await apiFetch(`/api/v1/reports/${editReportModal.report.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -299,7 +303,7 @@ export default function App() {
       if (start) params.set("start_date", start.toISOString().split("T")[0]);
       if (end) params.set("end_date", end.toISOString().split("T")[0]);
 
-       const res = await fetch(`/api/v1/reports/?${params}`, { headers });
+       const res = await apiFetch(`/api/v1/reports/?${params}`, { headers });
       if (res.ok) {
         const data = await res.json();
         setReports(data);
@@ -313,7 +317,7 @@ export default function App() {
 
   const fetchDepartments = async () => {
     try {
-      const res = await fetch("/api/v1/departments/");
+      const res = await apiFetch("/api/v1/departments/");
       if (res.ok) {
         const data = await res.json();
         setDepartments(data);
@@ -326,7 +330,7 @@ export default function App() {
   const fetchNotifications = async () => {
     if (userRole !== "admin") return;
     try {
-      const res = await fetch("/api/v1/reports/notifications/me", {
+      const res = await apiFetch("/api/v1/reports/notifications/me", {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
@@ -382,7 +386,7 @@ export default function App() {
     if (!token) return;
     (async () => {
       try {
-        const res = await fetch("/api/v1/chat/history?limit=20", {
+        const res = await apiFetch("/api/v1/chat/history?limit=20", {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!res.ok) return;
@@ -412,7 +416,7 @@ export default function App() {
       formData.append("username", loginEmail);
       formData.append("password", loginPassword);
 
-      const res = await fetch("/api/v1/auth/login", {
+      const res = await apiFetch("/api/v1/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: formData,
@@ -434,7 +438,7 @@ export default function App() {
       setToken(data.access_token);
 
       // Determine user role via /me
-      const profileRes = await fetch("/api/v1/admin/me", {
+      const profileRes = await apiFetch("/api/v1/admin/me", {
         headers: { Authorization: `Bearer ${data.access_token}` },
       });
       if (profileRes.ok) {
@@ -457,7 +461,7 @@ export default function App() {
     e.preventDefault();
     setAuthError("");
     try {
-      const res = await fetch("/api/v1/auth/register", {
+      const res = await apiFetch("/api/v1/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -532,7 +536,7 @@ export default function App() {
         long: long ? parseFloat(long) : null,
       };
 
-      const res = await fetch("/api/v1/reports/", {
+      const res = await apiFetch("/api/v1/reports/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -561,7 +565,7 @@ export default function App() {
         try {
           const formData = new FormData();
           formData.append("foto", fotoFile);
-          const fotoRes = await fetch(`/api/v1/reports/${data.id}/upload-foto`, {
+          const fotoRes = await apiFetch(`/api/v1/reports/${data.id}/upload-foto`, {
             method: "POST",
             headers: { Authorization: `Bearer ${token}` },
             body: formData,
@@ -599,7 +603,7 @@ export default function App() {
     try {
       const formData = new FormData();
       formData.append("foto", fotoFile);
-      const res = await fetch(`/api/v1/reports/${reportId}/upload-foto`, {
+      const res = await apiFetch(`/api/v1/reports/${reportId}/upload-foto`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
@@ -640,7 +644,7 @@ export default function App() {
   const handleCancelReport = async (reportId) => {
     if (!window.confirm("Batalkan pengaduan ini?")) return;
     try {
-      const res = await fetch(`/api/v1/reports/${reportId}/cancel`, {
+      const res = await apiFetch(`/api/v1/reports/${reportId}/cancel`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -661,7 +665,7 @@ export default function App() {
   // Status Update Handler
   const handleUpdateStatus = async (reportId) => {
     try {
-      const res = await fetch(`/api/v1/reports/${reportId}/status`, {
+      const res = await apiFetch(`/api/v1/reports/${reportId}/status`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -696,7 +700,7 @@ export default function App() {
     try {
       const formData = new FormData();
       formData.append("foto", feedbackFile);
-      const res = await fetch(`/api/v1/reports/${selectedReport.id}/upload-feedback`, {
+      const res = await apiFetch(`/api/v1/reports/${selectedReport.id}/upload-feedback`, {
         method: "POST",
         headers: { Authorization: "Bearer " + token },
         body: formData,
@@ -737,7 +741,7 @@ export default function App() {
         if (myDept) params.set("dept_id", myDept.id);
       }
 
-      const res = await fetch(`/api/v1/reports/export/csv?${params}`, {
+      const res = await apiFetch(`/api/v1/reports/export/csv?${params}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) {
@@ -770,7 +774,7 @@ export default function App() {
       if (end) params.set("end_date", end.toISOString().split("T")[0]);
       if (statusFilter !== "all") params.set("status", statusFilter);
 
-      const res = await fetch(`/api/v1/reports/export/html?${params}`, {
+      const res = await apiFetch(`/api/v1/reports/export/html?${params}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) {
@@ -801,7 +805,7 @@ export default function App() {
     const currentToken = token || localStorage.getItem("govsmart_token");
     if (currentToken) {
       try {
-        await fetch("/api/v1/chat/history", {
+        await apiFetch("/api/v1/chat/history", {
           method: "DELETE",
           headers: { Authorization: "Bearer " + currentToken },
         });
@@ -815,7 +819,7 @@ export default function App() {
     setSelectedReport(report);
     setShowAuditModal(true);
     try {
-      const res = await fetch(`/api/v1/admin/audit-logs/${report.id}`, {
+      const res = await apiFetch(`/api/v1/admin/audit-logs/${report.id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
@@ -832,7 +836,7 @@ export default function App() {
     e.preventDefault();
     setAdminSuccess("");
     try {
-      const res = await fetch("/api/v1/admin/admin-dinas", {
+      const res = await apiFetch("/api/v1/admin/admin-dinas", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -873,7 +877,7 @@ export default function App() {
   // Fetch Admin Dinas list
   const fetchAdminDinas = async () => {
     try {
-      const res = await fetch("/api/v1/admin/admin-dinas", {
+      const res = await apiFetch("/api/v1/admin/admin-dinas", {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
@@ -900,7 +904,7 @@ export default function App() {
   const handleUpdateAdminDinas = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch(`/api/v1/admin/admin-dinas/${editingAdmin.id}`, {
+      const res = await apiFetch(`/api/v1/admin/admin-dinas/${editingAdmin.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -933,7 +937,7 @@ export default function App() {
   const handleDeleteAdminDinas = async (admin) => {
     if (!window.confirm(`Hapus akun Admin Dinas ${admin.email}? Akun yang dinonaktifkan tidak dapat login.`)) return;
     try {
-      const res = await fetch(`/api/v1/admin/admin-dinas/${admin.id}`, {
+      const res = await apiFetch(`/api/v1/admin/admin-dinas/${admin.id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -972,7 +976,7 @@ export default function App() {
       const headers = { "Content-Type": "application/json" };
       if (token) headers["Authorization"] = `Bearer ${token}`;
 
-      const res = await fetch("/api/v1/chat/", {
+      const res = await apiFetch("/api/v1/chat/", {
         method: "POST",
         headers,
         body: JSON.stringify({ pertanyaan: userMsg }),
@@ -1804,7 +1808,7 @@ export default function App() {
                     {report.foto_bukti && (
                       <div style={{ marginBottom: "1rem" }}>
                         <img
-                          src={`/uploads/${report.foto_bukti}`}
+                          src={apiUrl(`/uploads/${report.foto_bukti}`)}
                           alt="Foto Bukti Kerusakan"
                           style={{
                             maxWidth: "100%",
@@ -1815,7 +1819,7 @@ export default function App() {
                             cursor: "pointer",
                             boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
                           }}
-                          onClick={() => window.open(`/uploads/${report.foto_bukti}`, "_blank")}
+                          onClick={() => window.open(apiUrl(`/uploads/${report.foto_bukti}`), "_blank")}
                           title="Klik untuk melihat foto ukuran penuh"
                         />
                       </div>
@@ -1856,7 +1860,7 @@ export default function App() {
                           📎 Dokumen Feedback Dinas tersedia
                         </span>
                         <a
-                          href={`/uploads/${report.foto_feedback}`}
+                          href={apiUrl(`/uploads/${report.foto_feedback}`)}
                           target="_blank"
                           rel="noopener noreferrer"
                           style={{
@@ -2583,7 +2587,7 @@ export default function App() {
                   Foto Bukti Lampiran:
                 </p>
                 <img
-                  src={`/uploads/${selectedReport.foto_bukti}`}
+                  src={apiUrl(`/uploads/${selectedReport.foto_bukti}`)}
                   alt="Foto Bukti"
                   style={{
                     maxWidth: "100%",
@@ -2593,7 +2597,7 @@ export default function App() {
                     border: "1px solid var(--border-color)",
                     cursor: "pointer",
                   }}
-                  onClick={() => window.open(`/uploads/${selectedReport.foto_bukti}`, "_blank")}
+                  onClick={() => window.open(apiUrl(`/uploads/${selectedReport.foto_bukti}`), "_blank")}
                   title="Klik untuk membuka ukuran penuh"
                 />
               </div>
@@ -2653,7 +2657,7 @@ export default function App() {
                 </p>
                 {selectedReport.foto_feedback.toLowerCase().endsWith(".pdf") ? (
                   <a
-                    href={"/uploads/" + selectedReport.foto_feedback}
+                    href={apiUrl("/uploads/" + selectedReport.foto_feedback)}
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem", fontSize: "0.9rem", color: "var(--accent-primary)" }}
@@ -2662,10 +2666,10 @@ export default function App() {
                   </a>
                 ) : (
                   <img
-                    src={"/uploads/" + selectedReport.foto_feedback}
+                    src={apiUrl("/uploads/" + selectedReport.foto_feedback)}
                     alt="Foto Feedback"
                     style={{ maxWidth: "100%", maxHeight: "120px", borderRadius: "8px", objectFit: "cover", border: "1px solid var(--border-color)", cursor: "pointer" }}
-                    onClick={() => window.open("/uploads/" + selectedReport.foto_feedback, "_blank")}
+                    onClick={() => window.open(apiUrl("/uploads/" + selectedReport.foto_feedback), "_blank")}
                   />
                 )}
               </div>

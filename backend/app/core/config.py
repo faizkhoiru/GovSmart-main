@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     CHATBOT_TIMEOUT: int = int(os.environ.get("CHATBOT_TIMEOUT", 180))
     CHATBOT_INTERNAL_TOKEN: str = os.environ.get("CHATBOT_INTERNAL_TOKEN", "")
     CHAT_RATE_LIMIT_PER_MINUTE: int = int(os.environ.get("CHAT_RATE_LIMIT_PER_MINUTE", 20))
+    CORS_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000"
     @property
     def SQLALCHEMY_DATABASE_URI(self) -> str:
         if self.DATABASE_URL:
@@ -24,4 +25,3 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
 settings = Settings()
-
