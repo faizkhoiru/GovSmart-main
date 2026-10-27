@@ -5,6 +5,8 @@ WORKDIR /app
 # Torch/sentence-transformers hanya untuk rebuild index, bukan runtime tanya.
 COPY requirements-docker.txt requirements.txt
 COPY service.py .
+COPY data/chunks ./data/chunks
+COPY data/index ./data/index
 COPY scripts/chatbot.py scripts/retriever.py scripts/typo_corrector.py scripts/
 RUN mkdir -p /app/data && chown -R govsmart:govsmart /app
 RUN pip install --no-cache-dir -r requirements.txt
