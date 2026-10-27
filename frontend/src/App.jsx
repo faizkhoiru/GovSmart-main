@@ -26,7 +26,11 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/+$/, "");
+const DEFAULT_PROD_API = "https://govsmart-main.onrender.com";
+const API_BASE_URL = (
+  import.meta.env.VITE_API_BASE_URL ||
+  (import.meta.env.PROD ? DEFAULT_PROD_API : "")
+).replace(/\/+$/, "");
 const apiUrl = (path) => `${API_BASE_URL}${path}`;
 const apiFetch = (path, options) => fetch(apiUrl(path), options);
 
