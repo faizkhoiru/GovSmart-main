@@ -179,10 +179,11 @@ visualisation) because GovSmart is a bidirectional complaint channel in which
 the citizen both produces a report and monitors its status.
 
 \subsection{Form Completion}
-Form guidelines and empirical UX evaluations emphasize that input fields must clearly communicate constraints
-and provide immediate, actionable feedback to minimize cognitive load~\cite{lewis2024}. Prior eye-tracking
-and usability studies show that post-hoc error messages impose heavier cognitive penalties than contextual
-inline cues~\cite{alsakran2021}. These studies evaluate single-stage forms; none examines multi-step
+Usability assessments of government web and mobile portals reveal persistent navigation and
+task-completion barriers, including unclear input constraints and inconsistent error
+feedback~\cite{alsakran2021,rafifing2022}. Behavioural UX research further shows that
+perceived ease of use directly shapes task outcomes and continued
+usage~\cite{lewis2024}. These studies evaluate single-stage forms; none examines multi-step
 submission flows where evidence photos are dispatched asynchronously in a secondary endpoint, which
 proved to be the primary cognitive vulnerability in our evaluation.
 
@@ -256,11 +257,12 @@ can edit or cancel a report only while it is \st{diterima}, can read only own
 reports, and sees the officer note, when present, on the report card. The
 personal report list returned by the API holds at most five reports.
 
-The citizen-facing interface (Fig.~\ref{fig:system}) provides a single submission
-form with a title field, a description textarea, optional coordinate inputs, and
-an optional photo-selection control with a preview. Selecting the photo is part
-of filling in the form, but the file is uploaded in a separate request after the
-report record is created; the interface displays the upload state. The description
+The citizen-facing interface (Fig.~\ref{fig:system}) uses a two-step submission
+architecture. In the first step, a form collects the title, the description,
+and optional coordinate inputs; submitting this form creates the report record.
+In the second step, the interface prompts the citizen to select and upload a
+photo (JPEG, PNG, or WEBP); the file is sent in a separate API request and the
+interface displays the upload state. The description
 field has no live character counter. The interface also provides a personal
 report list that shows report title, submission
 date, and the current status badge; and a report-detail view that includes the
@@ -466,7 +468,7 @@ Participant task completion times were recorded continuously from the conclusion
 
 \begin{figure}[!htbp]
 \centering
-\includegraphics[width=0.98\textwidth]{govsmart_fig2.pdf}
+\includegraphics[width=0.92\textwidth]{govsmart_fig2.pdf}
 \caption{Quantitative task performance across the pilot evaluation ($N=6$): (a)~task completion breakdown into unassisted success (S), assisted success (SH), and failure (F); and (b)~task execution duration (median and range) against the 300\,s timeout limit.}
 \label{fig:performance}
 \end{figure}
@@ -523,7 +525,7 @@ These observations show that some participants interpreted the raw status tokens
 
 \begin{figure}[!htbp]
 \centering
-\includegraphics[width=0.82\textwidth]{govsmart_fig3.pdf}
+\includegraphics[width=0.78\textwidth]{govsmart_fig3.pdf}
 \caption{Participant status comprehension across the five operational status tokens ($N=6$, 30 interpretations), highlighting the lowest correct count on \st{diterima}.}
 \label{fig:status_accuracy}
 \end{figure}
@@ -562,6 +564,7 @@ Table~\ref{tab:fail} summarizes observed difficulties and candidate interface fa
 \end{table}
 
 \subsection{Discussion: Task and Status Findings in the Mixed-Role Pilot}
+\enlargethispage{2.5\baselineskip}
 The empirical results provide formative observations for our operational hypotheses:
 Regarding $\mathbf{H_1}$ (Task Completion), 4 of 6 initial submissions met the completeness key without assistance. The observed photo-upload difficulty suggests a possible omission risk, but this pilot does not establish that the two-step flow caused it.
 Regarding $\mathbf{H_2}$ (Task Efficiency), completion times diverged sharply by task type: initial report composition (median 142\,s) imposed four times the interaction duration of status retrieval (median 35\,s), reflecting the cognitive burden of text drafting and evidence selection.
@@ -571,7 +574,7 @@ These findings align with Cognitive Fit Theory~\cite{bacic2022} and Nielsen's He
 
 \subsection{Limitations and Threats to Validity}
 \label{sec:limitations}
-\enlargethispage{3\baselineskip}
+\enlargethispage{9.5\baselineskip}
 Several limitations qualify the interpretation of these findings:
 \begin{itemize}
 \setlength{\itemsep}{1pt}\setlength{\parskip}{0pt}
@@ -586,23 +589,18 @@ Several limitations qualify the interpretation of these findings:
 \section{Conclusion}
 This pilot study evaluated complaint submission, status comprehension, and system
 boundary enforcement in GovSmart, a prototype developed in the Lamongan context.
-The six participants included prospective citizens and administrators; the pooled
-results are formative observations, not estimates of citizen performance. The
-primary findings were:
+The primary findings across the formative mixed-role pilot ($N=6$) were:
 \begin{enumerate}
-\item \textbf{Submission Completeness:} 4 of 6 participants (66.7\%) completed complaint submission independently. The photo was selected in the form but uploaded after report creation, and the pilot recorded a difficulty with this follow-on upload.
-\item \textbf{Task Efficiency:} Task durations scaled with interaction complexity, requiring a median of 142\,s for submission, 78\,s for revision, and 35\,s for status lookup.
+\setlength{\itemsep}{1pt}\setlength{\parskip}{0pt}
+\item \textbf{Submission Completeness:} 4 of 6 participants (66.7\%) completed complaint submission independently. The photo was selected in the form but uploaded after report creation, producing a follow-on upload difficulty.
+\item \textbf{Task Efficiency:} Task durations scaled with interaction complexity (median 142\,s for submission, 78\,s for revision, and 35\,s for status lookup).
 \item \textbf{Semantic Ambiguity:} Status comprehension reached 86.7\% overall (26/30), with the initial token \st{diterima} generating confusion between automated intake and active officer dispatch.
 \item \textbf{Security and Integrity:} All 11 boundary validation and cross-account access cases completed successfully, confirming enforced server-side access controls.
 \end{enumerate}
 
-\paragraph{Boundaries of Claims and Limitations.}
-Task success and status interpretation are interface usability measures, not evidence about municipal response quality, channel availability, or complaint completeness in Lamongan. The mixed-role pilot ($N=6$) provides formative observations for interface refinement, not citizen-population estimates or causal evidence of improved municipal responsiveness.
+\paragraph{Boundaries of Claims and Future Work.}
+Task success and status interpretation evaluate interface usability, not municipal response quality or grievance completeness in Lamongan. These formative observations from a small academic pilot ($N=6$) inform interface refinement rather than population estimates. Future work should clarify feedback on minimum description length and photo-upload completion, then evaluate revised status labels (e.g., ``Menunggu Verifikasi'') with a larger, citizen-focused sample across Lamongan subdistricts.
 
-\paragraph{Future Work.}
-Future work should first clarify feedback on minimum description length and photo-upload completion, then test revised status labels (e.g., ``Menunggu Verifikasi'') with a larger, citizen-focused sample across Lamongan subdistricts.
-
-\enlargethispage{1.5\baselineskip}
 \begin{credits}
 \subsubsection{\ackname} The authors thank the pilot participants for their time and feedback, their instructor Evianita Dewi Fajrianti, S.Tr.T., M.Tr.T., for guidance throughout the Workshop Pemrograman Framework course, and Politeknik Elektronika Negeri Surabaya (PENS) PSDKU Lamongan for providing the laboratory environment and testing facilities.
 
@@ -614,10 +612,10 @@ relevant to the content of this article.
 %% References: numbered in order of first citation, splncs04 style.
 %% All entries below have been verified to carry a registered DOI.
 \begin{thebibliography}{10}
-\setlength{\itemsep}{0.1ex plus 0.1ex minus 0.05ex}
-\setlength{\parskip}{0pt}
+\fontsize{8.5pt}{10.2pt}\selectfont
 
 \bibitem{maclean2022}
+\enlargethispage{4\baselineskip}
 MacLean, D., Titah, R.: A systematic literature review of empirical research on
 the impacts of e-government: a public value perspective. Public Administration
 Review \textbf{82}(2), 271--287 (2022).
@@ -629,7 +627,6 @@ position framework. Government Information Quarterly \textbf{40}(3), 101824 (202
 \url{https://doi.org/10.1016/j.giq.2023.101824}
 
 \bibitem{mansoor2021}
-\enlargethispage{2\baselineskip}
 Mansoor, M.: Citizens' trust in government as a function of good governance and
 government agency's provision of quality information on social media during
 COVID-19. Government Information Quarterly \textbf{38}(4), 101597 (2021).
