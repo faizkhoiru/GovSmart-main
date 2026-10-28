@@ -35,6 +35,9 @@
 \setcounter{topnumber}{4}
 \setcounter{bottomnumber}{3}
 \setcounter{totalnumber}{6}
+\setlength{\textfloatsep}{10pt plus 2pt minus 2pt}
+\setlength{\intextsep}{8pt plus 2pt minus 2pt}
+\setlength{\floatsep}{8pt plus 2pt minus 2pt}
 
 % Custom column types for clean wrapping without justification distortion
 \newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
@@ -456,7 +459,7 @@ P6 & 18--22 & Laptop & Daily (system management and web apps) & None \\
 \end{table}
 
 \subsection{Quantitative Task Performance: Completion Rate and Efficiency}
-Table~\ref{tab:results} summarizes the quantitative outcomes across the three user tasks, status comprehension, and boundary verification tests.
+Table~\ref{tab:results} and Fig.~\ref{fig:performance} summarize the quantitative outcomes across the three user tasks, status comprehension, and boundary verification tests.
 Across the end-to-end citizen reporting tasks, performance exhibited clear task-dependent variation:
 \begin{itemize}
 \item \textbf{Task T1 (Submit):} 4 of 6 participants (66.7\%) achieved unassisted success (S), while 2 of 6 (33.3\%) completed the task with moderator assistance (SH), and 0 failed (F). The median execution duration was 142\,s (range: 110--245\,s). Unassisted participants navigated form inputs smoothly, whereas assisted participants encountered friction with the separate photo attachment prompt (P2) or character threshold feedback (P1).
@@ -464,6 +467,13 @@ Across the end-to-end citizen reporting tasks, performance exhibited clear task-
 \item \textbf{Task T3 (Find status):} All 6 participants (100.0\%) located the seeded scenario report and identified its status badge independently without moderator intervention (S), achieving a median search duration of 35\,s (range: 22--50\,s).
 \end{itemize}
 Participant task completion times were recorded continuously from the conclusion of instruction reading until the final verified system action. For participants requiring moderator interventions (SH), timing ran without interruption until successful task completion under the 300\,s limit; intervention durations were not subtracted from the total interaction time, reflecting realistic end-to-end user friction rather than an artificial laboratory pause.
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=0.98\textwidth]{govsmart_fig2.pdf}
+\caption{Quantitative task performance across the pilot evaluation ($N=6$): (a)~task completion breakdown into unassisted success (S), assisted success (SH), and failure (F); and (b)~task execution duration (median and range) against the 300\,s timeout limit.}
+\label{fig:performance}
+\end{figure}
 
 \begin{table}[!htbp]
 \caption{Results per category (output 2). For tasks: S = success without help, SH = success with help, F = failure. For statuses: correct, partly correct, incorrect. For validation and ownership cases: pass or fail.}
@@ -500,7 +510,7 @@ Cross-account access & 4 & 4 (100.0\%) & -- & 0 (0.0\%) & -- \\
 \end{table}
 
 \subsection{Status Comprehension and Semantic Ambiguity}
-In the status comprehension evaluation, 26 out of 30 total interpretations (86.7\%) aligned
+In the status comprehension evaluation (Fig.~\ref{fig:status_accuracy}), 26 out of 30 total interpretations (86.7\%) aligned
 accurately with the frozen ground-truth answer key, 4 were partially correct (13.3\%), and 0 were incorrect.
 Comprehension was highest for terminal lifecycle states (\st{selesai} and \st{dibatalkan}, each 6 of 6, 100.0\%),
 where participants unanimously understood that administrative handling had concluded and that no subsequent citizen
@@ -513,6 +523,13 @@ active human intervention; for example, participant P2 stated during post-task d
 mistakenly inferring immediate physical deployment from a token that merely signifies placement in the departmental backlog.
 Similarly, for \st{diproses} (5 of 6 correct, 83.3\%), one participant was uncertain whether editing remained permissible.
 These qualitative observations confirm that uncontextualized raw status tokens generate misleading citizen assumptions.
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=0.95\textwidth]{govsmart_fig3.pdf}
+\caption{Citizen status comprehension accuracy across the five operational status tokens ($N=6$, 30 interpretations), highlighting the primary point of cognitive ambiguity on \st{diterima}.}
+\label{fig:status_accuracy}
+\end{figure}
 
 \subsection{System Validation and Security Audit}
 The boundary verification suite confirmed robust backend enforcement across all 11 executed test cases (100.0\% pass rate on the executed suite):
