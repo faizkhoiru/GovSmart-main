@@ -10,8 +10,8 @@
 %%   Before submission: search for "\res{" and "\todo{" -> none may remain.
 %%   Never fill a \res{} with an estimate. Guide: "Conclusion ... angka hasil nyata".
 %%
-%% IF NO OBSERVATION EVIDENCE EXISTS when the Introduction is finalised,
-%% replace paragraph 2 by the fallback wording given in the comment there.
+%% The Introduction uses published context and makes no unverified local
+%% claims about channel availability or complaint characteristics.
 %% ======================================================================
 \documentclass[runningheads]{llncs}
 
@@ -79,11 +79,14 @@ status of a report) from a synthetic road-damage scenario and explained five
 report statuses against a prepared answer key. We also tested input validation
 and report ownership with two citizen accounts. Outcome, time, help, and errors
 were logged per participant and task. Four of 6 submissions were complete
-without moderator help; 26 of 30 status interpretations were correct, and the most
-misread term was \st{diterima} (interpreted as in-progress officer handling);
-all 11 validation, resubmission, and cross-account access cases passed. Failures
-were traced to the two-step separate photo attachment workflow, absence of live character count feedback, and uncontextualized lowercase status badges, and were linked to
-interface revisions. The pilot is small and uses synthetic reports, so it
+without moderator help; 26 of 30 status interpretations were correct, and
+\st{diterima} was most frequently partly interpreted (two participants confused
+receipt with active officer handling);
+all 11 validation, resubmission, and cross-account access cases passed.
+Difficulties were observed around the follow-on photo upload, the minimum
+description length, and interpretation of raw status labels; these observations
+inform candidate interface revisions. The pilot is small and uses synthetic
+reports, so it
 supports problem identification only. It does not show higher citizen trust or
 better service quality of any agency.
 \keywords{Citizen complaint portal \and Usability evaluation \and Task success \and
@@ -106,23 +109,18 @@ staff update the status, may leave an officer note, and may upload a feedback
 document that the citizen can open. The citizen monitors the response in a
 personal list of reports that shows the latest status.
 
-%% --- Paragraph 2: context and motivation from Lamongan prototype observations ---
-In the context of Lamongan Regency, no publicly accessible digital channel for
-citizen complaints to local agencies was available at the time GovSmart was
-developed (November 2025 -- October 2026). An empirical review of the existing
-reporting workflow---conducted by the development team in October 2026 across
-three municipal service agencies (Dinas Pekerjaan Umum Bina Marga, Dinas
-Lingkungan Hidup, and Diskominfo)---examined manual paper intake logs, walk-in
-complaint desks, and informal social-media messaging channels. The observation
-revealed that over 70\% of incoming citizen grievances lacked standardized
-location descriptors or verifiable photographic evidence, submissions frequently
-languished without administrative acknowledgments, and citizens possessed zero
-visibility into whether a grievance had entered an operational queue or was
-undergoing active resolution. This field observation motivated two specific
-design choices in GovSmart that require empirical verification: the status is
-exposed as the raw lowercase API token (for example \st{diterima}), and evidence
-photos are submitted in a second request after the report record is saved,
-leaving a window in which a report exists without its attachment.
+%% --- Paragraph 2: documented context and scope of the local pilot ---
+Digital complaint channels have been studied in Indonesia, including the
+national SP4N-LAPOR! service~\cite{muttaqin2023} and the regional Lapak Aduan
+implementation in Banyumas~\cite{indrayani2025}. These studies do not establish
+which complaint channels were available to Lamongan residents during GovSmart's
+development, nor do they provide evidence for the completeness or handling of
+complaints received by Lamongan agencies. We therefore make no claim that
+Lamongan lacked a digital complaint channel or that a particular proportion of
+local complaints lacked location or photo evidence. Instead, this paper reports
+a formative evaluation of the GovSmart prototype and focuses on whether
+participants can complete its reporting tasks and interpret its displayed
+statuses.
 
 %% --- Paragraph 3: related portals and the specific gap ---
 Complaint portals have mostly been evaluated through crowdsourcing and digital transparency
@@ -238,12 +236,12 @@ Rafifing et al.~\cite{rafifing2022} & 30 portal users & Task scenarios on public
 \section{Methodology}
 
 \subsection{Research Question and Operational Hypotheses}
-This empirical pilot investigates the primary research question: \emph{can citizens submit a structurally complete complaint and accurately comprehend subsequent administrative status tokens to identify their next required action?}
+This empirical pilot investigates the primary research question: \emph{can participants in this mixed-role pilot submit a structurally complete complaint and accurately comprehend the displayed administrative status tokens and their next required action?}
 Grounded in Cognitive Fit Theory~\cite{bacic2022} and established usability heuristics for system status visibility~\cite{nielsen1994}, we formulate three operational hypotheses that strictly isolate task completion (accuracy) from task duration (efficiency):
 \begin{itemize}
-\item $\mathbf{H_1}$ \textbf{(Task Completion and Structural Integrity)}: Citizens can achieve successful submission ($T_1$) and modification ($T_2$), but multi-step request flows (specifically, dispatching evidence photos via a secondary endpoint after record creation) will generate higher structural omission rates than single-step form interactions.
-\item $\mathbf{H_2}$ \textbf{(Task Efficiency and Completion Time)}: Execution duration differs significantly across task modalities: initial report composition and photo attachment ($T_1$) incur a substantially higher time tax than targeted description revisions ($T_2$) or simple status retrieval ($T_3$).
-\item $\mathbf{H_3}$ \textbf{(Status Comprehension Dichotomy)}: Citizen comprehension accuracy diverges sharply between terminal workflow states (\st{selesai}, \st{dibatalkan}) and intermediate queue tokens (\st{diterima}, \st{diproses}), with uncontextualized raw tokens inducing cognitive conflation between machine ingestion and human officer handling.
+\item $\mathbf{H_1}$ \textbf{(Task Completion and Structural Integrity)}: Participants can achieve successful submission ($T_1$) and modification ($T_2$), but the multi-step request flow for evidence photos may create structural omissions.
+\item $\mathbf{H_2}$ \textbf{(Task Efficiency and Completion Time)}: Initial report composition and photo attachment ($T_1$) are expected to take longer than targeted description revisions ($T_2$) or status retrieval ($T_3$); we describe observed times without inferential testing.
+\item $\mathbf{H_3}$ \textbf{(Status Comprehension)}: Participants may interpret terminal workflow states (\st{selesai}, \st{dibatalkan}) differently from intermediate queue tokens (\st{diterima}, \st{diproses}); this pilot describes the observed interpretations without estimating a population-level difference.
 \end{itemize}
 
 \subsection{Platform Architecture and Interface Design}
@@ -258,10 +256,13 @@ can edit or cancel a report only while it is \st{diterima}, can read only own
 reports, and sees the officer note, when present, on the report card. The
 personal report list returned by the API holds at most five reports.
 
-The citizen-facing interface (Fig.~\ref{fig:system}) provides: a single submission
-form that contains a title field, a description textarea with a live character
-counter, an optional coordinate input pair, and an integrated photo-upload control
-with thumbnail preview; a personal report list that shows report title, submission
+The citizen-facing interface (Fig.~\ref{fig:system}) provides a single submission
+form with a title field, a description textarea, optional coordinate inputs, and
+an optional photo-selection control with a preview. Selecting the photo is part
+of filling in the form, but the file is uploaded in a separate request after the
+report record is created; the interface displays the upload state. The description
+field has no live character counter. The interface also provides a personal
+report list that shows report title, submission
 date, and the current status badge; and a report-detail view that includes the
 officer note and a link to any uploaded feedback document. The interface does not
 provide an explicit search bar or status filter; all reports in the personal list
@@ -349,7 +350,7 @@ Status shown & Intended meaning & Who is acting & Citizen's next action \\
 \end{table}
 
 \subsection{Experimental Protocols and Testing Environment}
-We recruit 6 prospective users who are not members of the project development team:
+We recruited 6 prospective users who are not members of the project development team:
 two in the citizen role (one undergraduate student and one 47-year-old resident),
 two department administrators, and two superadministrators. Each participant gives
 informed consent after hearing the study purpose, data logged, and the right to abort
@@ -448,7 +449,7 @@ P5 & 18--22 & Laptop & Daily (system management and web apps) & None \\
 \addlinespace[2pt]
 P6 & 18--22 & Laptop & Daily (system management and web apps) & None \\
 \midrule
-\multicolumn{5}{@{}p{\linewidth}@{}}{\textit{Note:} P1--P2 evaluated citizen-role flows; P3--P4 evaluated department administration; P5--P6 evaluated superadministration. Sessions conducted on 25 October 2026 at PENS PSDKU Lamongan; uniform task time limit was 300\,s.} \\
+\multicolumn{5}{@{}p{\linewidth}@{}}{\textit{Note:} P1--P2 were recruited as prospective citizens, P3--P4 as department administrators, and P5--P6 as superadministrators. All six participants completed the same citizen-facing T1--T3 tasks and status interpretation; role labels describe participant backgrounds, not task assignment. Results are not estimates for Lamongan citizens. Sessions were conducted on 25 October 2026 at PENS PSDKU Lamongan; the task time limit was 300\,s.} \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -457,7 +458,7 @@ P6 & 18--22 & Laptop & Daily (system management and web apps) & None \\
 Table~\ref{tab:results} and Fig.~\ref{fig:performance} summarize the quantitative outcomes across the three user tasks, status comprehension, and boundary verification tests.
 Across the end-to-end citizen reporting tasks, performance exhibited clear task-dependent variation:
 \begin{itemize}
-\item \textbf{Task T1 (Submit):} 4 of 6 participants (66.7\%) achieved unassisted success (S), while 2 of 6 (33.3\%) completed the task with moderator assistance (SH), and 0 failed (F). The median execution duration was 142\,s (range: 110--245\,s). Unassisted participants navigated form inputs smoothly, whereas assisted participants encountered friction with the separate photo attachment prompt (P2) or character threshold feedback (P1).
+\item \textbf{Task T1 (Submit):} 4 of 6 participants (66.7\%) achieved unassisted success (S), while 2 of 6 (33.3\%) completed the task with moderator assistance (SH), and 0 failed (F). The median execution duration was 142\,s (range: 110--245\,s). The observed difficulties included the photo upload that follows report creation (P2) and the minimum description length, which is not indicated before submission (P1).
 \item \textbf{Task T2 (Revise):} 5 of 6 participants (83.3\%) completed the targeted description correction independently (S), 1 of 6 (16.7\%) required assistance (SH), and 0 failed (F), with a median completion duration of 78\,s (range: 52--120\,s).
 \item \textbf{Task T3 (Find status):} All 6 participants (100.0\%) located the seeded scenario report and identified its status badge independently without moderator intervention (S), achieving a median search duration of 35\,s (range: 22--50\,s).
 \end{itemize}
@@ -469,6 +470,7 @@ Participant task completion times were recorded continuously from the conclusion
 \caption{Quantitative task performance across the pilot evaluation ($N=6$): (a)~task completion breakdown into unassisted success (S), assisted success (SH), and failure (F); and (b)~task execution duration (median and range) against the 300\,s timeout limit.}
 \label{fig:performance}
 \end{figure}
+\FloatBarrier
 
 \begin{table}[!htbp]
 \caption{Results per category (output 2). For tasks: S = success without help, SH = success with help, F = failure. For statuses: correct, partly correct, incorrect. For validation and ownership cases: pass or fail.}
@@ -517,12 +519,12 @@ active human intervention; for example, participant P2 stated during post-task d
 \emph{``Saya kira 'diterima' berarti dinas sudah menerima dan langsung berangkat membetulkan jalannya''},
 mistakenly inferring immediate physical deployment from a token that merely signifies placement in the departmental backlog.
 Similarly, for \st{diproses} (5 of 6 correct, 83.3\%), one participant was uncertain whether editing remained permissible.
-These qualitative observations confirm that uncontextualized raw status tokens generate misleading citizen assumptions.
+These observations show that some participants interpreted the raw status tokens differently from the answer key; the small, mixed-role sample does not establish how citizens generally understand them.
 
 \begin{figure}[!htbp]
 \centering
 \includegraphics[width=0.82\textwidth]{govsmart_fig3.pdf}
-\caption{Citizen status comprehension accuracy across the five operational status tokens ($N=6$, 30 interpretations), highlighting the primary point of cognitive ambiguity on \st{diterima}.}
+\caption{Participant status comprehension across the five operational status tokens ($N=6$, 30 interpretations), highlighting the lowest correct count on \st{diterima}.}
 \label{fig:status_accuracy}
 \end{figure}
 
@@ -536,11 +538,11 @@ The boundary verification suite confirmed robust backend enforcement across all 
 \end{itemize}
 All 11 executed test cases passed successfully, confirming enforced boundaries and access controls for the evaluated software release.
 
-\subsection{Qualitative Failure Modes and UI Remediation Strategies}
-Table~\ref{tab:fail} details the three recurring cognitive failure modes documented during participant observation and links each to an empirical root cause and proposed interface remediation.
+\subsection{Observed Difficulties and Candidate UI Revisions}
+Table~\ref{tab:fail} summarizes observed difficulties and candidate interface factors and revisions. These small-sample observations identify issues for follow-up; they do not establish causal mechanisms.
 
 \begin{table}[!htbp]
-\caption{Failure examples, cognitive root causes, and proposed UI remediation strategies.}
+\caption{Observed difficulties, plausible interface factors, and proposed UI revisions.}
 \label{tab:fail}
 \centering
 \footnotesize
@@ -548,9 +550,9 @@ Table~\ref{tab:fail} details the three recurring cognitive failure modes documen
 \renewcommand{\arraystretch}{1.08}
 \begin{tabularx}{\textwidth}{@{}C{0.6cm} Y L{2.4cm} Y Y@{}}
 \toprule
-\# & Observation (anonymised) & Form part / status term & Identified cause & Proposed revision \\
+\# & Observation (anonymised) & Form part / status term & Plausible factor & Proposed revision \\
 \midrule
-1 & Participant P2 submitted text description and assumed the photo was already uploaded, missing the separate file upload prompt ($n=2/6$, 33.3\%). & Attachment flow (\texttt{/photo} endpoint) & Two-step request architecture creates a temporal gap between record creation and evidence attachment. & Combine image selection into primary form modal with thumbnail preview before single-stage submit. \\
+1 & Participant P2 submitted the report and assumed the selected photo was already attached. & Photo upload after report creation & The photo is sent in a follow-on request; the participant may not have noticed or understood the upload state. & Make upload completion explicit and prevent the task from appearing complete until the attachment is confirmed. \\
 \addlinespace[2pt]
 2 & Participants P2 and P3 assumed \st{diterima} meant staff had actively reviewed and accepted the claim ($n=2/6$, 33.3\%). & Lowercase status badge \st{diterima} & The term is ambiguous between machine receipt and administrative approval. & Display ``Menunggu Verifikasi'' with explicit tooltip ``Laporan masuk antrean dinas''. \\
 \addlinespace[2pt]
@@ -559,9 +561,9 @@ Table~\ref{tab:fail} details the three recurring cognitive failure modes documen
 \end{tabularx}
 \end{table}
 
-\subsection{Discussion: Cognitive Mechanisms in Citizen E-Complaints}
-The empirical results provide direct answers to our operational hypotheses:
-Regarding $\mathbf{H_1}$ (Task Completion), structural completion succeeded in 4 of 6 initial submissions without assistance, but the two-stage attachment flow introduced genuine omission risks where participants assumed textual persistence implied attachment completion.
+\subsection{Discussion: Task and Status Findings in the Mixed-Role Pilot}
+The empirical results provide formative observations for our operational hypotheses:
+Regarding $\mathbf{H_1}$ (Task Completion), 4 of 6 initial submissions met the completeness key without assistance. The observed photo-upload difficulty suggests a possible omission risk, but this pilot does not establish that the two-step flow caused it.
 Regarding $\mathbf{H_2}$ (Task Efficiency), completion times diverged sharply by task type: initial report composition (median 142\,s) imposed four times the interaction duration of status retrieval (median 35\,s), reflecting the cognitive burden of text drafting and evidence selection.
 Regarding $\mathbf{H_3}$ (Status Comprehension), terminal states achieved 100\% comprehension, whereas intermediate queue states produced ambiguity between system receipt and officer action.
 
@@ -573,7 +575,7 @@ These findings align with Cognitive Fit Theory~\cite{bacic2022} and Nielsen's He
 Several limitations qualify the interpretation of these findings:
 \begin{itemize}
 \setlength{\itemsep}{1pt}\setlength{\parskip}{0pt}
-\item \emph{Sample size and homogeneity.} With $N=6$ participants recruited from an academic setting, the study has limited statistical power. The citizen cohort (P1--P2) is small, and older or digitally less experienced citizens are represented by a single participant (P2, 45--50 years).
+\item \emph{Sample size and participant composition.} With $N=6$ participants recruited from an academic setting, the study is a formative pilot, not a population estimate. Only two participants were recruited as prospective citizens; the remaining four had administrator roles. The pooled task and status results therefore should not be read as citizen-only outcomes. The age and experience profile also does not represent the diversity of Lamongan residents.
 \item \emph{Scenario authenticity.} Testing relied on a synthetic road-damage scenario and pre-seeded accounts rather than personal grievance incidents, which may not capture the emotional urgency of genuine citizen complaints.
 \item \emph{Order effects.} Tasks were administered in fixed sequence ($T_1 \rightarrow T_2 \rightarrow T_3$); familiarity gained during submission may have accelerated subsequent retrieval.
 \item \emph{Single moderator.} All sessions were moderated by a single researcher using a standardized rubric; secondary inter-rater checking of real-time intervention counts was not conducted.
@@ -582,22 +584,23 @@ Several limitations qualify the interpretation of these findings:
 %% ======================================================================
 \FloatBarrier
 \section{Conclusion}
-This pilot study established an empirical evaluation of citizen complaint submission,
-status comprehension, and system boundary enforcement in GovSmart, a localized municipal
-service prototype for Lamongan Regency. Across a controlled cohort of 6 participants spanning
-citizen and administrator roles, our primary findings indicate:
+This pilot study evaluated complaint submission, status comprehension, and system
+boundary enforcement in GovSmart, a prototype developed in the Lamongan context.
+The six participants included prospective citizens and administrators; the pooled
+results are formative observations, not estimates of citizen performance. The
+primary findings were:
 \begin{enumerate}
-\item \textbf{Submission Completeness:} 4 of 6 participants (66.7\%) completed complaint submission independently, with multi-stage attachment workflows identified as the primary operational vulnerability.
+\item \textbf{Submission Completeness:} 4 of 6 participants (66.7\%) completed complaint submission independently. The photo was selected in the form but uploaded after report creation, and the pilot recorded a difficulty with this follow-on upload.
 \item \textbf{Task Efficiency:} Task durations scaled with interaction complexity, requiring a median of 142\,s for submission, 78\,s for revision, and 35\,s for status lookup.
 \item \textbf{Semantic Ambiguity:} Status comprehension reached 86.7\% overall (26/30), with the initial token \st{diterima} generating confusion between automated intake and active officer dispatch.
 \item \textbf{Security and Integrity:} All 11 boundary validation and cross-account access cases completed successfully, confirming enforced server-side access controls.
 \end{enumerate}
 
 \paragraph{Boundaries of Claims and Limitations.}
-We explicitly emphasize that information comprehension and task success are interface usability metrics, not causal evidence of improved municipal responsiveness, administrative transparency, or reduced corruption. The pilot cohort ($N=6$) provides formative behavioral evidence for interface refinement rather than population-wide generalization.
+Task success and status interpretation are interface usability measures, not evidence about municipal response quality, channel availability, or complaint completeness in Lamongan. The mixed-role pilot ($N=6$) provides formative observations for interface refinement, not citizen-population estimates or causal evidence of improved municipal responsiveness.
 
 \paragraph{Future Work.}
-Future work will evaluate a redesigned unified submission interface featuring live character counts and disambiguated status badges (e.g., ``Menunggu Verifikasi'') in a broader field trial across Lamongan subdistricts.
+Future work should first clarify feedback on minimum description length and photo-upload completion, then test revised status labels (e.g., ``Menunggu Verifikasi'') with a larger, citizen-focused sample across Lamongan subdistricts.
 
 \enlargethispage{1.5\baselineskip}
 \begin{credits}
