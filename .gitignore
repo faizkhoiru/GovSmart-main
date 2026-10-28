@@ -93,3 +93,12 @@ logs/
 *.zip.env
 *.zip
 # ─── Paper / Academic Publications ───────────────────────────
+# Ignore LaTeX intermediate build files, preserve source (.tex), figures, and final output (.pdf)
+paper/*.aux
+paper/*.bbl
+paper/*.blg
+paper/*.out
+paper/*.toc
+paper/*.synctex*
+paper/*.fdb_latexmk
+paper/*.fls
