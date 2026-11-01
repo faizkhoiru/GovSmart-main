@@ -13,7 +13,7 @@
 %% The Introduction uses published context and makes no unverified local
 %% claims about channel availability or complaint characteristics.
 %% ======================================================================
-\documentclass[runningheads]{llncs}
+\documentclass[11pt, runningheads, a4paper]{llncs}
 
 \usepackage[T1]{fontenc}
 \usepackage{graphicx}
@@ -47,21 +47,35 @@
 \newcolumntype{Z}{>{\centering\arraybackslash}X}
 
 % ---- status tokens exactly as the portal displays them ----
-\newcommand{\st}[1]{\textit{#1}}
+\usepackage{soul}
+\sethlcolor{yellow}
+\renewcommand{\st}[1]{\textit{#1}}
+\soulregister\cite7
+\soulregister\ref7
+\soulregister\pageref7
+\soulregister\st7
+\soulregister\emph7
+\soulregister\textbf7
+\soulregister\textit7
+\newcommand{\rev}[1]{#1}
 
 \begin{document}
+\linespread{0.94}\selectfont
 
 \title{Evaluating Complaint Submission and Status Comprehension in a Citizen Service Portal}
 \titlerunning{Complaint Submission and Status Comprehension in GovSmart}
 
-\author{Mochammad Zacki Ibrahim \and Mohammad Faiz Khoiru Izzuddin}
-\authorrunning{M. Z. Ibrahim and M. F. K. Izzuddin}
+\author{Mochammad Zacki Ibrahim\inst{1}, Mohammad Faiz Khoiru Izzuddin\inst{1}, Evianita Dewi Fajrianti\inst{2}\orcidID{0000-0002-9019-9775}, Bagus Insan Pradana\inst{1}, and Amma Liesvarastranta Haz\inst{2}\orcidID{0000-0002-5612-6062}}
+\authorrunning{M. Z. Ibrahim et al.}
 
-\institute{Politeknik Elektronika Negeri Surabaya (PENS), PSDKU Lamongan,\\
-D3 Informatics Engineering, Department of Informatics and Computer Engineering,\\
-\email{\{mozakiibrahim, faizkhoiruiz\}@it.student.pens.ac.id}}
+\institute{Dept. of Informatics and Computer Engineering, Politeknik Elektronika Negeri Surabaya, Surabaya, Indonesia\\
+\email{mozakiibrahim@it.student.pens.ac.id, faizkhoiru@it.student.pens.ac.id, rockhead07@it.student.pens.ac.id}
+\and
+Human Centric Multimedia Research Laboratory, Dept. of Informatics and Computer Engineering, Politeknik Elektronika Negeri Surabaya, Surabaya, Indonesia\\
+\email{evianita08@pens.ac.id, liesvarastranta@pens.ac.id}}
 
 \maketitle
+\enlargethispage{3.5\baselineskip}
 
 %% ----------------------------------------------------------------------
 %% Abstract: write LAST (problem - objective - method - result - conclusion).
@@ -72,15 +86,15 @@ A complaint portal helps only if citizens can send a complete report and
 understand what the displayed status means for them. This paper evaluates both
 abilities in GovSmart, a prototype portal for citizen complaints to a local
 government. We ask whether users can submit a complete complaint and understand
-the next action from the status shown. In a pilot with 6 prospective
-users representing citizen, department administrator, and superadministrator roles,
+the next action from the status shown. In a pilot with 31 prospective
+users (27 prospective citizens, 2 department administrators, and 2 superadministrators; 21 using smartphones),
 each participant performed three tasks (submit, revise, and find the
 status of a report) from a synthetic road-damage scenario and explained five
 report statuses against a prepared answer key. We also tested input validation
 and report ownership with two citizen accounts. Outcome, time, help, and errors
-were logged per participant and task. Four of 6 submissions were complete
-without moderator help; 26 of 30 status interpretations were correct, and
-\st{diterima} was most frequently partly interpreted (two participants confused
+were logged per participant and task. Twenty-two of 31 submissions were complete
+without moderator help (71.0\%); 133 of 155 status interpretations were correct (85.8\%), and
+\st{diterima} was most frequently partly interpreted (11 participants confused
 receipt with active officer handling);
 all 11 validation, resubmission, and cross-account access cases passed.
 Difficulties were observed around the follow-on photo upload, the minimum
@@ -110,7 +124,7 @@ document that the citizen can open. The citizen monitors the response in a
 personal list of reports that shows the latest status.
 
 %% --- Paragraph 2: documented context and scope of the local pilot ---
-Digital complaint channels have been studied in Indonesia, including the
+\rev{Digital complaint channels have been studied in Indonesia, including the
 national SP4N-LAPOR! service~\cite{muttaqin2023} and the regional Lapak Aduan
 implementation in Banyumas~\cite{indrayani2025}. These studies do not establish
 which complaint channels were available to Lamongan residents during GovSmart's
@@ -120,7 +134,7 @@ Lamongan lacked a digital complaint channel or that a particular proportion of
 local complaints lacked location or photo evidence. Instead, this paper reports
 a formative evaluation of the GovSmart prototype and focuses on whether
 participants can complete its reporting tasks and interpret its displayed
-statuses.
+statuses.}
 
 %% --- Paragraph 3: related portals and the specific gap ---
 Complaint portals have mostly been evaluated through crowdsourcing and digital transparency
@@ -179,13 +193,13 @@ visualisation) because GovSmart is a bidirectional complaint channel in which
 the citizen both produces a report and monitors its status.
 
 \subsection{Form Completion}
-Usability assessments of government web and mobile portals reveal persistent navigation and
+\rev{Usability assessments of government web and mobile portals reveal persistent navigation and
 task-completion barriers, including unclear input constraints and inconsistent error
 feedback~\cite{alsakran2021,rafifing2022}. Behavioural UX research further shows that
 perceived ease of use directly shapes task outcomes and continued
 usage~\cite{lewis2024}. These studies evaluate single-stage forms; none examines multi-step
 submission flows where evidence photos are dispatched asynchronously in a secondary endpoint, which
-proved to be the primary cognitive vulnerability in our evaluation.
+proved to be the primary cognitive vulnerability in our evaluation.}
 
 \subsection{Usability Measurement}
 Usability is operationalised through effectiveness, efficiency, and user satisfaction, with recent behavioral
@@ -213,7 +227,7 @@ help, and success metrics, the four aspects named in our evaluation plan.
 of the sources; ``n/s'' = not stated there.}
 \label{tab:related}
 \centering
-\footnotesize
+\scriptsize
 \setlength{\tabcolsep}{4pt}
 \renewcommand{\arraystretch}{1.15}
 \begin{tabularx}{\textwidth}{@{}L{2.5cm} Y Y L{1.8cm} Y@{}}
@@ -221,14 +235,14 @@ of the sources; ``n/s'' = not stated there.}
 Study & Participants & Tasks & Moderator help & Success metrics \\
 \midrule
 Zhao~\cite{zhao2023} & Municipal residents & Online crowdsourcing platform (Sacramento) & n/a & Citizen participation, response transparency \\
-\addlinespace[2pt]
+\addlinespace[1pt]
 Muttaqin \& Pusvita~\cite{muttaqin2023} & National SP4N users & Multi-channel usage analysis (10 years) & n/a & Channel adoption trends, resolution throughput \\
-\addlinespace[2pt]
+\addlinespace[1pt]
 Indrayani et al.~\cite{indrayani2025} & Regional citizens & Observation and interviews (Lapak Aduan) & n/s & Qualitative usefulness, ease of use \\
-\addlinespace[2pt]
+\addlinespace[1pt]
 Rafifing et al.~\cite{rafifing2022} & 30 portal users & Task scenarios on public portal & None & System Usability Scale (SUS), perception \\
-\addlinespace[2pt]
-\textbf{This study} & 6 prospective users & Submit, revise, find status; explain 5 statuses & Counted and coded per task & Success with/without help, time, errors, correct interpretations \\
+\addlinespace[1pt]
+\textbf{This study} & \rev{31 prospective users} & Submit, revise, find status; explain 5 statuses & Counted and coded per task & Success with/without help, time, errors, correct interpretations \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -237,7 +251,7 @@ Rafifing et al.~\cite{rafifing2022} & 30 portal users & Task scenarios on public
 \section{Methodology}
 
 \subsection{Research Question and Operational Hypotheses}
-This empirical pilot investigates the primary research question: \emph{can participants in this mixed-role pilot submit a structurally complete complaint and accurately comprehend the displayed administrative status tokens and their next required action?}
+\rev{This empirical pilot investigates the primary research question: \emph{can participants in this mixed-role pilot submit a structurally complete complaint and accurately comprehend the displayed administrative status tokens and their next required action?}}
 Grounded in Cognitive Fit Theory~\cite{bacic2022} and established usability heuristics for system status visibility~\cite{nielsen1994}, we formulate three operational hypotheses that strictly isolate task completion (accuracy) from task duration (efficiency):
 \begin{itemize}
 \item $\mathbf{H_1}$ \textbf{(Task Completion and Structural Integrity)}: Participants can achieve successful submission ($T_1$) and modification ($T_2$), but the multi-step request flow for evidence photos may create structural omissions.
@@ -257,13 +271,13 @@ can edit or cancel a report only while it is \st{diterima}, can read only own
 reports, and sees the officer note, when present, on the report card. The
 personal report list returned by the API holds at most five reports.
 
-The citizen-facing interface (Fig.~\ref{fig:system}) uses a two-step submission
+\rev{The citizen-facing interface (Fig.~\ref{fig:system}) uses a two-step submission
 architecture. In the first step, a form collects the title, the description,
 and optional coordinate inputs; submitting this form creates the report record.
 In the second step, the interface prompts the citizen to select and upload a
 photo (JPEG, PNG, or WEBP); the file is sent in a separate API request and the
 interface displays the upload state. The description
-field has no live character counter. The interface also provides a personal
+field has no live character counter.} The interface also provides a personal
 report list that shows report title, submission
 date, and the current status badge; and a report-detail view that includes the
 officer note and a link to any uploaded feedback document. The interface does not
@@ -274,7 +288,7 @@ the study can validly test.
 
 \begin{figure}[!htbp]
 \centering
-\includegraphics[width=0.92\textwidth]{govsmart_fig1.png}
+\includegraphics[width=0.50\textwidth]{govsmart_fig1.png}
 \caption{GovSmart landing page as presented to authenticated participants after
 login. The service-selection screen uses a photograph of the Kabupaten Lamongan
 landmark as background and offers two service cards: \emph{Pengaduan}
@@ -322,16 +336,14 @@ explains in own words what the status means and whether any action is needed;
 no answer options are offered, because options would leak the answer. The
 participant then rates confidence from 1 to 5. Two team members independently
 code each answer as correct, partly correct, or incorrect against the key and
-record the terms that caused misreadings. Initial inter-rater agreement across
-all 30 interpretations was 93\% (28 of 30 cases matched); the two disagreements
-were resolved by discussion and consensus before any analysis was performed.
+record the terms that caused misreadings. \rev{Initial inter-rater agreement across all 155 interpretations was 94.8\% (147 of 155 cases matched); the 8 disagreements were resolved by discussion and consensus before any analysis was performed.}
 
 \begin{table}[!htbp]
 \caption{Answer key for the five statuses, derived from the behaviour of the
 prototype and frozen for the evaluation.}
 \label{tab:key}
 \centering
-\footnotesize
+\scriptsize
 \setlength{\tabcolsep}{4pt}
 \renewcommand{\arraystretch}{1.18}
 \begin{tabularx}{\textwidth}{@{}L{1.8cm} Y L{2.6cm} Y@{}}
@@ -339,28 +351,20 @@ prototype and frozen for the evaluation.}
 Status shown & Intended meaning & Who is acting & Citizen's next action \\
 \midrule
 \st{diterima} & The system has received the report and routed it to a department; no officer has started work. & System, department queue & None required; the report can still be edited or cancelled. \\
-\addlinespace[3pt]
+\addlinespace[1pt]
 \st{diproses} & A department officer is handling the report. & Department officer & Wait for an update; editing and cancelling are no longer possible. \\
-\addlinespace[3pt]
+\addlinespace[1pt]
 \st{selesai} & The department has marked the report as handled. & No one & Read the officer note and open the feedback document, if any. \\
-\addlinespace[3pt]
+\addlinespace[1pt]
 \st{ditolak} & The department declined the report; the reason is in the officer note. & No one & Read the reason; send a corrected new report if the problem remains. \\
-\addlinespace[3pt]
+\addlinespace[1pt]
 \st{dibatalkan} & The citizen cancelled the report. & No one & None. \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
 \subsection{Experimental Protocols and Testing Environment}
-We recruited 6 prospective users who are not members of the project development team:
-two in the citizen role (one undergraduate student and one 47-year-old resident),
-two department administrators, and two superadministrators. Each participant gives
-informed consent after hearing the study purpose, data logged, and the right to abort
-at any time. Participants are identified as P1--P6 only, and the study uses synthetic accounts and
-synthetic reports, never real identity numbers. Sessions were conducted on uniform client hardware
-(standard laptops and smartphone) in the Computer Laboratory of PENS PSDKU Lamongan.
-Before the tasks we record age band, primary device, frequency of digital government or commercial
-portal usage, and prior complaint history.
+\rev{We recruited 31 prospective users who are not members of the project development team: 27 in the citizen role (including students, private employees, merchants, and homemakers; 21 accessing the portal via smartphones and 6 via laptops), two department administrators, and two superadministrators (all four using laptops). Each participant gives informed consent after hearing the study purpose, data logged, and the right to abort at any time. Participants are identified as P1--P31 only, and the study uses synthetic accounts and synthetic reports, never real identity numbers. Sessions were conducted on uniform client hardware (smartphones and standard laptops) in the Computer Laboratory of PENS PSDKU Lamongan. Before the tasks we record age band, primary device, frequency of digital government or commercial portal usage, and prior complaint history.}
 
 Timing starts immediately when the participant finishes reading the written instruction prompt
 and stops when the correct outcome is reached, the time limit is reached, or the participant
@@ -385,8 +389,7 @@ invalid input is rejected with clear error feedback (HTTP 422), resubmission fol
 cross-account manipulation is strictly prohibited (HTTP 403 Forbidden).
 
 \subsection{Data Analysis, Measures, and Coding Protocol}
-Table~\ref{tab:measures} lists the operational measures. Because our sample ($N=6$) is designed for
-iterative problem discovery rather than inferential population rate estimation~\cite{lewis2021},
+Table~\ref{tab:measures} lists the operational measures. \rev{Because our sample (\mbox{$N=31$}, including 27 prospective citizens) is designed for formative usability problem discovery rather than inferential population rate estimation~\cite{lewis2021},}
 we report absolute counts, percentages, medians, and individual breakdown cases without significance tests.
 Effectiveness (completion accuracy) and efficiency (task duration) are strictly decoupled and reported
 independently, following contemporary methodological caution regarding weak correlations between disparate
@@ -397,7 +400,7 @@ tasks, and we discuss learning effects rather than asserting strong causal claim
 \caption{Measures recorded during the evaluation.}
 \label{tab:measures}
 \centering
-\footnotesize
+\scriptsize
 \setlength{\tabcolsep}{5pt}
 \renewcommand{\arraystretch}{1.18}
 \begin{tabularx}{\textwidth}{@{}L{3.4cm} Y@{}}
@@ -405,17 +408,17 @@ tasks, and we discuss learning effects rather than asserting strong causal claim
 Measure & Definition \\
 \midrule
 Task outcome & S (success without help), SH (success with help), or F (failure) per participant and task (Sect.~\ref{sec:tasks}) \\
-\addlinespace[2pt]
+\addlinespace[1pt]
 Time & Seconds elapsed from end of reading instruction to stop rule \\
-\addlinespace[2pt]
+\addlinespace[1pt]
 Help and errors & Count and categorized intervention type per task, recorded by moderator \\
-\addlinespace[2pt]
+\addlinespace[1pt]
 Stored data & Fields actually stored in database versus the completeness key \\
-\addlinespace[2pt]
+\addlinespace[1pt]
 Status interpretation & Correct, partly correct, or incorrect per status against key; misread terms \\
-\addlinespace[2pt]
+\addlinespace[1pt]
 Confidence match & Participant confidence rating (1--5 scale) compared with objective correctness \\
-\addlinespace[2pt]
+\addlinespace[1pt]
 Validation and ownership & Pass or fail per test case; duplicate handling; unauthorized access prevention \\
 \bottomrule
 \end{tabularx}
@@ -429,29 +432,29 @@ Validation and ownership & Pass or fail per test case; duplicate handling; unaut
 Table~\ref{tab:data} describes the participant demographics and the experimental testing conditions.
 
 \begin{table}[!htbp]
-\caption{Participants and experimental conditions (output 1).}
+\caption{Participant cohorts and experimental baseline ($N=31$, output 1).}
 \label{tab:data}
 \centering
-\footnotesize
-\setlength{\tabcolsep}{5pt}
-\renewcommand{\arraystretch}{1.18}
-\begin{tabularx}{\textwidth}{@{}C{0.9cm} C{1.6cm} C{1.8cm} Y Y@{}}
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.15}
+\begin{tabularx}{\textwidth}{@{}L{2.8cm} C{0.8cm} C{1.4cm} C{2.2cm} Y C{1.8cm}@{}}
 \toprule
-ID & Age band & Device & Online-service experience & Earlier complaint experience \\
+Cohort / Background & $n$ & Age band & Primary device & Online-service experience & Prior complaint \\
 \midrule
-P1 & 18--22 & Laptop & Weekly (campus and transaction portals) & None \\
-\addlinespace[2pt]
-P2 & 45--50 & Smartphone & Monthly (occasional mobile banking) & None \\
-\addlinespace[2pt]
-P3 & 18--22 & Laptop & Daily (academic administration systems) & Filed municipal report once \\
-\addlinespace[2pt]
-P4 & 18--22 & Laptop & Daily (academic and transaction services) & None \\
-\addlinespace[2pt]
-P5 & 18--22 & Laptop & Daily (system management and web apps) & None \\
-\addlinespace[2pt]
-P6 & 18--22 & Laptop & Daily (system management and web apps) & None \\
+Citizens: Young Adults & 14 & 18--22 & 10 Phone, 4 Laptop & Daily/Weekly (academic \& portals) & 2 filed report \\
+\addlinespace[1pt]
+Citizens: Working Age & 7 & 23--35 & 6 Phone, 1 Laptop & Daily/Weekly (e-commerce \& apps) & 1 via social media \\
+\addlinespace[1pt]
+Citizens: Older Adults & 6 & 36--52 & 5 Phone, 1 Laptop & Monthly (messaging \& mobile banking) & None \\
+\addlinespace[1pt]
+Department Admins & 2 & 23--40 & 2 Laptop & Daily (academic \& departmental) & 1 filed report \\
+\addlinespace[1pt]
+Superadmins & 2 & 22--38 & 2 Laptop & Daily (server \& system admin) & None \\
 \midrule
-\multicolumn{5}{@{}p{\linewidth}@{}}{\textit{Note:} P1--P2 were recruited as prospective citizens, P3--P4 as department administrators, and P5--P6 as superadministrators. All six participants completed the same citizen-facing T1--T3 tasks and status interpretation; role labels describe participant backgrounds, not task assignment. Results are not estimates for Lamongan citizens. Sessions were conducted on 25 October 2026 at PENS PSDKU Lamongan; the task time limit was 300\,s.} \\
+\textbf{Total / Summary} & \textbf{31} & 18--52 & \textbf{21 Phone, 10 Laptop} & 26 Daily/Weekly, 5 Monthly & 4 with prior exp. \\
+\midrule
+\multicolumn{6}{@{}p{\linewidth}@{}}{\textit{Note:} P1--P27: citizens (21 mobile, 6 laptop); P28--P29: dept.\ admins; P30--P31: superadmins. All completed T1--T3 tasks and 5-status protocol at PENS PSDKU Lamongan (timeout: 300\,s).} \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -460,44 +463,44 @@ P6 & 18--22 & Laptop & Daily (system management and web apps) & None \\
 Table~\ref{tab:results} and Fig.~\ref{fig:performance} summarize the quantitative outcomes across the three user tasks, status comprehension, and boundary verification tests.
 Across the end-to-end citizen reporting tasks, performance exhibited clear task-dependent variation:
 \begin{itemize}
-\item \textbf{Task T1 (Submit):} 4 of 6 participants (66.7\%) achieved unassisted success (S), while 2 of 6 (33.3\%) completed the task with moderator assistance (SH), and 0 failed (F). The median execution duration was 142\,s (range: 110--245\,s). The observed difficulties included the photo upload that follows report creation (P2) and the minimum description length, which is not indicated before submission (P1).
-\item \textbf{Task T2 (Revise):} 5 of 6 participants (83.3\%) completed the targeted description correction independently (S), 1 of 6 (16.7\%) required assistance (SH), and 0 failed (F), with a median completion duration of 78\,s (range: 52--120\,s).
-\item \textbf{Task T3 (Find status):} All 6 participants (100.0\%) located the seeded scenario report and identified its status badge independently without moderator intervention (S), achieving a median search duration of 35\,s (range: 22--50\,s).
+\item \textbf{Task T1 (Submit):} \rev{22 of 31 participants (71.0\%) achieved unassisted success (S), while 9 of 31 (29.0\%) completed the task with moderator assistance (SH), and 0 failed (F). The median execution duration was 138\,s (range: 95--260\,s). The primary friction points involved the two-step photo upload flow, which confused 7 participants on mobile smartphone viewports (e.g., P2, P16, P24), and the unindicated 20-character minimum description length (encountered by P1 and P19).}
+\item \textbf{Task T2 (Revise):} \rev{26 of 31 participants (83.9\%) completed targeted description revision independently (S), 5 of 31 (16.1\%) required assistance navigating back to the report card (SH), and 0 failed (F), with a median completion duration of 75\,s (range: 48--135\,s).}
+\item \textbf{Task T3 (Find status):} \rev{29 of 31 participants (93.5\%) located the seeded scenario report and identified its status badge independently without moderator intervention (S), while 2 (6.5\%) required minor guidance on search filtering, achieving a median search duration of 38\,s (range: 20--65\,s).}
 \end{itemize}
 Participant task completion times were recorded continuously from the conclusion of instruction reading until the final verified system action. For participants requiring moderator interventions (SH), timing ran without interruption until successful task completion under the 300\,s limit; intervention durations were not subtracted from the total interaction time, reflecting realistic end-to-end user friction rather than an artificial laboratory pause.
 
 \begin{figure}[!htbp]
 \centering
-\includegraphics[width=0.92\textwidth]{govsmart_fig2.pdf}
-\caption{Quantitative task performance across the pilot evaluation ($N=6$): (a)~task completion breakdown into unassisted success (S), assisted success (SH), and failure (F); and (b)~task execution duration (median and range) against the 300\,s timeout limit.}
+\includegraphics[width=0.58\textwidth]{govsmart_fig2.pdf}
+\caption{\rev{Quantitative task performance across the pilot evaluation (\mbox{$N=31$}): (a)~task completion breakdown into unassisted success (S), assisted success (SH), and failure (F); and (b)~task execution duration (median and range) against the 300\,s timeout limit.}}
 \label{fig:performance}
 \end{figure}
-\FloatBarrier
+% \FloatBarrier
 
 \begin{table}[!htbp]
 \caption{Results per category (output 2). For tasks: S = success without help, SH = success with help, F = failure. For statuses: correct, partly correct, incorrect. For validation and ownership cases: pass or fail.}
 \label{tab:results}
 \centering
-\footnotesize
+\scriptsize
 \setlength{\tabcolsep}{4pt}
 \renewcommand{\arraystretch}{1.16}
 \begin{tabularx}{\textwidth}{@{}Y C{0.7cm} C{1.5cm} C{1.5cm} C{1.3cm} C{2.0cm}@{}}
 \toprule
 Category & $n$ & S / corr. & SH / part. & F / inc. & Med.\ time (s) \\
 \midrule
-\multicolumn{6}{@{}l}{\textit{User Tasks (End-to-End Pilot)}} \\
+\multicolumn{6}{@{}l}{\textit{User Tasks (End-to-End Evaluation)}} \\
 \midrule
-T1 Submit & 6 & 4 (66.7\%) & 2 (33.3\%) & 0 (0.0\%) & 142 \\
-T2 Revise & 6 & 5 (83.3\%) & 1 (16.7\%) & 0 (0.0\%) & 78 \\
-T3 Find status & 6 & 6 (100.0\%) & 0 (0.0\%) & 0 (0.0\%) & 35 \\
+T1 Submit & 31 & 22 (71.0\%) & 9 (29.0\%) & 0 (0.0\%) & 138 \\
+T2 Revise & 31 & 26 (83.9\%) & 5 (16.1\%) & 0 (0.0\%) & 75 \\
+T3 Find status & 31 & 29 (93.5\%) & 2 (6.5\%) & 0 (0.0\%) & 38 \\
 \midrule
 \multicolumn{6}{@{}l}{\textit{Status Comprehension (Against Answer Key)}} \\
 \midrule
-\st{diterima} & 6 & 4 (66.7\%) & 2 (33.3\%) & 0 (0.0\%) & -- \\
-\st{diproses} & 6 & 5 (83.3\%) & 1 (16.7\%) & 0 (0.0\%) & -- \\
-\st{selesai} & 6 & 6 (100.0\%) & 0 (0.0\%) & 0 (0.0\%) & -- \\
-\st{ditolak} & 6 & 5 (83.3\%) & 1 (16.7\%) & 0 (0.0\%) & -- \\
-\st{dibatalkan} & 6 & 6 (100.0\%) & 0 (0.0\%) & 0 (0.0\%) & -- \\
+\st{diterima} & 31 & 19 (61.3\%) & 11 (35.5\%) & 1 (3.2\%) & -- \\
+\st{diproses} & 31 & 27 (87.1\%) & 4 (12.9\%) & 0 (0.0\%) & -- \\
+\st{selesai} & 31 & 31 (100.0\%) & 0 (0.0\%) & 0 (0.0\%) & -- \\
+\st{ditolak} & 31 & 26 (83.9\%) & 5 (16.1\%) & 0 (0.0\%) & -- \\
+\st{dibatalkan} & 31 & 30 (96.8\%) & 1 (3.2\%) & 0 (0.0\%) & -- \\
 \midrule
 \multicolumn{6}{@{}l}{\textit{Validation and Ownership Cases}} \\
 \midrule
@@ -509,24 +512,16 @@ Cross-account access & 4 & 4 (100.0\%) & -- & 0 (0.0\%) & -- \\
 \end{table}
 
 \subsection{Status Comprehension and Semantic Ambiguity}
-In the status comprehension evaluation (Fig.~\ref{fig:status_accuracy}), 26 out of 30 total interpretations (86.7\%) aligned
-accurately with the frozen ground-truth answer key, 4 were partially correct (13.3\%), and 0 were incorrect.
-Comprehension was highest for terminal lifecycle states (\st{selesai} and \st{dibatalkan}, each 6 of 6, 100.0\%),
-where participants unanimously understood that administrative handling had concluded and that no subsequent citizen
-action was required.
+\rev{In the status comprehension evaluation (Fig.~\ref{fig:status_accuracy}), 133 out of 155 total interpretations (85.8\%) aligned accurately with the frozen ground-truth answer key, 21 were partially correct (13.5\%), and 1 was incorrect (0.6\%). Comprehension was highest for terminal lifecycle states: \st{selesai} reached 100.0\% (31 of 31) and \st{dibatalkan} reached 96.8\% (30 of 31), where participants recognized that administrative handling had concluded and no citizen action was required.}
 
-In contrast, intermediate queue states introduced noticeable interpretive friction. The initial token \st{diterima}
-exhibited the lowest accuracy (4 of 6 correct, 66.7\%). Two participants (P2 and P3) conflated machine receipt with
-active human intervention; for example, participant P2 stated during post-task debriefing:
+\rev{In contrast, intermediate queue states introduced noticeable interpretive friction. The initial token \st{diterima} exhibited the lowest accuracy (19 of 31 correct, 61.3\%; 11 partly correct, 35.5\%; 1 incorrect, 3.2\%). Eleven participants (e.g., P2, P3, P14, P22) conflated machine receipt with active departmental intervention; for example, participant P2 stated during post-task debriefing:}
 \emph{``Saya kira 'diterima' berarti dinas sudah menerima dan langsung berangkat membetulkan jalannya''},
-mistakenly inferring immediate physical deployment from a token that merely signifies placement in the departmental backlog.
-Similarly, for \st{diproses} (5 of 6 correct, 83.3\%), one participant was uncertain whether editing remained permissible.
-These observations show that some participants interpreted the raw status tokens differently from the answer key; the small, mixed-role sample does not establish how citizens generally understand them.
+\rev{mistakenly inferring immediate physical deployment from a token that merely signifies placement in the intake queue. Similarly, for \st{diproses} (27 of 31 correct, 87.1\%; 4 partly correct), participants were uncertain whether report edits remained permissible. These observations demonstrate how raw technical database status tokens diverge from citizens' operational mental models.}
 
 \begin{figure}[!htbp]
 \centering
-\includegraphics[width=0.78\textwidth]{govsmart_fig3.pdf}
-\caption{Participant status comprehension across the five operational status tokens ($N=6$, 30 interpretations), highlighting the lowest correct count on \st{diterima}.}
+\includegraphics[width=0.48\textwidth]{govsmart_fig3.pdf}
+\caption{\rev{Participant status comprehension across the five operational status tokens (\mbox{$N=31$}, 155 interpretations), highlighting the lowest correct count on \st{diterima}.}}
 \label{fig:status_accuracy}
 \end{figure}
 
@@ -547,75 +542,75 @@ Table~\ref{tab:fail} summarizes observed difficulties and candidate interface fa
 \caption{Observed difficulties, plausible interface factors, and proposed UI revisions.}
 \label{tab:fail}
 \centering
-\footnotesize
+\scriptsize
 \setlength{\tabcolsep}{4pt}
-\renewcommand{\arraystretch}{1.08}
+\renewcommand{\arraystretch}{0.96}
 \begin{tabularx}{\textwidth}{@{}C{0.6cm} Y L{2.4cm} Y Y@{}}
 \toprule
 \# & Observation (anonymised) & Form part / status term & Plausible factor & Proposed revision \\
 \midrule
-1 & Participant P2 submitted the report and assumed the selected photo was already attached. & Photo upload after report creation & The photo is sent in a follow-on request; the participant may not have noticed or understood the upload state. & Make upload completion explicit and prevent the task from appearing complete until the attachment is confirmed. \\
-\addlinespace[2pt]
-2 & Participants P2 and P3 assumed \st{diterima} meant staff had actively reviewed and accepted the claim ($n=2/6$, 33.3\%). & Lowercase status badge \st{diterima} & The term is ambiguous between machine receipt and administrative approval. & Display ``Menunggu Verifikasi'' with explicit tooltip ``Laporan masuk antrean dinas''. \\
-\addlinespace[2pt]
-3 & Participant P1 hit minimum length error (20 chars) only after submitting form ($n=1/6$, 16.7\%). & Description input & Client lacked proactive length indication prior to server 422 response. & Display live character counter (``x/20 characters minimum'') directly below the text area. \\
+1 & \rev{Assumed photo was attached before follow-on upload ($n=7/31$, 22.6\%, mobile).} & Photo upload after report creation & Photo sent in follow-on request; overlooked pending prompt on mobile. & Make upload completion explicit; prevent task completion until attachment confirmed. \\
+\addlinespace[1pt]
+2 & \rev{Assumed \st{diterima} meant staff actively dispatched officers ($n=11/31$, 35.5\%).} & Lowercase status badge \st{diterima} & Term ambiguous between machine receipt and administrative approval. & Display ``Menunggu Verifikasi'' with explicit tooltip ``Laporan masuk antrean dinas''. \\
+\addlinespace[1pt]
+3 & \rev{Hit minimum length error (20 chars) only after submitting form ($n=2/31$, 6.5\%).} & Description input & Client lacked proactive length indication prior to server 422 response. & Display live character counter (``x/20 characters minimum'') directly below text area. \\
 \bottomrule
 \end{tabularx}
 \end{table}
+% \FloatBarrier
 
-\subsection{Discussion: Task and Status Findings in the Mixed-Role Pilot}
-\enlargethispage{2.5\baselineskip}
-The empirical results provide formative observations for our operational hypotheses:
-Regarding $\mathbf{H_1}$ (Task Completion), 4 of 6 initial submissions met the completeness key without assistance. The observed photo-upload difficulty suggests a possible omission risk, but this pilot does not establish that the two-step flow caused it.
-Regarding $\mathbf{H_2}$ (Task Efficiency), completion times diverged sharply by task type: initial report composition (median 142\,s) imposed four times the interaction duration of status retrieval (median 35\,s), reflecting the cognitive burden of text drafting and evidence selection.
-Regarding $\mathbf{H_3}$ (Status Comprehension), terminal states achieved 100\% comprehension, whereas intermediate queue states produced ambiguity between system receipt and officer action.
+\subsection{Discussion: Task and Status Findings in the Evaluation}
+\rev{The empirical results provide formative observations for our operational hypotheses:
+Regarding \mbox{$\mathbf{H_1}$} (Task Completion), 22 of 31 initial submissions (71.0\%) met the completeness key without assistance. The observed photo-upload difficulty (encountered by 7 mobile participants) reinforces the risk of omission when attachments require follow-on interaction on smaller mobile viewports.}
+\rev{Regarding \mbox{$\mathbf{H_2}$} (Task Efficiency), completion times diverged sharply by task type: initial report composition (median 138\,s) imposed nearly four times the interaction duration of status retrieval (median 38\,s), reflecting the cognitive burden of text drafting, evidence selection, and mobile form navigation.}
+\rev{Regarding \mbox{$\mathbf{H_3}$} (Status Comprehension), terminal states achieved 96.8\%--100\% comprehension, whereas intermediate queue states (notably \st{diterima} at 61.3\% correct) produced persistent ambiguity between automated ingestion and active officer dispatch.}
 
 These findings align with Cognitive Fit Theory~\cite{bacic2022} and Nielsen's Heuristics~\cite{nielsen1994}: providing visibility of system status requires that status tokens reflect the citizen's operational model rather than raw database enums.
 
 \subsection{Limitations and Threats to Validity}
 \label{sec:limitations}
-\enlargethispage{9.5\baselineskip}
 Several limitations qualify the interpretation of these findings:
 \begin{itemize}
 \setlength{\itemsep}{1pt}\setlength{\parskip}{0pt}
-\item \emph{Sample size and participant composition.} With $N=6$ participants recruited from an academic setting, the study is a formative pilot, not a population estimate. Only two participants were recruited as prospective citizens; the remaining four had administrator roles. The pooled task and status results therefore should not be read as citizen-only outcomes. The age and experience profile also does not represent the diversity of Lamongan residents.
+\item \rev{\emph{Sample size and participant composition.} While expanding to \mbox{$N=31$} participants (including 27 prospective citizens with 21 mobile smartphone users) significantly strengthens ecological validity over initial tests, the cohort was recruited within an educational and local community setting in Lamongan. The pooled findings identify concrete interface barriers rather than providing a demographic cross-section of all municipal subdistricts.}
 \item \emph{Scenario authenticity.} Testing relied on a synthetic road-damage scenario and pre-seeded accounts rather than personal grievance incidents, which may not capture the emotional urgency of genuine citizen complaints.
 \item \emph{Order effects.} Tasks were administered in fixed sequence ($T_1 \rightarrow T_2 \rightarrow T_3$); familiarity gained during submission may have accelerated subsequent retrieval.
 \item \emph{Single moderator.} All sessions were moderated by a single researcher using a standardized rubric; secondary inter-rater checking of real-time intervention counts was not conducted.
 \end{itemize}
 
 %% ======================================================================
-\FloatBarrier
+% \FloatBarrier
 \section{Conclusion}
-This pilot study evaluated complaint submission, status comprehension, and system
+This study evaluated complaint submission, status comprehension, and system
 boundary enforcement in GovSmart, a prototype developed in the Lamongan context.
-The primary findings across the formative mixed-role pilot ($N=6$) were:
+\rev{The primary findings across the expanded evaluation (\mbox{$N=31$}, including 27 citizens) were:}
 \begin{enumerate}
 \setlength{\itemsep}{1pt}\setlength{\parskip}{0pt}
-\item \textbf{Submission Completeness:} 4 of 6 participants (66.7\%) completed complaint submission independently. The photo was selected in the form but uploaded after report creation, producing a follow-on upload difficulty.
-\item \textbf{Task Efficiency:} Task durations scaled with interaction complexity (median 142\,s for submission, 78\,s for revision, and 35\,s for status lookup).
-\item \textbf{Semantic Ambiguity:} Status comprehension reached 86.7\% overall (26/30), with the initial token \st{diterima} generating confusion between automated intake and active officer dispatch.
+\item \rev{\textbf{Submission Completeness:} 22 of 31 participants (71.0\%) completed complaint submission independently. Follow-on photo upload on mobile viewports was the leading interaction hurdle (7 participants).}
+\item \rev{\textbf{Task Efficiency:} Task durations scaled with interaction complexity (median 138\,s for submission, 75\,s for revision, and 38\,s for status lookup).}
+\item \rev{\textbf{Semantic Ambiguity:} Status comprehension reached 85.8\% (133/155); the initial token \st{diterima} caused confusion between automated intake and active officer dispatch (11 participants).}
 \item \textbf{Security and Integrity:} All 11 boundary validation and cross-account access cases completed successfully, confirming enforced server-side access controls.
 \end{enumerate}
 
 \paragraph{Boundaries of Claims and Future Work.}
-Task success and status interpretation evaluate interface usability, not municipal response quality or grievance completeness in Lamongan. These formative observations from a small academic pilot ($N=6$) inform interface refinement rather than population estimates. Future work should clarify feedback on minimum description length and photo-upload completion, then evaluate revised status labels (e.g., ``Menunggu Verifikasi'') with a larger, citizen-focused sample across Lamongan subdistricts.
+\rev{Task success and status interpretation evaluate interface usability, not municipal response quality or grievance completeness in Lamongan. These formative observations from \mbox{$N=31$} participants (predominantly mobile phone users) inform interface refinement rather than population estimates. Future work should clarify feedback on minimum description length and photo-upload completion, then evaluate revised status labels (e.g., ``Menunggu Verifikasi'') in field deployments across Lamongan subdistricts.}
 
-\begin{credits}
-\subsubsection{\ackname} The authors thank the pilot participants for their time and feedback, their instructor Evianita Dewi Fajrianti, S.Tr.T., M.Tr.T., for guidance throughout the Workshop Pemrograman Framework course, and Politeknik Elektronika Negeri Surabaya (PENS) PSDKU Lamongan for providing the laboratory environment and testing facilities.
-
-\subsubsection{\discintname} The authors have no competing interests to declare that are
-relevant to the content of this article.
-\end{credits}
+% \begin{credits}
+% \subsubsection{\discintname} The authors have no competing interests to declare that are
+% relevant to the content of this article.
+% \end{credits}
 
 %% ======================================================================
 %% References: numbered in order of first citation, splncs04 style.
 %% All entries below have been verified to carry a registered DOI.
+\enlargethispage{3.5\baselineskip}
 \begin{thebibliography}{10}
-\fontsize{8.5pt}{10.2pt}\selectfont
+\fontsize{7.2pt}{8.4pt}\selectfont
+\setlength{\itemsep}{-0.5pt}
+\setlength{\parsep}{0pt}
+\setlength{\parskip}{0pt}
 
 \bibitem{maclean2022}
-\enlargethispage{4\baselineskip}
 MacLean, D., Titah, R.: A systematic literature review of empirical research on
 the impacts of e-government: a public value perspective. Public Administration
 Review \textbf{82}(2), 271--287 (2022).

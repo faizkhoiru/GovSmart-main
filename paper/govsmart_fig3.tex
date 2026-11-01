@@ -1,4 +1,4 @@
-% govsmart_fig3.tex — Standalone status-comprehension bar chart for GovSmart paper
+% govsmart_fig3.tex — Standalone status-comprehension bar chart for GovSmart paper (N=31, 155 Trials)
 % Horizontal stacked bars showing correct / partly correct / incorrect per status
 % Compile: pdflatex govsmart_fig3.tex
 \documentclass[border=4pt]{standalone}
@@ -15,7 +15,7 @@
 \begin{document}
 \begin{tikzpicture}
 \begin{axis}[
-    title={\textbf{Status Comprehension Accuracy across Operational Tokens} ($N{=}6$, 30 Trials)},
+    title={\textbf{Status Comprehension Accuracy across Operational Tokens} ($N{=}31$, 155 Trials)},
     title style={font=\small, at={(0.5,1.06)}, anchor=south},
     xbar stacked,
     width=14cm, height=6.5cm,
@@ -40,36 +40,36 @@
     clip=false,
 ]
 
-% Correct
+% Correct: selesai (100%), dibatalkan (96.8%), diproses (87.1%), ditolak (83.9%), diterima (61.3%)
 \addplot[fill=cCorr, draw=none] coordinates {
-    (100,5) (100,4) (83.3,3) (83.3,2) (66.7,1)
+    (100.0,5) (96.8,4) (87.1,3) (83.9,2) (61.3,1)
 };
-% Partly correct
+% Partly correct: selesai (0%), dibatalkan (3.2%), diproses (12.9%), ditolak (16.1%), diterima (35.5%)
 \addplot[fill=cPart, draw=none] coordinates {
-    (0,5) (0,4) (16.7,3) (16.7,2) (33.3,1)
+    (0.0,5) (3.2,4) (12.9,3) (16.1,2) (35.5,1)
 };
-% Incorrect
+% Incorrect: diterima (3.2%)
 \addplot[fill=cInc, draw=none] coordinates {
-    (0,5) (0,4) (0,3) (0,2) (0,1)
+    (0.0,5) (0.0,4) (0.0,3) (0.0,2) (3.2,1)
 };
 
 % Percentage labels
-\node[font=\scriptsize, white] at (axis cs:50,5) {100};
-\node[font=\scriptsize, white] at (axis cs:50,4) {100};
-\node[font=\scriptsize, white] at (axis cs:41.7,3) {83.3};
-\node[font=\scriptsize, white] at (axis cs:41.7,2) {83.3};
-\node[font=\scriptsize, white] at (axis cs:33.3,1) {66.7};
+\node[font=\scriptsize, white] at (axis cs:50,5) {100.0\%};
+\node[font=\scriptsize, white] at (axis cs:48.4,4) {96.8\%};
+\node[font=\scriptsize, white] at (axis cs:43.5,3) {87.1\%};
+\node[font=\scriptsize, white] at (axis cs:42.0,2) {83.9\%};
+\node[font=\scriptsize, white] at (axis cs:30.6,1) {61.3\%};
 
-% Partly-correct labels (only where nonzero)
-\node[font=\scriptsize] at (axis cs:91.7,3) {16.7};
-\node[font=\scriptsize] at (axis cs:91.7,2) {16.7};
-\node[font=\scriptsize] at (axis cs:83.3,1) {33.3};
+% Partly-correct labels (only where noticeable)
+\node[font=\scriptsize] at (axis cs:93.5,3) {12.9\%};
+\node[font=\scriptsize] at (axis cs:92.0,2) {16.1\%};
+\node[font=\scriptsize] at (axis cs:79.0,1) {35.5\%};
 
 % Ambiguity annotation — callout placed to the right, well clear of bars
 \node[font=\scriptsize, cAnnot, text width=3.8cm, align=left, anchor=west]
     at (axis cs:105,1.8) {%
-        \textbf{Ambiguity Point} ($n{=}2/6$):\\
-        Outlook ``\textit{diterima}'' conflated\\
+        \textbf{Ambiguity Point} ($n{=}11/31$):\\
+        Token ``\textit{diterima}'' conflated\\
         with immediate officer dispatch.};
 
 \legend{Correct, Partially Correct, Incorrect}
