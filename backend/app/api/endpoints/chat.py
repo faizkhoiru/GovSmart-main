@@ -34,6 +34,27 @@ async def limited_user(user_id):
 
 KNOWLEDGE_INTENTS = [
     {
+        "id": "panduan_aplikasi",
+        "phrases": [
+            "cara menggunakan aplikasi", "cara pakai aplikasi", "cara menggunakan govsmart",
+            "cara pakai govsmart", "cara kerja aplikasi", "panduan aplikasi",
+            "petunjuk penggunaan", "apa itu govsmart", "fungsi aplikasi ini",
+            "kegunaan aplikasi", "gimana cara pakai", "gimana cara menggunakan",
+            "panduan menggunakan aplikasi", "tutorial aplikasi", "cara memakai aplikasi"
+        ],
+        "keywords": ["govsmart", "panduan", "tutorial"],
+        "jawaban": (
+            "Panduan Lengkap Menggunakan Aplikasi GovSmart Kabupaten Lamongan:\n\n"
+            "1. Daftar & Masuk Akun: Klik 'Daftar Baru' dengan mengisi NIK (16 digit), email aktif, dan password aman, lalu masuk (login) ke akun Anda.\n"
+            "2. Buat Laporan Pengaduan: Pilih tab 'Buat Laporan', isi judul (5-100 karakter), deskripsi masalah (20-2.000 karakter), unggah foto bukti (maks. 5 MB), dan tandai titik lokasi GPS pada peta.\n"
+            "3. Klasifikasi AI Otomatis: Sistem AI GovSmart otomatis menentukan tingkat urgensi (Normal/Penting/Darurat) dan meneruskan laporan ke dinas berwenang dari 20 OPD Pemkab Lamongan.\n"
+            "4. Pantau Progres & Riwayat: Cek status laporan Anda secara real-time (Diterima -> Diproses -> Selesai/Ditolak) beserta foto bukti tindak lanjut dari petugas dinas.\n"
+            "5. Konsultasi Asisten AI: Gunakan fitur Tanya AI ini kapan saja untuk menanyakan syarat layanan publik (NIB/OSS, KTP/KK, PBG, KKPR) maupun bantuan penggunaan aplikasi."
+        ),
+        "intent": "panduan_aplikasi",
+        "layanan": "Panduan Layanan Digital GovSmart",
+    },
+    {
         "id": "faq_registrasi_akun",
         "phrases": [
             "bikin akun", "buat akun", "daftar akun", "cara daftar", "cara bikin akun",
@@ -373,6 +394,93 @@ KNOWLEDGE_INTENTS = [
         "layanan": "Edukasi Wawasan Kebangsaan",
     },
     {
+        "id": "faq_edit_batal_laporan",
+        "phrases": [
+            "edit laporan", "ubah laporan", "revisi laporan", "batalkan laporan",
+            "hapus laporan", "tarik laporan", "batalin laporan", "salah kirim laporan",
+            "koreksi laporan"
+        ],
+        "keywords": ["edit", "ubah", "batalkan", "batal", "revisi"],
+        "jawaban": (
+            "Ketentuan Mengubah (Edit) dan Membatalkan Laporan di GovSmart:\n\n"
+            "1. Syarat Status: Laporan HANYA dapat diedit atau dibatalkan selama statusnya masih 'Diterima' (belum diubah menjadi 'Diproses', 'Selesai', atau 'Ditolak' oleh Admin Dinas).\n"
+            "2. Cara Edit: Buka daftar 'Laporan Saya', pilih laporan berstatus 'Diterima', klik tombol 'Edit', perbarui judul atau deskripsi, lalu simpan.\n"
+            "3. Cara Batalkan: Klik tombol 'Batalkan Laporan' pada laporan berstatus 'Diterima' apabila masalah sudah teratasi atau terdapat kesalahan pengajuan."
+        ),
+        "intent": "faq_edit_batal_laporan",
+        "layanan": "Pengaduan Masyarakat Terpadu",
+    },
+    {
+        "id": "faq_pbg_slf",
+        "phrases": [
+            "syarat pbg", "izin pbg", "persetujuan bangunan gedung", "urus imb",
+            "izin mendirikan bangunan", "sertifikat laik fungsi", "syarat slf", "simbg"
+        ],
+        "keywords": ["pbg", "imb", "slf", "simbg"],
+        "jawaban": (
+            "Layanan Persetujuan Bangunan Gedung (PBG / pengganti IMB) & SLF Kabupaten Lamongan:\n\n"
+            "1. Sistem Pengajuan: Diajukan secara daring melalui portal SIMBG (simbg.pu.go.id) dan diproses oleh Dinas PU Cipta Karya bersama DPMPTSP Kabupaten Lamongan.\n"
+            "2. Persyaratan Dokumen Pokok:\n"
+            "   - Data Pemohon (KTP/NIB) dan bukti kepemilikan tanah (SHM/SHGB/Akta)\n"
+            "   - Dokumen KKPR (Kesesuaian Kegiatan Pemanfaatan Ruang)\n"
+            "   - Dokumen Rencana Teknis: gambar arsitektur, struktur, dan utilitas (MEP)\n"
+            "3. Biaya Retribusi: Mengikuti Perda Kabupaten Lamongan tentang Pajak Daerah dan Retribusi Daerah (PDRD)."
+        ),
+        "intent": "faq_pbg_slf",
+        "layanan": "Dinas Penanaman Modal dan Pelayanan Terpadu Satu Pintu",
+    },
+    {
+        "id": "persona_asisten",
+        "phrases": [
+            "cowo apa cewe", "cowok apa cewek", "laki atau perempuan", "pria atau wanita",
+            "jenis kelamin", "punya pacar", "sudah menikah", "umur berapa", "siapa yang buat",
+            "kamu manusia", "kamu robot", "kamu bot", "kamu ai"
+        ],
+        "keywords": ["cowo", "cewe", "cowok", "cewek", "gender", "kelamin"],
+        "jawaban": (
+            "Saya adalah asisten virtual berbasis kecerdasan buatan (AI) resmi dari aplikasi GovSmart Pemerintah Kabupaten Lamongan, sehingga saya tidak memiliki jenis kelamin ataupun wujud fisik layaknya manusia.\n\n"
+            "Saya dirancang khusus untuk mendampingi warga Kabupaten Lamongan dalam:\n"
+            "1. Panduan penggunaan aplikasi GovSmart (registrasi akun, cara melapor, pantau status laporan)\n"
+            "2. Informasi syarat perizinan usaha & bangunan (NIB/OSS, KKPR, PBG, SLF di DPMPTSP)\n"
+            "3. Layanan administrasi kependudukan (KTP-el, KK, KIA, Akta di Disdukcapil)\n"
+            "4. Informasi layanan dari 20 Dinas/OPD di Kabupaten Lamongan\n\n"
+            "Ada yang bisa saya bantu hari ini?"
+        ),
+        "intent": "sapaan",
+        "layanan": "Asisten Virtual GovSmart",
+    },
+    {
+        "id": "keluhan_bantuan_cepat",
+        "phrases": [
+            "aduh", "bingung", "tolong", "gimana nih", "bantuin", "mohon bantuan",
+            "butuh bantuan", "waduh", "astaga", "ya ampun"
+        ],
+        "keywords": ["aduh", "bingung", "tolong", "waduh"],
+        "jawaban": (
+            "Tenang, saya siap membantu Anda. Mohon ceritakan kendala atau kebutuhan yang sedang Anda hadapi, misalnya:\n\n"
+            "1. Bingung cara memakai aplikasi atau cara membuat laporan pengaduan\n"
+            "2. Kendala saat mendaftar akun atau gagal login\n"
+            "3. Ingin mengurus dokumen kependudukan (KTP, KK, Akta) atau perizinan usaha (NIB/OSS, KKPR, PBG)\n"
+            "4. Ingin melaporkan masalah jalan rusak, lampu jalan mati, sampah, atau layanan darurat\n\n"
+            "Silakan ketik topik yang Anda butuhkan, saya akan pandu langkah demi langkah."
+        ),
+        "intent": "sapaan",
+        "layanan": "Asisten Virtual GovSmart",
+    },
+    {
+        "id": "ucapan_terima_kasih",
+        "phrases": [
+            "terima kasih", "makasih", "trims", "thanks", "thank you", "matur nuwun",
+            "oke siap", "mantap", "sip", "baik terima kasih"
+        ],
+        "keywords": ["makasih", "thanks", "trims"],
+        "jawaban": (
+            "Sama-sama! Senang bisa membantu Anda. Jika ada hal lain seputar penggunaan aplikasi GovSmart, layanan pengaduan warga, atau prosedur perizinan di Kabupaten Lamongan yang ingin ditanyakan, silakan ketik kapan saja."
+        ),
+        "intent": "sapaan",
+        "layanan": "Asisten Virtual GovSmart",
+    },
+    {
         "id": "sapaan_dan_bantuan",
         "phrases": [
             "halo", "hai", "assalamu", "selamat pagi", "selamat siang",
@@ -395,8 +503,68 @@ KNOWLEDGE_INTENTS = [
 ]
 
 
+OUT_OF_RAG_PATTERNS = [
+    r"\bkopdes\b",
+    r"\bbumdes\b",
+    r"koperasi\s+(?:desa|merah\s+putih|simpan\s+pinjam|unit\s+desa)",
+    r"(?:membuka|buka|mendirikan|buat|bikin|syarat|izin|pendirian|daftar)\s+koperasi",
+    r"(?:membuat|bikin|mendirikan|membangun|pindah)\s+negara\b",
+    r"pindah\s+kewarganegaraan",
+    r"(?:cara|syarat|ingin|mau|gimana|bagaimana)\s+(?:jadi|menjadi|mencalonkan|daftar\s+jadi)\s+(?:presiden|wakil\s+presiden|menteri|gubernur|bupati|wakil\s+bupati|walikota|camat|lurah|kepala\s+desa|kades|anggota\s+dpr|dprd|dpd|mpr|hakim|jaksa|polisi|tni|tentara|pns|asn)",
+    r"akta\s+(?:pendirian|notaris|jual\s+beli|tanah|waris|cerai|perceraian|perusahaan|\bpt\b|\bcv\b)",
+    r"pendirian\s+(?:pt|cv|perseroan|yayasan|koperasi)",
+    r"\bkemenkumham\b",
+    r"sertifikat\s+(?:tanah|hak\s+milik|\bshm\b|\bshgb\b|vaksin|halal|kompetensi|profesi|guru)",
+    r"balik\s+nama",
+    r"\bbpn\b",
+    r"\bpedulilindungi\b",
+    r"\bsatusehat\b",
+    r"bpjs\s+ketenagakerjaan",
+    r"\bjamsostek\b",
+    r"\bjht\b",
+    r"\b(?:kpr|kur|pinjaman\s+bank|pinjaman\s+modal|kredit\s+usaha|kredit\s+rumah|rumah\s+subsidi|kartu\s+kredit|kartu\s+atm|bri|bni|mandiri|bca|ojk|pinjol)\b",
+    r"\b(?:spt\s+pajak|lapor\s+spt|lapor\s+pajak|npwp|djp|pajak\s+penghasilan|pajak\s+kendaraan|pajak\s+motor|pajak\s+mobil|pajak\s+bumi|\bpbb\b)\b",
+    r"\b(?:samsat|stnk|bpkb|sim\s+[abc]|perpanjang\s+sim|bikin\s+sim|buat\s+sim|skck|paspor|imigrasi|visa)\b",
+    r"\b(?:kua|nikah\s+di\s+kua|syarat\s+nikah|daftar\s+cpns|\bcpns\b|\bpppk\b|prakerja|kartu\s+prakerja)\b",
+    r"\b(?:cuti\s+melahirkan|uu\s+ketenagakerjaan|pesangon|ump|umr|umk\s+lamongan)\b",
+    r"siapa\s+(?:nama\s+)?(?:bupati|wakil\s+bupati|sekda|camat|lurah|kepala\s+dinas|kapolres|dandim|presiden|wakil\s+presiden|gubernur)",
+    r"\b(?:wisata|kuliner|makanan\s+khas|oleh-?oleh|hotel|penginapan|restoran|jadwal\s+kereta|kereta\s+api|jadwal\s+bus|tiket\s+kereta|kode\s+pos|prakiraan\s+cuaca|ramalan\s+cuaca|resep\s+masakan)\b",
+    r"(?:berapa\s+luas|luas\s+wilayah|jumlah\s+penduduk|letak\s+kabupaten|ibu\s+kota|batas\s+wilayah|piala\s+dunia)",
+    r"(?:password|kata\s+sandi|sandi|akun|login)\s+(?:wifi|hotspot|email|gmail|yahoo|whatsapp|\bwa\b|instagram|\big\b|facebook|\bfb\b|tiktok|telegram|google|apple)",
+    r"(?:ganti|ubah|lupa|reset)\s+(?:password|kata\s+sandi|sandi)\s+(?:wifi|email|gmail|whatsapp|instagram|facebook|google)",
+    r"laporan\s+(?:keuangan|pajak|tahunan|bulanan|penjualan|laba\s+rugi|praktikum|skripsi|magang|kerja|kegiatan|polisi|kehilangan)",
+    r"melapor\s+polisi|kemalingan",
+    r"(?:lampu\s+rumah|listrik\s+rumah|atap\s+rumah|memperbaiki\s+lampu\s+rumah|membuat\s+rumah|bikin\s+rumah|tagihan\s+air|tagihan\s+listrik|biaya\s+listrik|masuk\s+tol)",
+    r"(?:jalan\s+pikiran|jalan\s+keluar|jalan\s+hidup|bikin\s+anak|keluarga\s+bahagia|kesehatan\s+tubuh|sampah\s+plastik\s+di\s+rumah)",
+    r"(?:sekolah\s+kedinasan|daftar\s+kuliah|jalur\s+mandiri|masuk\s+universitas|perguruan\s+tinggi|rumah\s+sakit\s+jiwa)",
+    r"(?:gps\s+di\s+mobil|gps\s+mobil|gps\s+motor|lokasi\s+seseorang|grup\s+whatsapp|paket\s+jne|foto\s+profil|langit\s+berwarna|warna\s+merah\s+dalam\s+psikologi|surat\s+lamaran)",
+    r"\b(?:makanan|minuman|jajanan|cemilan|kuliner|roti|kue|restoran|warung\s+makan|tempat\s+makan|kedai\s+makan\w*|toko\s+makan\w*|toko\s+kue|rekomendasi\s+makan\w*|resep)\b",
+    r"\b(?:tapanuli|pahae\s+jae|tanjung\s+priok|sunter\s+jaya|jakarta\s+utara|tortillas|pancake|waffle|nastar|imam\s+syafei|siti\s+fatonah)\b",
+]
+OUT_OF_RAG_RE = re.compile("|".join(OUT_OF_RAG_PATTERNS), re.I)
+
+DI_LUAR_RAG_JAWABAN = (
+    "Maaf, informasi mengenai pertanyaan tersebut tidak tersedia di dalam basis dokumen resmi (RAG) "
+    "GovSmart Kabupaten Lamongan.\n\n"
+    "Sebagai asisten virtual resmi, saya hanya dapat menjawab pertanyaan yang tercatat dalam dokumen rujukan kami, meliputi:\n\n"
+    "1. Panduan Penggunaan & Pengaduan Aplikasi GovSmart (registrasi akun, login, cara melapor, cek status, dan alur 20 dinas)\n"
+    "2. Standar Pelayanan & SOP Perizinan DPMPTSP Kabupaten Lamongan (NIB/OSS, KKPR, PBG, SLF, Izin Reklame, Persetujuan Lingkungan, Izin Praktik)\n"
+    "3. Panduan Layanan Publik OPD Lamongan (KTP-el, KK, KIA, Akta Kelahiran/Kematian, Surat Pindah Disdukcapil, jalan rusak, PJU, sampah, bansos DTKS/PKH, Puskesmas/RSUD, pendidikan)\n"
+    "4. Wawasan Kebangsaan (Pancasila, UUD 1945, Bendera, Bahasa, Lambang Negara, dan sejarah BPUPK)\n\n"
+    "Silakan ajukan pertanyaan seputar topik di atas agar saya dapat memberikan informasi resmi yang akurat."
+)
+
+
 def generate_builtin_chatbot_response(pertanyaan: str) -> dict:
     q = pertanyaan.lower().strip()
+
+    if OUT_OF_RAG_RE.search(q):
+        return {
+            "jawaban": DI_LUAR_RAG_JAWABAN,
+            "intent": "di_luar_topik",
+            "mode": "guardrail_rag",
+            "sumber": [],
+        }
 
     best_intent = None
     best_score = 0
@@ -421,36 +589,51 @@ def generate_builtin_chatbot_response(pertanyaan: str) -> dict:
             best_intent = item
 
     if best_intent and best_score >= 3:
-        jawaban = best_intent["jawaban"]
-        intent = best_intent["intent"]
-        layanan = best_intent["layanan"]
-    else:
-        jawaban = (
-            f"Terima kasih atas pertanyaan Anda seputar '{pertanyaan}'.\n\n"
-            "Asisten virtual GovSmart Kabupaten Lamongan dapat membantu Anda dalam beberapa topik berikut:\n"
-            "1. Pembuatan Akun & Login (pilih 'Daftar Baru' di halaman login untuk registrasi warga)\n"
-            "2. Buat Pengaduan Fasilitas Publik (jalan rusak, lampu jalan padam, tumpukan sampah)\n"
-            "3. Dokumen Kependudukan (KTP-el, Kartu Keluarga, Akta di Disdukcapil)\n"
-            "4. Izin Usaha & Pembuatan NIB UMKM (melalui OSS di DPMPTSP)\n"
-            "5. Bantuan Sosial (PKH/DTKS di Dinas Sosial) & Layanan Kesehatan (Puskesmas/BPJS)\n\n"
-            "Silakan ketik pertanyaan yang lebih spesifik seputar topik di atas agar saya dapat memberikan rincian panduan yang tepat."
-        )
-        intent = "tanya_umum"
-        layanan = "Pusat Layanan Informasi Terpadu Pemkab Lamongan"
+        if best_score < 8:
+            filler_words = {
+                "apa", "apakah", "siapa", "berapa", "kapan", "dimana", "kemana", "mana",
+                "mengapa", "kenapa", "bagaimana", "gimana", "tolong", "mohon", "bantu",
+                "info", "informasi", "cara", "caranya", "syarat", "syaratnya", "prosedur",
+                "panduan", "proses", "bisa", "dapat", "boleh", "harus", "mau", "ingin",
+                "tahu", "cari", "jelaskan", "tentang", "mengenai", "seputar", "yang",
+                "di", "ke", "dari", "dan", "atau", "ini", "itu", "nya", "ya", "dong",
+                "saya", "aku", "kamu", "anda", "kita", "kami", "ada", "untuk", "dengan",
+                "baru", "lama", "membuat", "buat", "bikin", "mengurus", "urus", "daftar",
+            }
+            intent_corpus = " ".join(
+                best_intent["phrases"] + best_intent["keywords"] + [best_intent["jawaban"].lower()]
+            )
+            specific_words = [
+                w for w in re.findall(r"[a-z0-9]+", q)
+                if len(w) >= 3 and w not in filler_words
+            ]
+            if not specific_words or any(w not in intent_corpus for w in specific_words):
+                return {
+                    "jawaban": DI_LUAR_RAG_JAWABAN,
+                    "intent": "di_luar_topik",
+                    "mode": "guardrail_rag",
+                    "sumber": [],
+                }
+        return {
+            "jawaban": best_intent["jawaban"],
+            "intent": best_intent["intent"],
+            "mode": "asisten_cerdas",
+            "sumber": [
+                {
+                    "no": 1,
+                    "judul": f"Panduan Resmi {best_intent['layanan']}",
+                    "konteks": "Pusat Layanan dan Pengaduan Terpadu Pemerintah Kabupaten Lamongan",
+                    "layanan": best_intent["layanan"],
+                    "halaman": "1",
+                }
+            ],
+        }
 
     return {
-        "jawaban": jawaban,
-        "intent": intent,
-        "mode": "asisten_cerdas",
-        "sumber": [
-            {
-                "no": 1,
-                "judul": f"Panduan Resmi {layanan}",
-                "konteks": "Pusat Layanan dan Pengaduan Terpadu Pemerintah Kabupaten Lamongan",
-                "layanan": layanan,
-                "halaman": "1",
-            }
-        ],
+        "jawaban": DI_LUAR_RAG_JAWABAN,
+        "intent": "di_luar_topik",
+        "mode": "guardrail_rag",
+        "sumber": [],
     }
 
 

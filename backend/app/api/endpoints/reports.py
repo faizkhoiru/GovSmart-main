@@ -225,7 +225,7 @@ def upload_foto_feedback(
     report = get_report_by_id(db, report_id)
     if not report:
         raise HTTPException(status_code=404, detail="Laporan tidak ditemukan")
-    if report.dept_id != current_admin.dept_id:
+    if current_admin.role == "admin" and report.dept_id != current_admin.dept_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Hanya admin dinas yang bertugas pada laporan ini yang dapat mengupload feedback."
@@ -316,8 +316,8 @@ def export_reports_csv(
     if current_user.role not in ("admin", "admin_dinas", "super_admin"):
         raise HTTPException(status_code=403, detail="Tidak memiliki akses untuk mengekspor laporan")
 
-    # super_admin & admin bisa lihat semua dinas; admin_dinas hanya dinasnya sendiri
-    if current_user.role == "admin_dinas":
+    # super_admin bisa lihat semua dinas; admin dinas hanya dinasnya sendiri
+    if current_user.role in ("admin", "admin_dinas") and current_user.dept_id is not None:
         dept_filter = current_user.dept_id
     elif dept_id is not None:
         dept_filter = dept_id
@@ -392,8 +392,8 @@ def export_reports_html(
     if current_user.role not in ("admin", "admin_dinas", "super_admin"):
         raise HTTPException(status_code=403, detail="Tidak memiliki akses untuk mengekspor laporan")
 
-    # super_admin & admin bisa lihat semua dinas; admin_dinas hanya dinasnya sendiri
-    if current_user.role == "admin_dinas":
+    # super_admin bisa lihat semua dinas; admin dinas hanya dinasnya sendiri
+    if current_user.role in ("admin", "admin_dinas") and current_user.dept_id is not None:
         dept_filter = current_user.dept_id
     elif dept_id is not None:
         dept_filter = dept_id
@@ -411,6 +411,7 @@ def export_reports_html(
         end_date=end_date
     )
 
+    import html
     from fastapi.responses import HTMLResponse
     from datetime import datetime
 
@@ -423,13 +424,13 @@ def export_reports_html(
         rows_html += f"""
         <tr>
             <td>{r.id}</td>
-            <td>{r.judul}</td>
-            <td>{r.urgensi}</td>
-            <td>{dept_name}</td>
-            <td>{r.status}</td>
-            <td>{r.lat or ''}, {r.long or ''}</td>
-            <td>{r.catatan_petugas or '-'}</td>
-            <td>{created}</td>
+            <td>{html.escape(str(r.judul or ''))}</td>
+            <td>{html.escape(str(r.urgensi or ''))}</td>
+            <td>{html.escape(str(dept_name))}</td>
+            <td>{html.escape(str(r.status or ''))}</td>
+            <td>{html.escape(str(r.lat or ''))}, {html.escape(str(r.long or ''))}</td>
+            <td>{html.escape(str(r.catatan_petugas or '-'))}</td>
+            <td>{html.escape(str(created))}</td>
         </tr>
         """
 

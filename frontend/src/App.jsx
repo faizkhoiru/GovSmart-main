@@ -21,6 +21,7 @@ import {
   Navigation,
   Download,
   RotateCcw,
+  Users,
 } from "lucide-react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
@@ -51,22 +52,46 @@ const formatDate = (value, options = {}) => {
 
 const renderChatText = (text) => {
   const blocks = String(text || "").split(/\n{2,}/);
-  return blocks.map((block, index) => {
+  const elements = [];
+  const listRegex = /^([-*•]|\d+[.)])\s+/;
+
+  blocks.forEach((block, blockIndex) => {
     const lines = block.split("\n").map((line) => line.trim()).filter(Boolean);
-    const isList = lines.length > 1 && lines.every((line) => /^([-*•]|\d+[.)])\s+/.test(line));
-    if (isList) {
-      const ordered = lines.every((line) => /^\d+[.)]\s+/.test(line));
-      const Tag = ordered ? "ol" : "ul";
-      return (
-        <Tag key={index} className="chat-list">
-          {lines.map((line, lineIndex) => (
-            <li key={lineIndex}>{line.replace(/^([-*•]|\d+[.)])\s+/, "")}</li>
-          ))}
-        </Tag>
-      );
+    if (!lines.length) return;
+
+    let i = 0;
+    while (i < lines.length) {
+      if (listRegex.test(lines[i])) {
+        const ordered = /^\d+[.)]\s+/.test(lines[i]);
+        const listItems = [];
+        while (
+          i < lines.length &&
+          listRegex.test(lines[i]) &&
+          (/^\d+[.)]\s+/.test(lines[i]) === ordered)
+        ) {
+          listItems.push(lines[i].replace(listRegex, ""));
+          i++;
+        }
+        const Tag = ordered ? "ol" : "ul";
+        elements.push(
+          <Tag key={`${blockIndex}-list-${i}`} className="chat-list">
+            {listItems.map((item, itemIdx) => (
+              <li key={itemIdx}>{item}</li>
+            ))}
+          </Tag>
+        );
+      } else {
+        const textLines = [];
+        while (i < lines.length && !listRegex.test(lines[i])) {
+          textLines.push(lines[i]);
+          i++;
+        }
+        elements.push(<p key={`${blockIndex}-p-${i}`}>{textLines.join("\n")}</p>);
+      }
     }
-    return <p key={index}>{block}</p>;
   });
+
+  return elements;
 };
 
 const DEPT_COLORS = [
@@ -172,7 +197,7 @@ export default function App() {
     }
   };
 
-  const [mainView, setMainView] = useState("options"); // 'options' | 'pengaduan' | 'pertanyaan' | 'admin'
+  const [mainView, setMainView] = useState("options"); // 'options' | 'pengaduan' | 'pertanyaan' | 'admin' | 'admin_dinas'
   const [token, setToken] = useState(
     localStorage.getItem("govsmart_token") || "",
   );
@@ -252,6 +277,29 @@ export default function App() {
     },
   ]);
   const [chatLoading, setChatLoading] = useState(false);
+  const chatContainerRef = useRef(null);
+  const chatEndRef = useRef(null);
+  const chatInputRef = useRef(null);
+
+  const scrollToLatestChat = (behavior = "smooth") => {
+    if (chatEndRef.current) {
+      chatEndRef.current.scrollIntoView({ behavior, block: "end" });
+    } else if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTo({
+        top: chatContainerRef.current.scrollHeight,
+        behavior,
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (mainView === "pertanyaan") {
+      const timer = setTimeout(() => {
+        scrollToLatestChat("smooth");
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [chatMessages, chatLoading, mainView]);
 
   // Helper: compute date range from dateFilter / customStartDate / customEndDate
   const getPeriodRange = () => {
@@ -740,10 +788,6 @@ export default function App() {
       if (start) params.set("start_date", start.toISOString().split("T")[0]);
       if (end) params.set("end_date", end.toISOString().split("T")[0]);
       if (statusFilter !== "all") params.set("status", statusFilter);
-      if (userRole === "warga" && departments.length > 0) {
-        const myDept = departments.find((d) => d.id === userDeptId);
-        if (myDept) params.set("dept_id", myDept.id);
-      }
 
       const res = await apiFetch(`/api/v1/reports/export/csv?${params}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -967,14 +1011,14 @@ export default function App() {
     return "Maaf, terjadi kesalahan saat menghubungi server AI.";
   };
 
-  const handleSendChat = async (e) => {
-    e.preventDefault();
-    if (!chatPrompt.trim()) return;
+  const sendChatMessage = async (rawPrompt) => {
+    const text = String(rawPrompt || "").trim();
+    if (!text || chatLoading) return;
 
-    const userMsg = chatPrompt;
-    setChatMessages((prev) => [...prev, { role: "user", text: userMsg }]);
+    setChatMessages((prev) => [...prev, { role: "user", text }]);
     setChatPrompt("");
     setChatLoading(true);
+    chatInputRef.current?.focus();
 
     try {
       const headers = { "Content-Type": "application/json" };
@@ -983,18 +1027,23 @@ export default function App() {
       const res = await apiFetch("/api/v1/chat/", {
         method: "POST",
         headers,
-        body: JSON.stringify({ pertanyaan: userMsg }),
+        body: JSON.stringify({ pertanyaan: text }),
       });
 
       if (res.ok) {
         const data = await res.json();
         setChatMessages((prev) => [
           ...prev,
-          { role: "ai", text: data.jawaban || "Tidak ada jawaban." },
+          {
+            role: "ai",
+            text: data.jawaban || "Tidak ada jawaban.",
+            sumber: Array.isArray(data.sumber) ? data.sumber : [],
+            intent: data.intent,
+          },
         ]);
       } else {
-        const text = await chatErrorText(res);
-        setChatMessages((prev) => [...prev, { role: "ai", text }]);
+        const errText = await chatErrorText(res);
+        setChatMessages((prev) => [...prev, { role: "ai", text: errText }]);
       }
     } catch (e) {
       setChatMessages((prev) => [
@@ -1007,6 +1056,11 @@ export default function App() {
     } finally {
       setChatLoading(false);
     }
+  };
+
+  const handleSendChat = (e) => {
+    e.preventDefault();
+    sendChatMessage(chatPrompt);
   };
 
   // Filtered reports by search query
@@ -1292,18 +1346,33 @@ export default function App() {
             }}
           >
             {userRole === "admin" || userRole === "super_admin" ? (
-              <div
-                onClick={() => setMainView("admin")}
-                className="glass-panel option-card"
-              >
-                <ShieldCheck size={80} className="text-accent-primary" />
-                <h2 style={{ fontSize: "1.75rem", fontWeight: 800 }}>
-                  Dasbor Admin
-                </h2>
-                <p style={{ textAlign: "center", color: "var(--text-muted)" }}>
-                  Manajemen pengaduan masuk dan pembaruan status laporan.
-                </p>
-              </div>
+              <>
+                <div
+                  onClick={() => setMainView("admin")}
+                  className="glass-panel option-card"
+                >
+                  <ShieldCheck size={80} className="text-accent-primary" />
+                  <h2 style={{ fontSize: "1.75rem", fontWeight: 800 }}>
+                    Dasbor Admin
+                  </h2>
+                  <p style={{ textAlign: "center", color: "var(--text-muted)" }}>
+                    Manajemen pengaduan masuk dan pembaruan status laporan.
+                  </p>
+                </div>
+
+                <div
+                  onClick={() => setMainView("pertanyaan")}
+                  className="glass-panel option-card"
+                >
+                  <MessageSquare size={80} className="text-accent-primary" />
+                  <h2 style={{ fontSize: "1.75rem", fontWeight: 800 }}>
+                    Pertanyaan
+                  </h2>
+                  <p style={{ textAlign: "center", color: "var(--text-muted)" }}>
+                    Tanya AI Chatbot mengenai panduan layanan atau perizinan.
+                  </p>
+                </div>
+              </>
             ) : (
               <>
                 <div
@@ -1401,10 +1470,10 @@ export default function App() {
       >
         <button
           className="nav-btn"
-          onClick={() => setMainView("options")}
+          onClick={() => setMainView(mainView === "admin_dinas" ? "admin" : "options")}
           style={{ marginBottom: "2rem" }}
         >
-          &larr; Kembali ke Pilihan
+          &larr; {mainView === "admin_dinas" ? "Kembali ke Dasbor Admin" : "Kembali ke Pilihan"}
         </button>
 
         {mainView === "pengaduan" && (
@@ -1989,6 +2058,7 @@ export default function App() {
             </div>
 
             <div
+              ref={chatContainerRef}
               style={{
                 height: "400px",
                 overflowY: "auto",
@@ -2000,6 +2070,7 @@ export default function App() {
                 display: "flex",
                 flexDirection: "column",
                 gap: "1rem",
+                scrollBehavior: "smooth",
               }}
             >
               {chatMessages.map((msg, i) => (
@@ -2020,6 +2091,30 @@ export default function App() {
                   }}
                 >
                   {renderChatText(msg.text)}
+                  {msg.role === "ai" && Array.isArray(msg.sumber) && msg.sumber.length > 0 && (
+                    <div
+                      style={{
+                        marginTop: "0.75rem",
+                        paddingTop: "0.6rem",
+                        borderTop: "1px solid #e2e8f0",
+                        fontSize: "0.8rem",
+                        color: "#475569",
+                      }}
+                    >
+                      <div style={{ fontWeight: 700, marginBottom: "0.3rem", color: "#334155" }}>
+                        Sumber Dokumen Resmi:
+                      </div>
+                      <ul style={{ margin: 0, paddingLeft: "1.1rem", display: "flex", flexDirection: "column", gap: "0.2rem" }}>
+                        {msg.sumber.map((s, sIdx) => (
+                          <li key={sIdx}>
+                            [{s.no}] {s.judul}
+                            {s.konteks ? ` — ${s.konteks}` : ""}
+                            {s.halaman ? ` (Hal. ${s.halaman})` : ""}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
               ))}
               {chatLoading && (
@@ -2037,6 +2132,7 @@ export default function App() {
                   <div className="typing-dot"></div>
                 </div>
               )}
+              <div ref={chatEndRef} style={{ height: "1px" }} />
             </div>
 
             {/* Rekomendasi Pertanyaan Cepat */}
@@ -2045,7 +2141,8 @@ export default function App() {
                 <button
                   key={idx}
                   type="button"
-                  onClick={() => setChatPrompt(qp)}
+                  disabled={chatLoading}
+                  onClick={() => sendChatMessage(qp)}
                   className="nav-btn"
                   style={{
                     padding: "0.35rem 0.75rem",
@@ -2054,10 +2151,11 @@ export default function App() {
                     borderColor: "rgba(59, 130, 246, 0.25)",
                     color: "var(--accent-primary)",
                     borderRadius: "999px",
-                    cursor: "pointer",
+                    cursor: chatLoading ? "not-allowed" : "pointer",
+                    opacity: chatLoading ? 0.6 : 1,
                   }}
                 >
-                  💡 {qp}
+                  {qp}
                 </button>
               ))}
             </div>
@@ -2067,7 +2165,9 @@ export default function App() {
               style={{ display: "flex", gap: "1rem" }}
             >
               <input
+                ref={chatInputRef}
                 type="text"
+                maxLength={500}
                 className="form-input"
                 placeholder="Tanyakan panduan atau lapor..."
                 value={chatPrompt}
@@ -2076,10 +2176,11 @@ export default function App() {
               />
               <button
                 type="submit"
+                disabled={chatLoading || !chatPrompt.trim()}
                 className="nav-btn nav-btn-primary"
                 style={{ padding: "0.85rem 1.5rem" }}
               >
-                <Send size={18} /> Kirim
+                <Send size={18} /> {chatLoading ? "Mengirim..." : "Kirim"}
               </button>
             </form>
           </div>
@@ -2142,149 +2243,57 @@ export default function App() {
               {userRole === "super_admin" && (
                 <div
                   className="glass-panel"
-                  style={{ padding: "2rem", marginBottom: "2.5rem" }}
+                  style={{
+                    padding: "1.25rem 1.75rem",
+                    marginBottom: "2rem",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    flexWrap: "wrap",
+                    gap: "1rem",
+                    border: "1px solid rgba(59, 130, 246, 0.25)",
+                    background: "rgba(255, 255, 255, 0.85)",
+                  }}
                 >
-                  <h2
-                    style={{
-                      fontSize: "1.2rem",
-                      fontWeight: 700,
-                      marginBottom: "1.5rem",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "0.5rem",
-                    }}
-                  >
-                    <UserPlus className="text-accent-primary" /> Registrasi Akun
-                    Admin Dinas Baru
-                  </h2>
-                  {adminSuccess && (
-                    <p
+                  <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+                    <div
                       style={{
-                        color: "#059669",
-                        background: "#ecfdf5",
-                        padding: "1rem",
-                        borderRadius: "8px",
-                        fontWeight: 600,
-                        marginBottom: "1.5rem",
+                        width: "48px",
+                        height: "48px",
+                        borderRadius: "12px",
+                        background: "rgba(59, 130, 246, 0.12)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
                       }}
                     >
-                      {adminSuccess}
-                    </p>
-                  )}
-                  <form
-                    onSubmit={handleCreateAdminDinas}
+                      <Users className="text-accent-primary" size={24} />
+                    </div>
+                    <div>
+                      <h2 style={{ fontSize: "1.2rem", fontWeight: 800, margin: 0, color: "var(--text-main)" }}>
+                        Daftar Admin Dinas
+                      </h2>
+                      <p style={{ margin: "0.25rem 0 0", fontSize: "0.88rem", color: "var(--text-muted)" }}>
+                        Kelola data aparatur dan pendaftaran akun Admin OPD ({adminDinasList.length} akun terdaftar).
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className="nav-btn nav-btn-primary"
+                    onClick={() => setMainView("admin_dinas")}
                     style={{
-                      display: "grid",
-                      gridTemplateColumns: "1fr 1fr 1fr auto",
-                      gap: "1rem",
-                      alignItems: "end",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "0.5rem",
+                      padding: "0.75rem 1.4rem",
+                      fontSize: "0.92rem",
+                      fontWeight: 700,
                     }}
                   >
-                    <div className="form-group" style={{ margin: 0 }}>
-                      <label className="form-label">NIP Aparatur</label>
-                      <input
-                        type="text"
-                        className="form-input"
-                        placeholder="198505052010011005"
-                        value={adminNip}
-                        onChange={(e) => setAdminNip(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div className="form-group" style={{ margin: 0 }}>
-                      <label className="form-label">Email Dinas</label>
-                      <input
-                        type="email"
-                        className="form-input"
-                        placeholder="admin.pu@lamongan.go.id"
-                        value={adminEmail}
-                        onChange={(e) => setAdminEmail(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div className="form-group" style={{ margin: 0 }}>
-                      <label className="form-label">Password</label>
-                      <input
-                        type="password"
-                        className="form-input"
-                        placeholder="••••••••"
-                        value={adminPassword}
-                        onChange={(e) => setAdminPassword(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div className="form-group" style={{ margin: 0 }}>
-                      <label className="form-label">Dinas</label>
-                      <select
-                        className="form-select"
-                        value={adminDeptId}
-                        onChange={(e) => setAdminDeptId(e.target.value)}
-                        required
-                      >
-                        <option value="">Pilih Dinas</option>
-                        {departments.map((d) => (
-                          <option key={d.id} value={d.id}>{d.nama_dinas}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <button
-                      type="submit"
-                      className="nav-btn nav-btn-primary"
-                      style={{ padding: "0.85rem 1.5rem" }}
-                    >
-                      Buat Akun
-                    </button>
-                  </form>
-                </div>
-              )}{/* Daftar Admin Dinas (Super Admin only) */}
-              {userRole === "super_admin" && (
-                <div className="glass-panel" style={{ padding: "1.5rem", marginBottom: "2rem" }}>
-                  <h2 style={{ fontSize: "1.2rem", fontWeight: 700, marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                    <UserPlus className="text-accent-primary" /> Daftar Admin Dinas Terdaftar
-                  </h2>
-                  {adminDinasList.length === 0 ? (
-                    <p style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>Belum ada Admin Dinas terdaftar.</p>
-                  ) : (
-                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.9rem" }}>
-                      <thead>
-                        <tr style={{ borderBottom: "2px solid var(--border-color)", textAlign: "left", color: "var(--text-muted)" }}>
-                          <th style={{ padding: "0.75rem" }}>ID</th>
-                          <th style={{ padding: "0.75rem" }}>NIP</th>
-                          <th style={{ padding: "0.75rem" }}>Email</th>
-                          <th style={{ padding: "0.75rem" }}>Dinas</th>
-                          <th style={{ padding: "0.75rem" }}>Status</th>
-                          <th style={{ padding: "0.75rem" }}>Aksi</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {adminDinasList.map((a) => (
-                          <tr key={a.id} style={{ borderBottom: "1px solid #e2e8f0" }}>
-                            <td style={{ padding: "0.75rem", fontWeight: 600 }}>#{a.id}</td>
-                            <td style={{ padding: "0.75rem" }}>{a.nik_or_nip}</td>
-                            <td style={{ padding: "0.75rem" }}>{a.email}</td>
-                            <td style={{ padding: "0.75rem" }}>{a.nama_dinas || departments.find((d) => d.id === a.dept_id)?.nama_dinas || "-"}</td>
-                            <td style={{ padding: "0.75rem" }}>{a.is_active ? "Aktif" : "Non-aktif"}</td>
-                            <td style={{ padding: "0.75rem", display: "flex", gap: "0.3rem" }}>
-                              <button
-                                className="nav-btn"
-                                style={{ padding: "0.3rem 0.7rem", fontSize: "0.8rem" }}
-                                onClick={() => handleEditAdminDinas(a)}
-                              >
-                                Edit
-                              </button>
-                              <button
-                                className="nav-btn"
-                                style={{ padding: "0.3rem 0.7rem", fontSize: "0.8rem", borderColor: "#ef4444", color: "#ef4444" }}
-                                onClick={() => handleDeleteAdminDinas(a)}
-                              >
-                                Hapus
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  )}
+                    <Users size={18} />
+                    Buka Halaman Daftar Admin Dinas &rarr;
+                  </button>
                 </div>
               )}{/* Peta Lamongan dengan Pin Laporan*/}
               <div className="glass-panel" style={{ padding: "1.5rem", marginBottom: "2rem" }}>
@@ -2542,6 +2551,228 @@ export default function App() {
                     ))}
                   </tbody>
                 </table>
+              )}
+            </div>
+          </div>
+        )}
+
+        {mainView === "admin_dinas" && userRole === "super_admin" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
+            <div
+              className="glass-panel"
+              style={{
+                padding: "1.5rem 2rem",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                flexWrap: "wrap",
+                gap: "1rem",
+              }}
+            >
+              <div>
+                <h1 style={{ fontSize: "1.75rem", fontWeight: 800, margin: 0 }}>
+                  Manajemen Admin Dinas (OPD)
+                </h1>
+                <p style={{ color: "var(--text-muted)", margin: "0.4rem 0 0", fontSize: "0.95rem" }}>
+                  Kelola hak akses dan pendaftaran akun aparatur dinas untuk seluruh Organisasi Perangkat Daerah Kabupaten Lamongan.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="nav-btn"
+                onClick={() => setMainView("admin")}
+                style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem" }}
+              >
+                &larr; Kembali ke Dasbor Admin
+              </button>
+            </div>
+
+            {/* Registrasi Akun Admin Dinas Baru */}
+            <div className="glass-panel" style={{ padding: "2rem" }}>
+              <h2
+                style={{
+                  fontSize: "1.2rem",
+                  fontWeight: 700,
+                  marginBottom: "1.5rem",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.5rem",
+                }}
+              >
+                <UserPlus className="text-accent-primary" /> Registrasi Akun Admin Dinas Baru
+              </h2>
+              {adminSuccess && (
+                <p
+                  style={{
+                    color: "#059669",
+                    background: "#ecfdf5",
+                    padding: "1rem",
+                    borderRadius: "8px",
+                    fontWeight: 600,
+                    marginBottom: "1.5rem",
+                  }}
+                >
+                  {adminSuccess}
+                </p>
+              )}
+              <form
+                onSubmit={handleCreateAdminDinas}
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr 1fr auto",
+                  gap: "1rem",
+                  alignItems: "end",
+                }}
+              >
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label className="form-label">NIP Aparatur</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="198505052010011005"
+                    value={adminNip}
+                    onChange={(e) => setAdminNip(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label className="form-label">Email Dinas</label>
+                  <input
+                    type="email"
+                    className="form-input"
+                    placeholder="admin.pu@lamongan.go.id"
+                    value={adminEmail}
+                    onChange={(e) => setAdminEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label className="form-label">Password</label>
+                  <input
+                    type="password"
+                    className="form-input"
+                    placeholder="••••••••"
+                    value={adminPassword}
+                    onChange={(e) => setAdminPassword(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label className="form-label">Dinas</label>
+                  <select
+                    className="form-select"
+                    value={adminDeptId}
+                    onChange={(e) => setAdminDeptId(e.target.value)}
+                    required
+                  >
+                    <option value="">Pilih Dinas</option>
+                    {departments.map((d) => (
+                      <option key={d.id} value={d.id}>{d.nama_dinas}</option>
+                    ))}
+                  </select>
+                </div>
+                <button
+                  type="submit"
+                  className="nav-btn nav-btn-primary"
+                  style={{ padding: "0.85rem 1.5rem" }}
+                >
+                  Buat Akun
+                </button>
+              </form>
+            </div>
+
+            {/* Daftar Admin Dinas Terdaftar */}
+            <div className="glass-panel" style={{ padding: "1.5rem" }}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: "1rem",
+                  flexWrap: "wrap",
+                  gap: "0.5rem",
+                }}
+              >
+                <h2
+                  style={{
+                    fontSize: "1.2rem",
+                    fontWeight: 700,
+                    margin: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem",
+                  }}
+                >
+                  <Users className="text-accent-primary" /> Daftar Admin Dinas Terdaftar ({adminDinasList.length})
+                </h2>
+                <button
+                  type="button"
+                  className="nav-btn"
+                  onClick={fetchAdminDinas}
+                  style={{ fontSize: "0.82rem", padding: "0.35rem 0.8rem" }}
+                >
+                  Segarkan Data
+                </button>
+              </div>
+
+              {adminDinasList.length === 0 ? (
+                <p style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>Belum ada Admin Dinas terdaftar.</p>
+              ) : (
+                <div style={{ overflowX: "auto" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.9rem" }}>
+                    <thead>
+                      <tr style={{ borderBottom: "2px solid var(--border-color)", textAlign: "left", color: "var(--text-muted)" }}>
+                        <th style={{ padding: "0.75rem" }}>ID</th>
+                        <th style={{ padding: "0.75rem" }}>NIP</th>
+                        <th style={{ padding: "0.75rem" }}>Email</th>
+                        <th style={{ padding: "0.75rem" }}>Dinas</th>
+                        <th style={{ padding: "0.75rem" }}>Status</th>
+                        <th style={{ padding: "0.75rem" }}>Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {adminDinasList.map((a) => (
+                        <tr key={a.id} style={{ borderBottom: "1px solid #e2e8f0" }}>
+                          <td style={{ padding: "0.75rem", fontWeight: 600 }}>#{a.id}</td>
+                          <td style={{ padding: "0.75rem" }}>{a.nik_or_nip}</td>
+                          <td style={{ padding: "0.75rem" }}>{a.email}</td>
+                          <td style={{ padding: "0.75rem" }}>{a.nama_dinas || departments.find((d) => d.id === a.dept_id)?.nama_dinas || "-"}</td>
+                          <td style={{ padding: "0.75rem" }}>
+                            <span
+                              style={{
+                                display: "inline-block",
+                                padding: "0.2rem 0.55rem",
+                                borderRadius: "999px",
+                                fontSize: "0.75rem",
+                                fontWeight: 700,
+                                background: a.is_active ? "rgba(16, 185, 129, 0.15)" : "rgba(239, 68, 68, 0.15)",
+                                color: a.is_active ? "#059669" : "#dc2626",
+                              }}
+                            >
+                              {a.is_active ? "Aktif" : "Non-aktif"}
+                            </span>
+                          </td>
+                          <td style={{ padding: "0.75rem", display: "flex", gap: "0.3rem" }}>
+                            <button
+                              className="nav-btn"
+                              style={{ padding: "0.3rem 0.7rem", fontSize: "0.8rem" }}
+                              onClick={() => handleEditAdminDinas(a)}
+                            >
+                              Edit
+                            </button>
+                            <button
+                              className="nav-btn"
+                              style={{ padding: "0.3rem 0.7rem", fontSize: "0.8rem", borderColor: "#ef4444", color: "#ef4444" }}
+                              onClick={() => handleDeleteAdminDinas(a)}
+                            >
+                              Hapus
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </div>
           </div>

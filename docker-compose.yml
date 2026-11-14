@@ -58,8 +58,10 @@ services:
       - LLM_MODEL=${LLM_MODEL:-}
       - LLM_API_KEY=${LLM_API_KEY:-}
     volumes:
-      # Index RAG read-only. Rebuild image bila kode service berubah.
+      # Index RAG dan skrip layanan chatbot dipasang agar selalu sinkron dengan kode terbaru.
       - ./govsmart-chatbot/data:/app/data:ro
+      - ./govsmart-chatbot/scripts:/app/scripts:ro
+      - ./govsmart-chatbot/service.py:/app/service.py:ro
 
 volumes:
   mysql_data:

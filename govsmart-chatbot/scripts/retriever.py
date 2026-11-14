@@ -3,16 +3,11 @@
 
 Pencarian = embedding (makna) + BM25 (kata kunci persis, mis. "Pasal 57", "KKPR", "NIB"),
 digabung dengan Reciprocal Rank Fusion. Bisa difilter per koleksi (aplikasi / pemerintah / kenegaraan)
-sesuai hasil intent router nanti.
+sesuai hasil intent router.
 
 Pemakaian (dari root proyek):
     python scripts/retriever.py "berapa lama registrasi KKPR" --koleksi pemerintah -k 5
-    python scripts/retriever.py --eval          # uji kualitas retrieval dengan pertanyaan acuan
-
-Pemakaian di kode (mis. di FastAPI):
-    from scripts.retriever import Retriever
-    r = Retriever()
-    hasil = r.search("apa bentuk bendera negara?", k=4, koleksi="kenegaraan")
+    python scripts/retriever.py --eval
 """
 import argparse
 import hashlib
@@ -28,24 +23,51 @@ ROOT = Path(__file__).resolve().parent.parent
 CHUNKS = ROOT / "data" / "chunks" / "chunks.jsonl"
 INDEX_DIR = ROOT / "data" / "index"
 
-# Naskah sejarah (transkrip sidang) jumlahnya sangat banyak dan berbahasa kuno -> diberi bobot lebih rendah
-JENIS_BOBOT = {"naskah_sejarah": 0.6}
-# Lampiran peraturan hasil OCR berisi bagan alir yang terbaca berantakan; isinya biasa ada juga di dokumen yang lebih bersih
-LAMPIRAN_OCR_BOBOT = 0.7
-# Chunk standar pelayanan punya nama layanan (field 'produk'). Makin besar porsi nama layanan yang tercakup
-# pertanyaan, makin tinggi skornya (membedakan 'Registrasi KKPR' dari 'Penerbitan Persetujuan KKPR').
-PRODUK_BOOST = 0.4
+JENIS_BOBOT = {"naskah_sejarah": 0.6, "faq": 1.15, "panduan": 1.15}
+LAMPIRAN_OCR_BOBOT = 0.65
+PRODUK_BOOST = 0.45
+KONTEKS_BOOST = 0.35
 
 STOP = set("yang dan di ke dari untuk dengan pada adalah itu ini apa berapa bagaimana saja atau dalam "
            "akan oleh ada saya bisa dapat apakah siapa kapan mengapa kenapa".split())
+
+QUESTION_FRAME_STOP = {
+    "cara", "caranya", "bagaimana", "gimana", "apa", "apakah", "siapa", "berapa",
+    "kapan", "dimana", "kemana", "mana", "mengapa", "kenapa", "tolong", "mohon",
+    "jelaskan", "info", "informasi", "arti", "artinya", "makna", "maksud", "dimaksud",
+    "bisa", "bisakah", "dapat", "boleh", "harus", "mau", "ingin", "tahu", "cari",
+    "buat", "membuat", "dibuatnya", "bikin", "membuka", "buka", "urus", "mengurus",
+    "pakai", "memakai", "gunakan", "menggunakan", "lihat", "melihat", "cek", "mengecek",
+    "terjadi", "dilakukan", "saja", "ya", "dong", "nih", "sih", "kan", "kok",
+}
 
 
 def tokenize(text):
     return [t for t in re.findall(r"\w+", text.lower()) if t not in STOP]
 
 
-# Singkatan -> kepanjangan. Dokumen sering memakai nama lengkap, sedangkan pengguna menulis singkatan
-# (mis. "KKPR"). Kepanjangan ditambahkan ke query saat pencarian. Tambah sesuai kebutuhan.
+def stem_id(w: str) -> str:
+    """Stemming ringan Bahasa Indonesia untuk menyamakan kata berimbuhan dengan kata dasarnya."""
+    if len(w) <= 4 or w in {"kedinasan", "kemalingan", "kewarganegaraan"}:
+        return w
+    s = w
+    for suf in ("kannya", "annya", "inya", "nya", "lah", "kah"):
+        if len(s) - len(suf) >= 4 and s.endswith(suf):
+            s = s[:-len(suf)]
+            break
+    if len(s) >= 7 and s.endswith("kan") and not s.endswith("aikan"):
+        s = s[:-3]
+    elif len(s) >= 6 and s.endswith("an"):
+        s = s[:-2]
+    elif len(s) >= 6 and s.endswith("i") and not s.endswith("ai"):
+        s = s[:-1]
+    for pre in ("memper", "diper", "keber", "keter", "meng", "peng", "meny", "peny", "mem", "pem", "men", "pen", "ber", "ter", "per", "me", "pe", "di", "ke", "se"):
+        if len(s) - len(pre) >= 4 and s.startswith(pre):
+            s = s[len(pre):]
+            break
+    return s
+
+
 ALIAS = {
     "kkpr": "Kesesuaian Kegiatan Pemanfaatan Ruang",
     "pbg": "Persetujuan Bangunan Gedung",
@@ -59,13 +81,73 @@ ALIAS = {
     "pkplh": "Pernyataan Kesanggupan Pengelolaan dan Pemantauan Lingkungan Hidup",
     "skkl": "Surat Keputusan Kelayakan Lingkungan Hidup",
     "dpmptsp": "Dinas Penanaman Modal dan Pelayanan Terpadu Satu Pintu",
-    "opd": "Organisasi Perangkat Daerah",
+    "dukcapil": "Dinas Kependudukan dan Pencatatan Sipil",
+    "disdukcapil": "Dinas Kependudukan dan Pencatatan Sipil",
+    "dishub": "Dinas Perhubungan Penerangan Jalan Umum",
+    "dlh": "Dinas Lingkungan Hidup sampah kebersihan",
+    "dinsos": "Dinas Sosial bantuan sosial DTKS PKH",
+    "dinkes": "Dinas Kesehatan Puskesmas RSUD",
+    "disdik": "Dinas Pendidikan sekolah beasiswa",
+    "pju": "Penerangan Jalan Umum lampu jalan",
+    "kia": "Kartu Identitas Anak",
+    "kk": "Kartu Keluarga",
+    "dtks": "Data Terpadu Kesejahteraan Sosial",
+    "pkh": "Program Keluarga Harapan bantuan sosial",
+    "bpnt": "Bantuan Pangan Non Tunai",
+    "opd": "Organisasi Perangkat Daerah dinas",
     "rtr": "Rencana Tata Ruang",
     "bpupk": "Badan Penyelidik Usaha-usaha Persiapan Kemerdekaan Indonesia",
     "uud": "Undang-Undang Dasar Negara Republik Indonesia",
     "nkri": "Negara Kesatuan Republik Indonesia",
+    "sila": "dasar Pancasila Ketuhanan Kemanusiaan Persatuan Kerakyatan Keadilan",
+    "bela": "pembelaan pertahanan keamanan negara",
+    "wawasan": "kebangsaan nasionalisme persatuan kesatuan",
+    "sumpah": "pemuda bahasa persatuan",
+    "pungutan": "ketertiban perda satpol",
+    "operasional": "perizinan berusaha menunjang kegiatan usaha umku",
+    "tersumbat": "drainase saluran air selokan banjir",
+    "gps": "koordinat lokasi latitude longitude Gunakan Lokasi Saya",
+    "keluar": "logout sesi login ulang keamanan akun",
+    "tercemar": "pencemaran limbah polusi sampah lingkungan",
+    "tergenang": "banjir drainase saluran air selokan jalan",
+    "parkir": "lampu jalan rambu lalu lintas macet terminal Dinas Perhubungan",
+    "tanpa": "wajib opsional mengisi foto bukti lokasi",
+    "keamanan": "aman menjaga sesi login password hash dilindungi",
+    "identitas": "bendera bahasa lambang negara lagu kebangsaan pemersatu eksistensi bangsa",
+    "praktik": "praktek",
+    "praktek": "praktik",
+    "aman": "dilindungi keamanan pribadi hash password",
+    "unggah": "diunggah foto bukti ukuran format",
+    "nasional": "bangsa negara indonesia",
+    "bantuan": "bansos sosial layanan pendampingan umkm",
+    "sumber": "rujukan dokumen chatbot",
+    "informasi": "panduan layanan pengaduan",
+    "menghubungi": "dinas terkait pengaduan laporan",
 }
 
+QUERY_SYNONYMS = {
+    "bikin": "buat membuat mendaftar pendaftaran",
+    "buat": "bikin membuat mendaftar",
+    "pakai": "menggunakan memakai panduan",
+    "gunakan": "menggunakan memakai panduan",
+    "menggunakan": "memakai panduan fitur",
+    "biaya": "tarif retribusi gratis",
+    "bayar": "biaya tarif retribusi",
+    "lama": "jangka waktu hari",
+    "syarat": "persyaratan dokumen",
+    "persyaratan": "syarat",
+    "urus": "mengurus pengurusan pelayanan pendaftaran",
+    "mengurus": "urus pelayanan pendaftaran",
+    "lapor": "melapor laporan pengaduan",
+    "melapor": "lapor laporan pengaduan",
+    "pengaduan": "laporan aduan",
+    "mati": "padam rusak",
+    "padam": "mati",
+    "hilang": "rusak penggantian kehilangan",
+    "edit": "mengedit mengubah menghapus",
+    "hapus": "menghapus mengedit membatalkan",
+    "batal": "membatalkan dibatalkan",
+}
 
 try:
     from .typo_corrector import koreksi_teks
@@ -78,10 +160,11 @@ except ImportError:
 
 def expand_query(q):
     q_norm = koreksi_teks(q)
-    # Cari alias baik dari kata asli maupun kata yang sudah dikoreksi
     tokens = dict.fromkeys(re.findall(r"\w+", (q + " " + q_norm).lower()))
     extra = [ALIAS[t] for t in tokens if t in ALIAS]
-    return q_norm + (" (" + "; ".join(extra) + ")" if extra else "")
+    syn = [QUERY_SYNONYMS[t] for t in tokens if t in QUERY_SYNONYMS]
+    parts = extra + syn
+    return q_norm + (" (" + "; ".join(parts) + ")" if parts else "")
 
 
 class BM25:
@@ -121,13 +204,24 @@ class Retriever:
         self.bm25 = BM25([tokenize(c["teks_embed"]) for c in self.chunks])
         self.koleksi = np.array([c["koleksi"] for c in self.chunks])
         self.produk_tok = [set(tokenize(c["produk"])) if c.get("produk") else set() for c in self.chunks]
+        self.konteks_tok = [set(tokenize(c["konteks"])) if c.get("konteks") else set() for c in self.chunks]
+        self.chunk_tokens = [set(tokenize(c["teks_embed"])) for c in self.chunks]
+        self.chunk_stems = [{stem_id(t) for t in toks} for toks in self.chunk_tokens]
+        self.corpus_vocab = set(ALIAS.keys()) | set(QUERY_SYNONYMS.keys()) | {
+            "bpupk", "bpupki", "ppki", "sidang", "perumusan", "merumuskan",
+            "dasar", "soekarno", "hatta", "yamin", "soepomo", "radjiman",
+        }
+        for c, toks in zip(self.chunks, self.chunk_tokens):
+            if c["doc_id"] != "anri_naskah_sumber_bpupk_1945":
+                self.corpus_vocab.update(toks)
+        self.corpus_stems = {stem_id(t) for t in self.corpus_vocab}
         self.bobot = np.array([self._bobot(c) for c in self.chunks], dtype="float32")
         self._model = None
 
     @staticmethod
     def _bobot(c):
         w = JENIS_BOBOT.get(c["jenis"], 1.0)
-        if c.get("sumber_ocr") and c.get("konteks", "").startswith("LAMPIRAN"):
+        if c.get("sumber_ocr") and c.get("konteks", "").upper().startswith("LAMPIRAN"):
             w *= LAMPIRAN_OCR_BOBOT
         return w
 
@@ -136,7 +230,6 @@ class Retriever:
             try:
                 from sentence_transformers import SentenceTransformer
             except ImportError:
-                # Runtime image intentionally omits Torch; BM25 remains usable.
                 self._model = False
             else:
                 self._model = SentenceTransformer(self.model_name, device="cpu")
@@ -150,36 +243,49 @@ class Retriever:
         return self.emb @ encoded if encoded is not None else np.zeros(len(self.chunks), dtype="float32")
 
     def search(self, query, k=5, koleksi=None, pool=40, tetangga=0):
-        """-> list dict: chunk, skor (RRF x bobot), dense (cosine).
-
-        tetangga=1: setiap hasil diikuti chunk berikutnya di dokumen yang sama (bertanda "tetangga": True),
-        berguna bila jawaban terpotong di batas chunk (mis. langkah prosedur di satu chunk, jangka waktu di chunk berikutnya).
-        """
-        query = expand_query(query)
+        """-> list dict: chunk, skor (RRF x bobot), dense (cosine)."""
+        q_norm = koreksi_teks(query)
+        raw_toks = tokenize(q_norm)
+        topic_toks = [t for t in raw_toks if t not in QUESTION_FRAME_STOP] or raw_toks
+        topic_qt = set(topic_toks)
+        alias_toks = [
+            tok
+            for t in dict.fromkeys(re.findall(r"\w+", (query + " " + q_norm).lower()))
+            if t in ALIAS
+            for tok in tokenize(ALIAS[t])
+        ]
+        primary_tokens = topic_toks + alias_toks
+        expanded = expand_query(query)
         if koleksi is None:
             mask = np.ones(len(self.chunks), dtype=bool)
         else:
             mask = np.isin(self.koleksi, [koleksi] if isinstance(koleksi, str) else list(koleksi))
-        dense = self._dense_scores(query)
-        bm = self.bm25.scores(tokenize(query))
+        dense = self._dense_scores(expanded)
+        bm_primary = self.bm25.scores(primary_tokens)
+        bm_syn = self.bm25.scores(tokenize(expanded))
+        bm = np.where(bm_primary > 0, bm_primary + 0.35 * bm_syn, 0.0)
         dense_m = np.where(mask, dense, -np.inf)
         bm_m = np.where(mask, bm, -np.inf)
 
         fused = defaultdict(float)
-        for r, i in enumerate(np.argsort(-dense_m)[:pool]):
-            if np.isfinite(dense_m[i]):
-                fused[int(i)] += 1.0 / (60 + r + 1)
+        if np.any(dense > 0):
+            for r, i in enumerate(np.argsort(-dense_m)[:pool]):
+                if np.isfinite(dense_m[i]) and dense_m[i] > 0:
+                    fused[int(i)] += 1.0 / (60 + r + 1)
         for r, i in enumerate(np.argsort(-bm_m)[:pool]):
             if np.isfinite(bm_m[i]) and bm_m[i] > 0:
                 fused[int(i)] += 1.0 / (60 + r + 1)
-        qt = set(tokenize(query))
+        qt = set(tokenize(expanded))
         for i in fused:
             fused[i] *= float(self.bobot[i])
             pt = self.produk_tok[i]
             if pt:
                 fused[i] *= 1 + PRODUK_BOOST * len(qt & pt) / len(pt)
+            kt = self.konteks_tok[i]
+            if kt and topic_qt:
+                fused[i] *= 1 + KONTEKS_BOOST * len(topic_qt & kt) / max(len(topic_qt), 1)
         top = sorted(fused, key=fused.get, reverse=True)[:k]
-        out = [{"chunk": self.chunks[i], "skor": fused[i], "dense": float(dense[i])} for i in top]
+        out = [{"chunk": self.chunks[i], "skor": fused[i], "dense": float(dense[i]), "idx": i} for i in top]
         if tetangga:
             seen = set(top)
             for i in top:
@@ -188,12 +294,10 @@ class Retriever:
                         break
                     if j not in seen:
                         seen.add(j)
-                        out.append({"chunk": self.chunks[j], "skor": 0.0, "dense": float(dense[j]), "tetangga": True})
+                        out.append({"chunk": self.chunks[j], "skor": 0.0, "dense": float(dense[j]), "tetangga": True, "idx": j})
         return out
 
 
-# Set uji awal. Sesuaikan/tambah dengan isi dokumenmu sendiri (terutama FAQ dan panduan aplikasi).
-# koleksi = koleksi yang akan dipilih router; docs = dokumen yang benar; kata = potongan teks yang harus ada.
 EVAL = [
     {"q": "Berapa lama proses registrasi KKPR?", "koleksi": "pemerintah",
      "docs": ["sk_dpmptsp_lamongan_standar_pelayanan_2026", "perbup_lamongan_40_2025_sop_perizinan"], "kata": "5 Hari"},
@@ -215,8 +319,6 @@ EVAL = [
      "docs": ["faq_aplikasi", "panduan_pelaporan"], "kata": "20"},
 ]
 
-# Variasi uji bahasa normal, santai, singkatan, dan typo ringan.
-# Variasi dipakai untuk evaluasi router/retriever, bukan fakta baru.
 _VARIANT_SEEDS = [
     ("Berapa lama proses registrasi KKPR?", "pemerintah"),
     ("Apa syarat registrasi KKPR?", "pemerintah"),
@@ -369,7 +471,7 @@ _VARIANT_TYPOS = {
     "Tolong jelaskan": "Tlg jelaskan", "Bagaimana": "Bgmn", "Berapa": "Brp",
     "syarat": "syrat", "izin": "ijin", "pengaduan": "pngaduan",
     "aplikasi": "aplkasi", "Pancasila": "Pancsila", "Indonesia": "Indonesa",
-    "Bagaimana": "Bgmn", "Apa": "Apaa", "cara": "cra", "melapor": "mlapor",
+    "Apa": "Apaa", "cara": "cra", "melapor": "mlapor",
     "layanan": "layann", "negara": "negraa",
 }
 for _seed, _koleksi in _VARIANT_SEEDS:
@@ -384,8 +486,6 @@ for _seed, _koleksi in _VARIANT_SEEDS:
         if _typo_q != _q:
             QUESTION_VARIANTS.append({"q": _typo_q, "koleksi": _koleksi, "jenis": "typo"})
 
-# EVAL keeps only questions with known expected documents; variants are a separate
-# router/retriever smoke corpus and must not be counted as factual ground truth.
 QUESTION_VARIANTS = QUESTION_VARIANTS[:400]
 
 
