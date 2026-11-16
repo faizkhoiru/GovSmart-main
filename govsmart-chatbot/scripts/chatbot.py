@@ -50,17 +50,44 @@ SAPAAN = (
     "Silakan ketik pertanyaan Anda secara spesifik, misalnya: 'Bagaimana cara membuat laporan?' atau 'Berapa lama proses registrasi KKPR?'"
 )
 
+SAPAAN_SINGKAT = (
+    "Halo! Senang bisa menyapa Anda 😊 Saya asisten virtual GovSmart Kabupaten Lamongan. "
+    "Ada panduan perizinan, administrasi kependudukan, atau pengaduan fasilitas daerah yang bisa saya bantu hari ini?"
+)
+
+KABAR_JAWABAN = (
+    "Alhamdulillah kabar saya sangat baik dan selalu siap siaga 24/7 membantu warga Lamongan! 😊\n\n"
+    "Bagaimana kabar Anda hari ini? Ada panduan layanan perizinan, administrasi kependudukan, atau pengaduan fasilitas daerah yang bisa saya bantu?"
+)
+
+BANTU_TAWARAN = (
+    "Tentu saja bisa banget! 😊 Silakan sampaikan apa yang ingin Anda tanyakan atau kendala apa yang sedang dihadapi. Saya siap memandu langkah demi langkah."
+)
+
 APRESIASI = (
-    "Sama-sama! Senang dapat membantu Anda. Jika masih ada hal lain yang ingin ditanyakan seputar aplikasi GovSmart, "
+    "Sama-sama! Senang dapat membantu Anda 😊 Jika masih ada hal lain yang ingin ditanyakan seputar aplikasi GovSmart, "
     "pengaduan masyarakat, atau layanan dan perizinan di Kabupaten Lamongan, silakan ketik pertanyaan Anda kapan saja."
 )
 
+PUJIAN_JAWABAN = (
+    "Hehe, terima kasih banyak atas apresiasinya! Senang sekali bisa membantu Anda 😊\n\n"
+    "Jika ada perizinan atau layanan publik lain yang ingin Anda ketahui, jangan ragu bertanya lagi ya!"
+)
+
+HUMOR_JAWABAN = (
+    "Hehe, senang bisa ngobrol santai dengan Anda! 😄 Meskipun saya bot AI, saya selalu siap mendampingi warga Lamongan dengan ramah.\n\n"
+    "Ada hal seputar layanan publik yang ingin Anda tanyakan?"
+)
+
+PAMIT_JAWABAN = (
+    "Sampai jumpa lagi! Terima kasih sudah menggunakan GovSmart Lamongan. Semoga hari Anda menyenangkan dan sehat selalu ya! 👋😊"
+)
+
 PERSONA_JAWABAN = (
-    "Saya adalah asisten virtual berbasis kecerdasan buatan (AI) di portal GovSmart Kabupaten Lamongan, sehingga saya "
-    "bukan manusia dan tidak memiliki jenis kelamin maupun usia.\n\n"
-    "Tugas utama saya adalah mendampingi warga dan pelaku UMKM selama 24/7 untuk:\n\n"
-    "1. Memandu cara menggunakan aplikasi GovSmart (registrasi akun, login, dan pembuatan pengaduan)\n"
-    "2. Memberikan informasi persyaratan, biaya, dan waktu layanan perizinan (NIB, KKPR, PBG) serta dokumen kependudukan (KTP, KK, Akta)\n"
+    "Saya adalah asisten virtual cerdas berbasis AI di portal GovSmart Kabupaten Lamongan 😊\n\n"
+    "Saya bukan manusia dan tidak memiliki wujud fisik, namun saya diprogram khusus untuk mendampingi warga dan pelaku UMKM selama 24/7 untuk:\n\n"
+    "1. Memandu cara menggunakan aplikasi GovSmart (registrasi akun, login, dan pembuatan pengaduan fasilitas publik)\n"
+    "2. Memberikan informasi persyaratan, biaya, dan waktu layanan perizinan DPMPTSP (NIB, KKPR, PBG) serta dokumen kependudukan Disdukcapil (KTP, KK, Akta)\n"
     "3. Menjawab pertanyaan seputar layanan dinas di Kabupaten Lamongan dan wawasan kebangsaan\n\n"
     "Ada informasi layanan yang bisa saya bantu carikan untuk Anda hari ini?"
 )
@@ -153,7 +180,8 @@ FRAME_TOKENS = {
     "keempat", "kelima", "baru", "hilang", "rusak", "liar", "menumpuk",
     "umum", "publik", "daerah", "kabupaten", "lamongan", "indonesia", "warga",
     "masyarakat", "orang", "isi", "diterima", "diproses", "selesai", "ditolak",
-    "dibatalkan", "membatalkan", "batal",
+    "dibatalkan", "membatalkan", "batal", "permohonan", "pemohon", "fasilitas",
+    "e", "el", "pelaporan",
 }
 
 BROAD_CONTAINER_TOKENS = {
@@ -170,6 +198,10 @@ BROAD_CONTAINER_TOKENS = {
 VALID_BROAD_PHRASES_RE = re.compile(
     r"(?:daftar|bikin|buat|registrasi|masuk|login|keluar|keamanan)\s+akun"
     r"|(?:buat|bikin|kirim|mengirim|mengajukan|melihat|cek|status|riwayat|lokasi|foto|edit|hapus|batal|membatalkan|dibatalkan|isi)\s+(?:laporan|pengaduan|aduan)"
+    r"|(?:laporan|pengaduan|aduan)\s+(?:fasilitas|rusak|infrastruktur|jalan|lampu|pju|sampah)"
+    r"|fasilitas\s+(?:rusak|umum|publik)"
+    r"|(?:syarat|permohonan|pengajuan|bikin|buat|urus|cetak|hilang|rusak)\s+(?:e-?ktp|ktp|kk|kia|akta|surat\s+pindah)"
+    r"|(?:izin|perizinan|sip|perpanjang|perpanjangan)\s+(?:praktik|praktek|dokter|nakes|tenaga\s+kesehatan|bidan|perawat|apoteker)"
     r"|(?:pelayanan|layanan)\s+(?:publik|terpadu|kesehatan|pendidikan|sosial|dinas|daerah)"
     r"|standar\s+pelayanan"
     r"|(?:izin|perizinan)\s+(?:usaha|umkm|online|lingkungan)"
@@ -242,17 +274,90 @@ def _rapikan_format_chat(teks: str) -> str:
     return "\n".join(out).strip()
 
 
+POLA_KOMPONEN = (
+    r"(?:"
+    r"halo+|hai+|hi+|hello+|helo+|slamat|selamat\s+(?:pagi|siang|sore|malam)|pagi|siang|sore|malam|"
+    r"assalamu'?alaikum(?:\s+wr\.?\s*wb\.?)?|aslm|ass|askum|mikum|samlikum|"
+    r"permisi|punten|kulo\s+nuwun|sewun|"
+    r"min|admin|mimin|kak|kaka|kakak|pak|bu|bro|sis|gan|cuy|sob|rek|"
+    r"(?:bisa|bs|bsa|boleh|blh|bleh|dapat|dpt|bisakah|bolehkah)?\s*(?:tolong\s+|tlong\s+|tlng\s+)?"
+    r"(?:bantu(?:in)?|bntu(?:in)?|tolong(?:in)?|tlong(?:in)?|tlng(?:in)?|tulung)(?:\s+(?:gue|gua|gw|aku|saya|sy|kami|kita|ane|kulo|dong|min|mimin|kak|bro))?|"
+    r"mau\s+(?:nanya|tanya)(?:\s+dong)?|nanya\s+dong|tanya\s+dong|pengen\s+nanya|pengin\s+tanya|mw\s+tanya|mo\s+nanya|"
+    r"tolong\s+(?:jelaskan|infokan|kasih\s+tahu)|mau\s+konsultasi(?:\s+dong)?|"
+    r"ada\s+yang\s+(?:mau|ingin)\s+(?:aku|saya|gue|gua|gw|kita)?\s*(?:tanyakan|tanya)|"
+    r"gak|ga|gk|nggak|ngga|kgk|kagak|bisa|bs|bsa|kah|sih|tah|ta|kan|nih|deh|ya|yah|dong"
+    r")"
+)
+POLA_BASA_BASI_FULL = re.compile(rf"^(?:{POLA_KOMPONEN}[\s,!?-]*)+$", re.I)
+POLA_BASA_BASI_PREFIX = re.compile(rf"^(?:{POLA_KOMPONEN}[\s,!?-]+)+", re.I)
+
+
+def kupas_basa_basi(teks: str) -> str:
+    """Mengupas sapaan/basa-basi santai di depan kalimat agar pertanyaan inti terlihat."""
+    teks_clean = teks.strip()
+    if POLA_BASA_BASI_FULL.match(teks_clean):
+        return ""
+    sisa = POLA_BASA_BASI_PREFIX.sub("", teks_clean).strip()
+    sisa = re.sub(r"^[,\-?!:;\s]+", "", sisa).strip()
+    return sisa
+
+
 SAPA_RE = re.compile(
     r"^(?:(?:halo+|hai+|hi+|hello+|helo+|slamat|selamat\s+(?:pagi|siang|sore|malam)|"
-    r"assalamu'?alaikum(?:\s+wr\.?\s*wb\.?)?|permisi|min|admin|kak|pak|bu|bro|sis|gan|p|tes|test|cek|ping)"
+    r"assalamu'?alaikum(?:\s+wr\.?\s*wb\.?)?|aslm|ass|askum|mikum|samlikum|"
+    r"permisi|min|admin|mimin|kak|kaka|kakak|pak|bu|bro|sis|gan|cuy|sob|p|tes|test|cek|ping)"
     r"[\s!.,?]*)+$",
     re.I,
 )
 
+KABAR_RE = re.compile(
+    r"\b(?:"
+    r"apa\s+kabar|gimana\s+kabar(?:nya)?|sehat\s*(?:min|gak|kah)?|kabarnya\s+gimana|lagi\s+(?:apa|ngapain|sibuk)|"
+    r"kbrnya\s+gmn|gmn\s+kbr|kbr|piye\s+kabare|pripun\s+kabare|sehat\s+kan"
+    r")\b",
+    re.I,
+)
+
+BISA_BANTU_RE = re.compile(
+    r"\b(?:"
+    r"(?:bisa|boleh|dapat)\s+(?:tolong\s+)?(?:bantu|bantuin)|"
+    r"(?:bantu(?:in)?|tolong(?:in)?)\s+(?:gue|gua|gw|aku|saya|kami|kita|ane|kulo|dong|min|mimin|kak|om|bro|sis|rek)|"
+    r"(?:bantu(?:in)?|tolong(?:in)?)|"
+    r"(?:minta|butuh|perlu)\s+(?:bantuan|tolong|pertolongan|inpo|info|informasi|panduan|petunjuk)|"
+    r"(?:mau|pengen|pengin|ingin|mw|mo)\s+(?:tanya|nanya|konsultasi|curhat|mengadu)|"
+    r"ada\s+yang\s+(?:mau|ingin|pengen|bisa)\s+(?:aku|saya|gue|gua|gw|kita)?\s*(?:tanyakan|tanya|obrolin|bicarakan)|"
+    r"ada\s+pertanyaan|"
+    r"(?:bisa|boleh)\s+(?:tanya|nanya|konsultasi)|"
+    r"help\s*(?:me|min|kak)?|"
+    r"bantuan\s*(?:min|kak|dong)?"
+    r")\b",
+    re.I,
+)
+
+PUJIAN_RE = re.compile(
+    r"\b(?:"
+    r"kamu\s+(?:pintar|pinter|cerdas|hebat|keren|ramah|asik|lucu|baik)|"
+    r"keren\s+(?:banget|bgt)|mantap\s+(?:banget|bgt|jiwa)|bagus\s+(?:banget|bgt)|"
+    r"bot\s+(?:keren|pintar|pinter|hebat)|terbaik|good\s+job|mantul|mantabb"
+    r")\b",
+    re.I,
+)
+
+HUMOR_RE = re.compile(
+    r"\b(?:haha+|wkwk+|hehe+|xixi+|hihi+|lucu\s+(?:banget|bgt)|bercanda|lawak)\b",
+    re.I,
+)
+
+PAMIT_RE = re.compile(
+    r"\b(?:sampai\s+jumpa|dadah|bye(?:-bye)?|selamat\s+tidur|good\s+night|pamit\s+dulu|udahan\s+dulu|see\s+you)\b",
+    re.I,
+)
+
 TERIMA_KASIH_RE = re.compile(
-    r"^(?:(?:terima\s*kasih|makasih|mksih|makasi|trimakasih|trims|thanks|thx|tq|oke+|ok+|okay|siap|sip|"
-    r"mantap|baik|paham|mengerti|oh\s+gitu|oh\s+begitu|banyak|banget|ya|yah|min|admin|kak|pak|bu|infonya)"
-    r"[\s!.,?]*)+$",
+    r"\b(?:"
+    r"terima\s*kasih|makasih|mksih|makasi|trimakasih|trims|thanks|thx|tq|"
+    r"matur\s+nuwun|matursuwun|suwun|kesuwun|tengkiu|thank\s+you"
+    r")\b",
     re.I,
 )
 
@@ -485,7 +590,9 @@ CURATED_INTENTS = [
         "id": "panduan_buat_laporan",
         "koleksi": "aplikasi",
         "patterns": [
-            r"(?:bagaimana\s+)?(?:cara|langkah|panduan|prosedur)\s+(?:membuat|buat|bikin|mengajukan|mengirim|kirim|melapor|melaporkan)\s+(?:laporan|pengaduan|aduan|keluhan|masalah|fasilitas\s+rusak)",
+            r"(?:bagaimana\s+)?(?:cara|langkah|panduan|prosedur)\s+(?:membuat|buat|bikin|mengajukan|mengirim|kirim|melapor|melaporkan)\s+(?:laporan|pengaduan|aduan|keluhan|masalah)",
+            r"laporan\s+fasilitas\s+rusak",
+            r"fasilitas\s+rusak",
             r"bagaimana\s+cara\s+membuat\s+pengaduan",
             r"bagaimana\s+cara\s+mengirim\s+pengaduan\s+baru",
             r"bagaimana\s+cara\s+mengajukan\s+laporan\s+warga",
@@ -493,12 +600,12 @@ CURATED_INTENTS = [
             r"cara\s+menulis\s+laporan\s+yang\s+baik",
         ],
         "jawaban": (
-            "Langkah-langkah Membuat Laporan Pengaduan di GovSmart [1]:\n\n"
+            "Langkah-langkah Membuat Laporan Pengaduan / Fasilitas Rusak di GovSmart [1]:\n\n"
             "1. Masuk (login) ke akun GovSmart Anda, lalu pilih menu 'Pengaduan'.\n"
-            "2. Isi Judul Laporan (5 sampai 100 karakter) secara singkat dan jelas, misalnya: 'Jalan Berlubang di Jl. Veteran Lamongan'.\n"
-            "3. Tulis Isi Detail Laporan (20 sampai 2.000 karakter) yang memuat: jenis kerusakan/masalah, lokasi spesifik (nama jalan, RT/RW, desa, kecamatan), sejak kapan terjadi, serta dampaknya bagi warga [1].\n"
+            "2. Isi Judul Laporan (5 sampai 100 karakter) secara singkat dan jelas, misalnya: 'Jalan Berlubang di Jl. Veteran Lamongan' atau 'Lampu PJU Rusak'.\n"
+            "3. Tulis Isi Detail Laporan (20 sampai 2.000 karakter) yang memuat: jenis kerusakan fasilitas/masalah publik, lokasi spesifik (nama jalan, RT/RW, desa, kecamatan), sejak kapan terjadi, serta dampaknya bagi warga [1].\n"
             "4. Pilih titik lokasi pada peta atau klik 'Gunakan Lokasi Saya' (GPS) agar petugas mudah menemukan lokasi (opsional namun sangat disarankan).\n"
-            "5. Unggah foto bukti kondisi lapangan berformat JPEG, PNG, atau WEBP maksimal 5 MB (opsional).\n"
+            "5. Unggah foto bukti kondisi fasilitas rusak di lapangan berformat JPEG, PNG, atau WEBP maksimal 5 MB (opsional).\n"
             "6. Klik 'Kirim Laporan'. Sistem AI GovSmart akan otomatis menentukan dinas tujuan dan tingkat urgensi laporan Anda [1]."
         ),
         "sumber": {
@@ -996,14 +1103,14 @@ class GovSmartChatbot:
     def _cek_intent_terkurasi(self, q: str, q_norm: str):
         if self._memuat_entitas_luar_rag(q, q_norm):
             return None
-        content_qt = [t for t in tokenize(q_norm) if t not in FRAME_TOKENS]
+        content_qt = [t for t in tokenize(q_norm) if t not in FRAME_TOKENS and len(t) > 1]
         for item in CURATED_INTENTS:
             matched = any(re.search(pat, q, re.I) or re.search(pat, q_norm, re.I) for pat in item["patterns"])
             if not matched:
                 continue
             item_toks = set(tokenize(item["jawaban"] + " " + item["sumber"].get("konteks", "")))
             item_stems = {stem_id(x) for x in item_toks}
-            if content_qt and not all(self._token_cocok_chunk(t, item_toks, item_stems) for t in content_qt):
+            if content_qt and not any(self._token_cocok_chunk(t, item_toks, item_stems) for t in content_qt):
                 continue
             return item
         return None
@@ -1022,16 +1129,16 @@ class GovSmartChatbot:
         return any(e in c_toks or stem_id(e) in c_stems for e in ekspansi)
 
     def _verifikasi_relevansi_rag(self, q_raw: str, q_norm: str, dipakai: list) -> bool:
-        """Pastikan chunk RAG teratas benar-benar membahas seluruh subjek spesifik pertanyaan."""
+        """Pastikan chunk RAG teratas benar-benar membahas subjek spesifik pertanyaan."""
         if not dipakai:
             return False
         if self._memuat_entitas_luar_rag(q_raw, q_norm):
             return False
 
         raw_toks = tokenize(q_norm)
-        specific_qt = [t for t in raw_toks if t not in FRAME_TOKENS]
+        specific_qt = [t for t in raw_toks if t not in FRAME_TOKENS and len(t) > 1]
         if not specific_qt:
-            return False
+            return bool(VALID_BROAD_PHRASES_RE.search(q_norm) or VALID_BROAD_PHRASES_RE.search(q_raw))
 
         c1 = dipakai[0]["chunk"]
         if hasattr(self.r, "chunk_tokens") and "idx" in dipakai[0]:
@@ -1052,32 +1159,30 @@ class GovSmartChatbot:
             if not any(w in raw_toks for w in ("nib", "oss", "kbli", "izin", "perizinan", "usaha")):
                 return False
 
-        if not any(self._token_cocok_chunk(t, c1_toks, c1_stems) for t in specific_qt):
-            return False
-
         top_toks = set(c1_toks)
         top_stems = set(c1_stems)
-        for h in dipakai[1:2]:
-            if not h.get("tetangga"):
-                if hasattr(self.r, "chunk_tokens") and "idx" in h:
-                    top_toks.update(self.r.chunk_tokens[h["idx"]])
-                    top_stems.update(self.r.chunk_stems[h["idx"]])
-                else:
-                    ht = set(tokenize(h["chunk"].get("teks_embed", h["chunk"].get("teks", ""))))
-                    top_toks.update(ht)
-                    top_stems.update(stem_id(x) for x in ht)
+        for h in dipakai[:5]:
+            if hasattr(self.r, "chunk_tokens") and "idx" in h:
+                top_toks.update(self.r.chunk_tokens[h["idx"]])
+                top_stems.update(self.r.chunk_stems[h["idx"]])
+            else:
+                ht = set(tokenize(h["chunk"].get("teks_embed", h["chunk"].get("teks", ""))))
+                top_toks.update(ht)
+                top_stems.update(stem_id(x) for x in ht)
 
-        if not all(self._token_cocok_chunk(t, top_toks, top_stems) for t in specific_qt):
+        if VALID_BROAD_PHRASES_RE.search(q_norm) or VALID_BROAD_PHRASES_RE.search(q_raw):
+            return any(self._token_cocok_chunk(t, top_toks, top_stems) for t in specific_qt)
+
+        matched_count = sum(1 for t in specific_qt if self._token_cocok_chunk(t, top_toks, top_stems))
+        min_required = max(1, math.ceil(len(specific_qt) * 0.4))
+        if matched_count < min_required:
             return False
 
         narrow_qt = [t for t in specific_qt if t not in BROAD_CONTAINER_TOKENS]
         if not narrow_qt:
-            return bool(VALID_BROAD_PHRASES_RE.search(q_norm) or VALID_BROAD_PHRASES_RE.search(q_raw))
+            return True
 
-        return (
-            any(self._token_cocok_chunk(t, c1_toks, c1_stems) for t in narrow_qt)
-            and all(self._token_cocok_chunk(t, top_toks, top_stems) for t in narrow_qt)
-        )
+        return any(self._token_cocok_chunk(t, top_toks, top_stems) for t in narrow_qt)
 
     def rute(self, q, q_norm=None):
         """-> (daftar koleksi / ['di_luar_topik'], metode, max_cos)"""
@@ -1177,20 +1282,20 @@ class GovSmartChatbot:
         if INJEKSI_RE.search(q):
             return self._hasil(t0, "ditolak", DITOLAK, mode="guardrail")
 
-        q_norm = koreksi_teks(q)
+        # 1. Kupas sapaan pembuka santai jika ada (misal: "Halo min mau tanya dong, bagaimana cara...")
+        q_core = kupas_basa_basi(q)
+        q_target = q_core if len(q_core) >= 5 else q
+        q_norm = koreksi_teks(q_target)
 
-        if SAPA_RE.match(q) or SAPA_RE.match(q_norm):
-            return self._hasil(t0, "sapaan", SAPAAN, mode="kanned")
-        if TERIMA_KASIH_RE.match(q) or TERIMA_KASIH_RE.match(q_norm):
-            return self._hasil(t0, "sapaan", APRESIASI, mode="kanned")
-        if PERSONA_RE.search(q) or PERSONA_RE.search(q_norm):
-            return self._hasil(t0, "perkenalan", PERSONA_JAWABAN, mode="kanned")
-        if KENAL_RE.search(q) or KENAL_RE.search(q_norm):
-            return self._hasil(t0, "perkenalan", SAPAAN, mode="kanned")
-        if KELUHAN_SINGKAT_RE.match(q) or KELUHAN_SINGKAT_RE.match(q_norm):
-            return self._hasil(t0, "bantuan_awal", BANTUAN_AWAL, mode="kanned")
+        # 2. CEK GUARDRAIL LUAR TOPIK:
+        # Jika pertanyaan berada di luar konteks aplikasi/RAG, tetap gagal (di_luar_topik)
+        if OUT_OF_RAG_RE.search(q) or OUT_OF_RAG_RE.search(q_target):
+            return self._hasil(t0, "di_luar_topik", DI_LUAR, rute="guardrail_rag", mode="guardrail_rag")
 
-        curated = self._cek_intent_terkurasi(q, q_norm)
+        # 3. Cek apakah cocok dengan panduan terkurasi resmi
+        curated = self._cek_intent_terkurasi(q_target, q_norm)
+        if not curated and q_target != q:
+            curated = self._cek_intent_terkurasi(q, koreksi_teks(q))
         if curated:
             return self._hasil(
                 t0,
@@ -1202,10 +1307,38 @@ class GovSmartChatbot:
                 mode="terkurasi",
             )
 
-        if self._memuat_entitas_luar_rag(q, q_norm):
+        # 4. Humanizer: Cek basa-basi ramah / small talk jika tidak menanyakan SOP resmi
+        q_check = q_core if q_core else q
+        q_norm_check = koreksi_teks(q_check)
+
+        if KABAR_RE.search(q_check) or KABAR_RE.search(q_norm_check):
+            return self._hasil(t0, "sapaan", KABAR_JAWABAN, mode="humanizer")
+        if BISA_BANTU_RE.search(q_check) or BISA_BANTU_RE.search(q_norm_check):
+            return self._hasil(t0, "sapaan", BANTU_TAWARAN, mode="humanizer")
+        if PUJIAN_RE.search(q_check) or PUJIAN_RE.search(q_norm_check):
+            return self._hasil(t0, "sapaan", PUJIAN_JAWABAN, mode="humanizer")
+        if HUMOR_RE.search(q_check) or HUMOR_RE.search(q_norm_check):
+            return self._hasil(t0, "sapaan", HUMOR_JAWABAN, mode="humanizer")
+        if PAMIT_RE.search(q_check) or PAMIT_RE.search(q_norm_check):
+            return self._hasil(t0, "sapaan", PAMIT_JAWABAN, mode="humanizer")
+        if TERIMA_KASIH_RE.search(q_check) or TERIMA_KASIH_RE.search(q_norm_check):
+            return self._hasil(t0, "sapaan", APRESIASI, mode="humanizer")
+        if PERSONA_RE.search(q_check) or PERSONA_RE.search(q_norm_check):
+            return self._hasil(t0, "perkenalan", PERSONA_JAWABAN, mode="humanizer")
+        if KENAL_RE.search(q_check) or KENAL_RE.search(q_norm_check):
+            return self._hasil(t0, "perkenalan", SAPAAN, mode="humanizer")
+        if KELUHAN_SINGKAT_RE.match(q_check) or KELUHAN_SINGKAT_RE.match(q_norm_check):
+            return self._hasil(t0, "bantuan_awal", BANTUAN_AWAL, mode="humanizer")
+        if not q_core:
+            return self._hasil(t0, "sapaan", SAPAAN_SINGKAT, mode="humanizer")
+
+        # 5. Cek entitas di luar RAG untuk pertanyaan umum
+        if self._memuat_entitas_luar_rag(q, q_norm) or self._memuat_entitas_luar_rag(q_target, q_norm):
             return self._hasil(t0, "di_luar_topik", DI_LUAR, rute="guardrail_rag", mode="guardrail_rag")
 
-        koleksi, metode, max_cos = self.rute(q, q_norm)
+        koleksi, metode, max_cos = self.rute(q_target, q_norm)
+        if koleksi == ["di_luar_topik"] and q_target != q:
+            koleksi, metode, max_cos = self.rute(q, koreksi_teks(q))
         if koleksi == ["di_luar_topik"]:
             return self._hasil(t0, "di_luar_topik", DI_LUAR, rute=metode, max_cos=max_cos, mode="kanned")
 

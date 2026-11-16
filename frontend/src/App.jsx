@@ -1366,7 +1366,7 @@ export default function App() {
                 >
                   <MessageSquare size={80} className="text-accent-primary" />
                   <h2 style={{ fontSize: "1.75rem", fontWeight: 800 }}>
-                    Pertanyaan
+                    Bantuan
                   </h2>
                   <p style={{ textAlign: "center", color: "var(--text-muted)" }}>
                     Tanya AI Chatbot mengenai panduan layanan atau perizinan.
@@ -1397,7 +1397,7 @@ export default function App() {
                 >
                   <MessageSquare size={80} className="text-accent-primary" />
                   <h2 style={{ fontSize: "1.75rem", fontWeight: 800 }}>
-                    Pertanyaan
+                    Bantuan
                   </h2>
                   <p
                     style={{ textAlign: "center", color: "var(--text-muted)" }}

@@ -555,10 +555,83 @@ DI_LUAR_RAG_JAWABAN = (
 )
 
 
+POLA_KOMPONEN = (
+    r"(?:"
+    r"halo+|hai+|hi+|hello+|helo+|slamat|selamat\s+(?:pagi|siang|sore|malam)|pagi|siang|sore|malam|"
+    r"assalamu'?alaikum(?:\s+wr\.?\s*wb\.?)?|aslm|ass|askum|mikum|samlikum|"
+    r"permisi|punten|kulo\s+nuwun|sewun|"
+    r"min|admin|mimin|kak|kaka|kakak|pak|bu|bro|sis|gan|cuy|sob|rek|"
+    r"(?:bisa|bs|bsa|boleh|blh|bleh|dapat|dpt|bisakah|bolehkah)?\s*(?:tolong\s+|tlong\s+|tlng\s+)?"
+    r"(?:bantu(?:in)?|bntu(?:in)?|tolong(?:in)?|tlong(?:in)?|tlng(?:in)?|tulung)(?:\s+(?:gue|gua|gw|aku|saya|sy|kami|kita|ane|kulo|dong|min|mimin|kak|bro))?|"
+    r"mau\s+(?:nanya|tanya)(?:\s+dong)?|nanya\s+dong|tanya\s+dong|pengen\s+nanya|pengin\s+tanya|mw\s+tanya|mo\s+nanya|"
+    r"tolong\s+(?:jelaskan|infokan|kasih\s+tahu)|mau\s+konsultasi(?:\s+dong)?|"
+    r"ada\s+yang\s+(?:mau|ingin)\s+(?:aku|saya|gue|gua|gw|kita)?\s*(?:tanyakan|tanya)|"
+    r"gak|ga|gk|nggak|ngga|kgk|kagak|bisa|bs|bsa|kah|sih|tah|ta|kan|nih|deh|ya|yah|dong"
+    r")"
+)
+POLA_BASA_BASI_FULL = re.compile(rf"^(?:{POLA_KOMPONEN}[\s,!?-]*)+$", re.I)
+POLA_BASA_BASI_PREFIX = re.compile(rf"^(?:{POLA_KOMPONEN}[\s,!?-]+)+", re.I)
+
+BISA_BANTU_RE = re.compile(
+    r"\b(?:"
+    r"(?:bisa|boleh|dapat)\s+(?:tolong\s+)?(?:bantu|bantuin)|"
+    r"(?:bantu(?:in)?|tolong(?:in)?)\s+(?:gue|gua|gw|aku|saya|kami|kita|ane|kulo|dong|min|mimin|kak|om|bro|sis|rek)|"
+    r"(?:bantu(?:in)?|tolong(?:in)?)|"
+    r"(?:minta|butuh|perlu)\s+(?:bantuan|tolong|pertolongan|inpo|info|informasi|panduan|petunjuk)|"
+    r"(?:mau|pengen|pengin|ingin|mw|mo)\s+(?:tanya|nanya|konsultasi|curhat|mengadu)|"
+    r"ada\s+yang\s+(?:mau|ingin|pengen|bisa)\s+(?:aku|saya|gue|gua|gw|kita)?\s*(?:tanyakan|tanya|obrolin|bicarakan)|"
+    r"ada\s+pertanyaan|"
+    r"(?:bisa|boleh)\s+(?:tanya|nanya|konsultasi)|"
+    r"help\s*(?:me|min|kak)?|"
+    r"bantuan\s*(?:min|kak|dong)?"
+    r")\b",
+    re.I,
+)
+
+
 def generate_builtin_chatbot_response(pertanyaan: str) -> dict:
     q = pertanyaan.lower().strip()
 
-    if OUT_OF_RAG_RE.search(q):
+    # Kupas sapaan / basa-basi pembuka
+    if POLA_BASA_BASI_FULL.match(q):
+        q_core = ""
+    else:
+        q_core = POLA_BASA_BASI_PREFIX.sub("", q).strip()
+        q_core = re.sub(r"^[,\-?!:;\s]+", "", q_core).strip()
+
+    if re.search(r"\b(?:apa\s+kabar|gimana\s+kabar(?:nya)?|sehat\s*(?:min|gak|kah)?|kabarnya\s+gimana|lagi\s+(?:apa|ngapain|sibuk)|kbrnya\s+gmn|gmn\s+kbr|kbr|piye\s+kabare|pripun\s+kabare)\b", q):
+        return {
+            "jawaban": "Alhamdulillah kabar saya sangat baik dan selalu siap siaga 24/7 membantu warga Lamongan! 😊\n\nBagaimana kabar Anda hari ini? Ada panduan layanan perizinan, administrasi kependudukan, atau pengaduan fasilitas daerah yang bisa saya bantu?",
+            "intent": "sapaan",
+            "mode": "humanizer",
+            "sumber": [],
+        }
+
+    if re.search(r"\b(?:kamu\s+(?:pintar|pinter|cerdas|hebat|keren|ramah|asik|lucu|baik)|keren\s+banget|mantap\s+banget|bagus\s+banget|terbaik|good\s+job)\b", q):
+        return {
+            "jawaban": "Hehe, terima kasih banyak atas apresiasinya! Senang sekali bisa membantu Anda 😊\n\nJika ada perizinan atau layanan publik lain yang ingin Anda ketahui, jangan ragu bertanya lagi ya!",
+            "intent": "sapaan",
+            "mode": "humanizer",
+            "sumber": [],
+        }
+
+    if BISA_BANTU_RE.search(q) or (q_core and BISA_BANTU_RE.search(q_core)):
+        return {
+            "jawaban": "Tentu saja bisa banget! 😊 Silakan sampaikan apa yang ingin Anda tanyakan atau kendala apa yang sedang dihadapi seputar aplikasi GovSmart atau layanan Pemkab Lamongan. Saya siap memandu langkah demi langkah.",
+            "intent": "sapaan",
+            "mode": "humanizer",
+            "sumber": [],
+        }
+
+    if not q_core:
+        return {
+            "jawaban": "Halo! Senang bisa menyapa Anda 😊 Saya asisten virtual GovSmart Kabupaten Lamongan. Ada panduan perizinan, administrasi kependudukan, atau pengaduan fasilitas daerah yang bisa saya bantu hari ini?",
+            "intent": "sapaan",
+            "mode": "humanizer",
+            "sumber": [],
+        }
+
+    if OUT_OF_RAG_RE.search(q) or OUT_OF_RAG_RE.search(q_core):
         return {
             "jawaban": DI_LUAR_RAG_JAWABAN,
             "intent": "di_luar_topik",
@@ -566,22 +639,19 @@ def generate_builtin_chatbot_response(pertanyaan: str) -> dict:
             "sumber": [],
         }
 
+    q_eval = q_core if len(q_core) >= 5 else q
     best_intent = None
     best_score = 0
 
     for item in KNOWLEDGE_INTENTS:
         score = 0
-        # Cocokkan frasa kunci (prioritas tinggi)
         for phrase in item["phrases"]:
-            if phrase in q:
-                # Frasa lebih panjang diberi bobot lebih besar
+            if phrase in q or phrase in q_eval:
                 words_count = len(phrase.split())
                 score += 8 + (words_count * 4)
 
-        # Cocokkan kata kunci individual
         for kw in item["keywords"]:
-            # Cek kecocokan kata utuh
-            if re.search(r"\b" + re.escape(kw) + r"\b", q):
+            if re.search(r"\b" + re.escape(kw) + r"\b", q) or re.search(r"\b" + re.escape(kw) + r"\b", q_eval):
                 score += 3
 
         if score > best_score:
