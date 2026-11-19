@@ -52,6 +52,8 @@ def stem_id(w: str) -> str:
         return w
     s = w
     for suf in ("kannya", "annya", "inya", "nya", "lah", "kah"):
+        if suf == "inya" and s.endswith(("ainya", "uinya", "oinya")):
+            continue
         if len(s) - len(suf) >= 4 and s.endswith(suf):
             s = s[:-len(suf)]
             break

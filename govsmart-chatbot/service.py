@@ -22,9 +22,9 @@ def mask_pii(text: str) -> str:
 SUMBER_KEYS = ["no", "judul", "konteks", "layanan", "halaman"]
 
 def whitelist_result(res: Dict[str, Any]) -> Dict[str, Any]:
-    out = {k: res[k] for k in ("jawaban","intent","mode") if k in res}
+    out = {k: res[k] for k in ("jawaban", "intent", "mode", "konteks_sebelumnya") if k in res}
     if "sumber" in res and isinstance(res["sumber"], list):
-        out["sumber"] = [{k:v for k,v in s.items() if k in SUMBER_KEYS} for s in res["sumber"]]
+        out["sumber"] = [{k: v for k, v in s.items() if k in SUMBER_KEYS} for s in res["sumber"]]
     return out
 
 # Semaphore concurrency limit
@@ -135,8 +135,20 @@ def create_app(bot=None):
         q = mask_pii(str(q).strip())
         if not (1 <= len(q) <= 500):
             return JSONResponse({"kode": "INVALID_INPUT", "pesan": "Pertanyaan wajib 1-500 karakter.", "fields": ["pertanyaan"]},422)
+        riwayat_raw = payload.get("riwayat")
+        riwayat = []
+        if isinstance(riwayat_raw, list):
+            for item in riwayat_raw[-10:]:
+                if isinstance(item, dict):
+                    riwayat.append({
+                        "prompt": mask_pii(str(item.get("prompt") or item.get("pertanyaan") or "")[:500]),
+                        "response": mask_pii(str(item.get("response") or item.get("jawaban") or "")[:1000]),
+                    })
         try:
-            hasil = chatbot.tanya(q)
+            try:
+                hasil = chatbot.tanya(q, riwayat=riwayat)
+            except TypeError:
+                hasil = chatbot.tanya(q)
         except Exception:
             return JSONResponse({"kode": "SERVICE_ERROR", "pesan": "Terjadi galat sistem.", "fields": []}, 503)
         hasil["jawaban"] = mask_pii(hasil.get("jawaban", ""))

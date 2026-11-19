@@ -20,6 +20,10 @@ class ReportUpdateStatus(BaseModel):
     status: str = Field(..., description="Status baru: diterima, diproses, selesai, ditolak")
     catatan_petugas: Optional[str] = Field(None, max_length=1000, description="Catatan tindak lanjut atau alasan petugas")
 
+class ReportRatingInput(BaseModel):
+    rating_kepuasan: int = Field(..., ge=1, le=5, description="Penilaian kepuasan warga (1 sampai 5 bintang)")
+    ulasan_warga: Optional[str] = Field(None, max_length=500, description="Ulasan atau masukan warga terhadap penanganan laporan")
+
 class ReportResponse(BaseModel):
     id: int
     user_id: int
@@ -36,6 +40,10 @@ class ReportResponse(BaseModel):
     catatan_petugas: Optional[str] = None
     # Nama file dokumen/foto feedback dari admin dinas (None jika belum ada)
     foto_feedback: Optional[str] = None
+    # Penilaian kepuasan warga (1-5) & ulasan
+    rating_kepuasan: Optional[int] = None
+    ulasan_warga: Optional[str] = None
+    rated_at: Optional[datetime] = None
     created_at: Optional[datetime] = None
 
     class Config:

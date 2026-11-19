@@ -108,8 +108,11 @@ GovSmart bukan layanan darurat. Untuk kondisi yang mengancam nyawa, segera hubun
 ## Apakah laporan saya bisa dilihat orang lain?
 Tidak. Warga hanya melihat laporan miliknya sendiri, dan admin hanya melihat laporan yang masuk ke dinasnya.
 
-## Apakah saya bisa mengedit atau menghapus laporan yang sudah dikirim?
-Tidak, fitur tersebut belum tersedia untuk warga. Jika ada kesalahan, buat laporan baru dengan informasi yang lebih jelas.
+## Apakah saya bisa mengedit atau membatalkan laporan yang sudah dikirim?
+Ya. Selama status laporan masih **"Diterima"**, warga dapat menekan tombol **"Edit Laporan"** untuk memperbarui judul dan deskripsi laporan, atau menekan tombol **"Batalkan Laporan"** untuk membatalkan pengaduan. Setelah laporan berstatus **"Diproses"**, **"Selesai"**, atau **"Ditolak"**, laporan tidak dapat diubah lagi.
+
+## Bagaimana cara memberi rating kepuasan dan melihat bukti tindak lanjut petugas?
+Setelah laporan berstatus **"Selesai"**, warga dapat melihat catatan tindak lanjut dan lampiran foto/dokumen bukti pengerjaan dari Admin Dinas, serta memberikan **Rating Kepuasan (1 hingga 5 bintang)** beserta ulasan pada kartu laporan tersebut.
 
 ## Apa yang harus saya lakukan jika laporan saya ditolak atau salah dinas?
 Jika statusnya ditolak, perbaiki informasi yang kurang lalu buat laporan baru dengan deskripsi yang lebih jelas. Jika laporan salah arah dinas, buat laporan baru dengan kata kunci yang lebih tepat. Saat ini belum ada fitur bagi admin untuk memindahkan laporan ke dinas lain.

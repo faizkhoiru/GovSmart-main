@@ -23,5 +23,11 @@ class Report(Base):
     catatan_petugas: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     # Nama file dokumen/foto feedback dari admin dinas (nullable, JPEG/PNG/WEBP/PDF, maks 5 MB)
     foto_feedback: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    # Penilaian kepuasan warga (1-5 bintang) setelah laporan berstatus selesai
+    rating_kepuasan: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    # Ulasan / komentar kepuasan dari warga pelapor
+    ulasan_warga: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    # Waktu warga memberikan penilaian kepuasan
+    rated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     # Waktu pembuatan laporan
     created_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=True)

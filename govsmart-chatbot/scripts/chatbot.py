@@ -26,8 +26,11 @@ except ImportError:
 
 ROOT = Path(__file__).resolve().parent.parent
 try:
-    from dotenv import load_dotenv
+    from dotenv import load_dotenv, dotenv_values
     load_dotenv(ROOT / ".env")
+    for _k, _v in dotenv_values(ROOT / ".env").items():
+        if _v and not os.environ.get(_k):
+            os.environ[_k] = _v
 except ImportError:
     pass
 
@@ -100,6 +103,243 @@ BANTUAN_AWAL = (
     "4. Dokumen Kependudukan & Layanan Warga: ketik 'syarat KTP', 'kartu keluarga', atau 'cara daftar bansos'\n\n"
     "Tuliskan pertanyaan atau kendala Anda, saya akan memandu langkah demi langkah."
 )
+
+DAFTAR_PERTANYAAN_JAWABAN = (
+    "Berikut daftar topik dan contoh pertanyaan yang bisa Anda tanyakan kepada Asisten AI GovSmart Kabupaten Lamongan:\n\n"
+    "1. Panduan & Fitur Aplikasi GovSmart:\n"
+    "- 'Bagaimana cara daftar akun baru dan apa syarat password-nya?'\n"
+    "- 'Bagaimana cara membuat laporan pengaduan fasilitas rusak?'\n"
+    "- 'Apa arti status laporan Diterima, Diproses, Selesai, dan Ditolak?'\n"
+    "- 'Apakah laporan yang sudah dikirim bisa diedit atau dibatalkan?'\n"
+    "- 'Bagaimana cara memberi rating/penilaian kepuasan pada laporan yang selesai?'\n"
+    "- 'Bagaimana cara melihat dan mengedit profil pengguna?'\n"
+    "- 'Dinas apa saja yang ada di sistem AI Routing GovSmart?'\n\n"
+    "2. Perizinan Usaha & Standar Pelayanan DPMPTSP Lamongan:\n"
+    "- 'Bagaimana syarat dan cara mengurus NIB UMKM di OSS?'\n"
+    "- 'Berapa lama proses registrasi dan persetujuan KKPR?'\n"
+    "- 'Apa syarat pengajuan PBG (IMB) dan bagaimana rumus hitung retribusinya?'\n"
+    "- 'Berapa lama pengurusan dokumen lingkungan SPPL, UKL-UPL (PKPLH), dan AMDAL (SKKL)?'\n"
+    "- 'Bagaimana cara mengurus SLF, Izin Reklame, SIP Tenaga Kesehatan, atau Surat Keterangan Penelitian?'\n\n"
+    "3. Layanan Publik OPD & Administrasi Kependudukan (Disdukcapil):\n"
+    "- 'Apa syarat mengurus e-KTP baru/hilang, Kartu Keluarga (KK), KIA, Akta Kelahiran, dan Surat Pindah?'\n"
+    "- 'Ke mana melapor jalan berlubang, jembatan rusak, banjir, atau lampu jalan (PJU) mati?'\n"
+    "- 'Bagaimana cara melapor sampah menumpuk, pohon tumbang, atau gangguan ketertiban umum?'\n"
+    "- 'Bagaimana cara daftar bantuan sosial (DTKS/PKH/BPNT), layanan Puskesmas/RSUD Soegiri, atau Beasiswa Perintis?'\n\n"
+    "4. Wawasan Kebangsaan & Kenegaraan:\n"
+    "- 'Apa saja lima sila Pancasila dan makna lambang Garuda Pancasila?'\n"
+    "- 'Apa perbedaan UUD 1945 dan Undang-Undang serta ketentuan Bendera, Bahasa, dan Lagu Kebangsaan?'\n\n"
+    "Tips: Anda juga bisa bertanya secara bersambung (multi-turn), misalnya setelah bertanya soal NIB lalu mengetik 'Berapa lama?', 'Biayanya berapa?', atau 'Urusnya di mana?'."
+)
+
+SAPAAN_VARIASI = [
+    SAPAAN,
+    (
+        "Selamat datang di layanan Asisten AI GovSmart Kabupaten Lamongan! 😊\n\n"
+        "Saya siap mendampingi Anda mencari informasi resmi seputar:\n"
+        "1. Panduan Aplikasi GovSmart (buat akun, edit profil, lapor fasilitas rusak, pantau status, & beri rating)\n"
+        "2. Standar Perizinan DPMPTSP (NIB UMKM via OSS, KKPR, PBG/SIMBG, SLF, SPPL/AMDAL, & SIP Nakes)\n"
+        "3. Pelayanan Publik OPD Lamongan (KTP-el, KK, KIA, Akta Disdukcapil, jalan rusak, lampu PJU, sampah, bansos, Puskesmas/RSUD, & Beasiswa Perintis)\n"
+        "4. Wawasan Kebangsaan (Pancasila, UUD 1945, Bendera, Bahasa, Lambang Negara, & Sejarah BPUPK)\n\n"
+        "Ada topik atau layanan yang ingin Anda tanyakan sekarang?"
+    ),
+    (
+        "Halo Warga Lamongan! 👋 Saya asisten virtual cerdas GovSmart yang aktif 24 jam.\n\n"
+        "Anda dapat bertanya langsung mengenai:\n"
+        "- Cara melapor jalan berlubang, lampu PJU mati, sampah menumpuk, atau fasilitas umum rusak\n"
+        "- Persyaratan, estimasi waktu, dan biaya perizinan usaha (NIB, KKPR, PBG, SLF, izin lingkungan)\n"
+        "- Pengurusan dokumen kependudukan gratis di Disdukcapil (e-KTP, KK, KIA, Akta, Surat Pindah)\n"
+        "- Panduan fitur akun, edit profil, riwayat laporan, hingga wawasan kebangsaan\n\n"
+        "Silakan tuliskan pertanyaan Anda, saya siap membantu!"
+    ),
+]
+
+SAPAAN_SINGKAT_VARIASI = [
+    SAPAAN_SINGKAT,
+    (
+        "Halo! Selamat datang di GovSmart Kabupaten Lamongan 👋😊 "
+        "Silakan sampaikan pertanyaan Anda seputar pengaduan fasilitas publik, perizinan usaha (NIB/KKPR/PBG), layanan KTP/KK Disdukcapil, atau fitur aplikasi."
+    ),
+    (
+        "Hai! Asisten AI GovSmart siap membantu Anda 24/7 😊 "
+        "Apakah Anda ingin membuat laporan pengaduan, mencari syarat perizinan, atau menanyakan layanan dinas di Kabupaten Lamongan?"
+    ),
+    (
+        "Halo, salam hangat dari GovSmart Lamongan! 😊 "
+        "Ada informasi layanan publik, dokumen kependudukan, atau panduan aplikasi yang ingin Anda cari tahu hari ini?"
+    ),
+]
+
+KABAR_VARIASI = [
+    KABAR_JAWABAN,
+    (
+        "Kabar saya prima dan selalu siap melayani masyarakat Kabupaten Lamongan! 🌟😊\n\n"
+        "Semoga Anda juga sehat dan lancar urusannya hari ini. Ada informasi perizinan, kependudukan, atau pengaduan yang ingin ditanyakan?"
+    ),
+    (
+        "Alhamdulillah sehat dan siap membantu Anda kapan saja! 😄\n\n"
+        "Silakan beri tahu jika Anda butuh panduan melapor fasilitas umum, syarat NIB/KKPR/PBG, atau layanan OPD Lamongan lainnya ya."
+    ),
+]
+
+BANTU_TAWARAN_VARIASI = [
+    BANTU_TAWARAN,
+    (
+        "Dengan senang hati! 😊 Silakan ketik langsung pertanyaan atau urusan layanan yang sedang Anda butuhkan, baik seputar aplikasi GovSmart, perizinan DPMPTSP, maupun layanan OPD Lamongan."
+    ),
+    (
+        "Siap membantu! 👍 Anda bisa langsung menuliskan topik yang ingin ditanyakan (misalnya: 'syarat e-KTP', 'cara lapor jalan rusak', atau 'berapa lama KKPR')."
+    ),
+]
+
+APRESIASI_VARIASI = [
+    APRESIASI,
+    (
+        "Terima kasih kembali! Senang sekali informasi dari saya bermanfaat untuk Anda 🙏😊 "
+        "Kapan pun Anda butuh panduan layanan publik atau pengaduan di Kabupaten Lamongan, silakan sapa saya lagi ya."
+    ),
+    (
+        "Sama-sama! Semoga urusan layanan atau pengaduan Anda di Kabupaten Lamongan berjalan lancar 😊 "
+        "Jangan ragu bertanya kembali jika masih ada yang ingin diketahui."
+    ),
+]
+
+PUJIAN_VARIASI = [
+    PUJIAN_JAWABAN,
+    (
+        "Terima kasih banyak atas kata-kata baiknya! 😊 Dukungan Anda membuat saya makin semangat melayani warga Lamongan.\n\n"
+        "Ada topik layanan publik atau fitur GovSmart lain yang ingin kita bahas?"
+    ),
+    (
+        "Wah, terima kasih banyak! Senang bisa memberikan layanan terbaik untuk Anda 🌟😊 "
+        "Silakan tanyakan lagi kapan saja jika butuh informasi lainnya ya!"
+    ),
+]
+
+HUMOR_VARIASI = [
+    HUMOR_JAWABAN,
+    (
+        "Haha, Anda bisa saja! 😄 Walaupun saya asisten AI digital, semangat pelayanan saya untuk warga Lamongan tetap 100% nyata.\n\n"
+        "Yuk, ada info perizinan atau layanan daerah yang ingin dicari tahu?"
+    ),
+]
+
+PAMIT_VARIASI = [
+    PAMIT_JAWABAN,
+    (
+        "Terima kasih telah berkunjung ke GovSmart Kabupaten Lamongan! Sampai berjumpa kembali dan semoga segala urusan Anda dimudahkan 👋😊"
+    ),
+]
+
+PERSONA_VARIASI = [
+    PERSONA_JAWABAN,
+    (
+        "Kenalkan, saya Asisten Virtual AI resmi pada portal GovSmart Kabupaten Lamongan 🤖😊\n\n"
+        "Tugas utama saya adalah membantu warga dan pelaku usaha secara cepat & akurat berdasarkan dokumen resmi Pemkab Lamongan:\n"
+        "1. Panduan langkah demi langkah fitur aplikasi GovSmart & alur pengaduan ke 20 OPD\n"
+        "2. Informasi syarat, waktu penyelesaian, dan biaya perizinan di DPMPTSP & Disdukcapil\n"
+        "3. Referensi wawasan kebangsaan (Pancasila, UUD 1945, & simbol negara)\n\n"
+        "Silakan ajukan pertanyaan Anda!"
+    ),
+]
+
+DAFTAR_PERTANYAAN_VARIASI = [
+    DAFTAR_PERTANYAAN_JAWABAN,
+    (
+        "Anda dapat menanyakan berbagai hal kepada saya! Berikut panduan topik beserta contoh kalimat tanya yang paling sering diajukan warga di GovSmart Lamongan:\n\n"
+        "1. Seputar Akun, Profil & Pengaduan Aplikasi GovSmart:\n"
+        "- 'Gimana cara daftar akun baru dan syarat password-nya?'\n"
+        "- 'Cara lihat dan edit profil pengguna gimana?'\n"
+        "- 'Gimana cara lapor jalan rusak atau fasilitas umum rusak?'\n"
+        "- 'Laporan yang sudah dikirim bisa diedit atau dibatalkan gak?'\n"
+        "- 'Cara kasih rating bintang untuk laporan yang selesai?'\n\n"
+        "2. Seputar Perizinan Usaha & Standar Pelayanan DPMPTSP:\n"
+        "- 'Syarat dan cara bikin NIB UMKM di OSS?'\n"
+        "- 'Berapa lama dan berapa biaya pengurusan KKPR?'\n"
+        "- 'Bagaimana cara mengurus PBG (IMB) dan rumus retribusinya?'\n"
+        "- 'Berapa lama proses SPPL, UKL-UPL (PKPLH), dan AMDAL (SKKL)?'\n"
+        "- 'Syarat mengurus SLF, Izin Reklame, SIP Nakes, atau Surat Penelitian?'\n\n"
+        "3. Seputar Kependudukan (Disdukcapil) & Layanan Dinas Daerah:\n"
+        "- 'Apa syarat bikin e-KTP baru/hilang, KK, KIA, Akta Kelahiran, dan Surat Pindah?'\n"
+        "- 'Ke mana lapor lampu jalan (PJU) mati, sampah menumpuk, atau banjir?'\n"
+        "- 'Bagaimana cara daftar bansos DTKS/PKH, berobat BPJS di Puskesmas/RSUD, atau Beasiswa Perintis?'\n\n"
+        "4. Seputar Wawasan Kebangsaan:\n"
+        "- 'Sebutkan 5 sila Pancasila dan makna lambang Garuda Pancasila!'\n"
+        "- 'Bagaimana aturan ukuran Bendera Merah Putih dan kedudukan UUD 1945?'\n\n"
+        "Tips Percakapan: Saya mendukung obrolan bersambung (multi-turn). Setelah bertanya suatu layanan, Anda cukup mengetik 'Berapa lama?', 'Biayanya gratis?', atau 'Di mana urusnya?'."
+    ),
+]
+
+
+def _pilih_variasi(daftar_variasi: list, q: str = "", riwayat: list = None) -> str:
+    """Pilih variasi jawaban yang natural dan tidak mengulang respons giliran sebelumnya."""
+    if not daftar_variasi:
+        return ""
+    if len(daftar_variasi) == 1:
+        return daftar_variasi[0]
+    turn_idx = len(riwayat) if isinstance(riwayat, list) else 0
+    q_seed = sum(ord(c) for c in (q or "").lower().strip())
+    idx = (q_seed + turn_idx) % len(daftar_variasi)
+    kandidat = daftar_variasi[idx]
+    if isinstance(riwayat, list) and riwayat:
+        last_resp = str(riwayat[-1].get("response") or riwayat[-1].get("jawaban") or "").strip()
+        if last_resp and kandidat.strip() == last_resp:
+            kandidat = daftar_variasi[(idx + 1) % len(daftar_variasi)]
+    return kandidat
+
+
+_PEMBUKA_SAPAAWAL = [
+    "Halo! Senang bisa membantu Anda 😊 ",
+    "Hai! Terima kasih sudah bertanya di GovSmart 😊 ",
+    "Halo Warga Lamongan! Berikut informasi resminya untuk Anda: ",
+]
+
+_PENUTUP_VARIATIF = [
+    "\n\nJika Anda ingin tahu lebih lanjut (misalnya soal estimasi waktu, biaya, atau lokasi pengurusannya), silakan tanyakan langsung ya!",
+    "\n\nTips: Anda bisa langsung membalas dengan pertanyaan singkat seperti 'Berapa lama prosesnya?' atau 'Apakah gratis?' untuk topik ini.",
+    "\n\nSemoga penjelasan ini membantu! Ada detail lain seputar layanan di atas yang ingin Anda pastikan?",
+    "",
+]
+
+
+def _bingkai_jawaban_variatif(
+    teks_inti: str,
+    q_raw: str,
+    riwayat: list = None,
+    konteks_sebelumnya: str = None,
+    tambahkan_penutup: bool = True,
+) -> str:
+    """Beri variasi pembuka/penutup kontekstual agar respons terasa luwes dan tidak monoton, tanpa mengubah fakta/angka SOP."""
+    if not teks_inti:
+        return teks_inti
+    q_low = (q_raw or "").lower().strip()
+    turn_idx = len(riwayat) if isinstance(riwayat, list) else 0
+    seed = sum(ord(c) for c in q_low) + turn_idx * 7
+
+    awalan = ""
+    # Jika pengguna menyapa di awal kalimat (mis. "Halo min, cara daftar...")
+    if re.match(r"^(?:halo|hai|hi|hei|permisi|assalamualaikum|selamat\s+(?:pagi|siang|sore|malam)|min|kak)\b", q_low):
+        awalan = _PEMBUKA_SAPAAWAL[seed % len(_PEMBUKA_SAPAAWAL)] + "\n\n"
+    elif konteks_sebelumnya:
+        pembuka_mt = [
+            f"Melanjutkan pembahasan mengenai {konteks_sebelumnya}, berikut rincian informasinya:\n\n",
+            f"Terkait {konteks_sebelumnya} yang Anda tanyakan, berikut ketentuannya:\n\n",
+            f"Untuk layanan {konteks_sebelumnya}, berikut detail resminya:\n\n",
+        ]
+        awalan = pembuka_mt[seed % len(pembuka_mt)]
+
+    akhiran = ""
+    if tambahkan_penutup and not konteks_sebelumnya:
+        pilihan_penutup = _PENUTUP_VARIATIF[seed % len(_PENUTUP_VARIATIF)]
+        if pilihan_penutup:
+            akhiran = pilihan_penutup
+
+    hasil = f"{awalan}{teks_inti.strip()}{akhiran}".strip()
+    if isinstance(riwayat, list) and riwayat:
+        last_resp = str(riwayat[-1].get("response") or riwayat[-1].get("jawaban") or "").strip()
+        if last_resp and hasil == last_resp:
+            alt_penutup = _PENUTUP_VARIATIF[(seed + 1) % (len(_PENUTUP_VARIATIF) - 1)]
+            hasil = f"Berikut informasi lengkapnya kembali untuk Anda:\n\n{teks_inti.strip()}{alt_penutup}".strip()
+    return hasil
 
 DI_LUAR = (
     "Maaf, informasi mengenai pertanyaan tersebut tidak tersedia di dalam basis dokumen resmi (RAG) "
@@ -181,7 +421,34 @@ FRAME_TOKENS = {
     "umum", "publik", "daerah", "kabupaten", "lamongan", "indonesia", "warga",
     "masyarakat", "orang", "isi", "diterima", "diproses", "selesai", "ditolak",
     "dibatalkan", "membatalkan", "batal", "permohonan", "pemohon", "fasilitas",
-    "e", "el", "pelaporan",
+    "e", "el", "pelaporan", "itu", "tersebut", "tadi", "tsb", "atas", "terus",
+    "trus", "lalu", "kemudian", "nah", "jadi", "misal", "misalkan", "seandainya",
+    "soal", "biayanya", "tarifnya", "prosesnya", "waktunya", "lamanya", "syaratnya",
+    "persyaratannya", "dokumennya", "berkasnya", "prosedurnya", "langkahnya",
+    "urusnya", "mengurusnya", "daftarnya", "pendaftarannya", "lokasinya",
+    "tempatnya", "kantornya", "aplikasinya", "statusnya", "editnya", "diwakilkan",
+    "daring", "online", "offline", "langsung", "datang",
+    "tanya", "tanyakan", "ditanyakan", "bertanya", "pertanyaan", "jawab", "dijawab",
+    "menjawab", "jawaban", "topik", "menu", "pilihan", "rekomendasi", "tersedia",
+    "bahas", "dibahas", "membahas", "sebutkan", "disebutkan", "menyebutkan",
+    "tunjukkan", "ditunjukkan", "menunjukkan", "ajarkan", "diajarkan", "mengajarkan",
+    "pandu", "dipandu", "memandu", "beri", "memberi", "diberi", "diberikan",
+    "penilaian", "ulasan", "kepuasan", "bintang", "tindak", "lanjut", "unduh",
+    "cetak", "telepon", "whatsapp", "email", "domisili", "biodata", "nama",
+    "lengkap", "kategori", "cakupan", "kemampuan", "keahlian", "kegunaan",
+    "depan", "belakang", "samping", "sebelah", "dekat", "sekitar", "sepanjang",
+    "arah", "menuju", "perempatan", "pertigaan", "tikungan", "tengah", "pinggir",
+    "tepi", "ujung", "pojok", "parah", "sekali", "banget", "sini", "situ", "sana",
+    "disiapkan", "siapkan", "menyiapkan", "persiapkan", "persiapan", "dibawa",
+    "bawa", "membawa", "dilampirkan", "lampirkan", "melampirkan", "lampiran",
+    "diunggah", "unggah", "mengunggah", "upload", "dibutuhkan", "butuhkan",
+    "membutuhkan", "butuh", "perlukan", "memerlukan", "dikumpulkan", "kumpulkan",
+    "diserahkan", "serahkan", "diajukan", "diurus", "uruskan", "dipungut",
+    "pungutan", "dibayar", "pembayaran", "penyelesaian", "penyelesaiannya",
+    "pengurusannya", "penerbitannya", "penanganannya", "pembuatannya", "secara",
+    "punya", "mempunyai", "milik", "via", "berlaku", "masa", "aktif", "keluar",
+    "terbit", "ambil", "diambil", "kelengkapan", "kelengkapannya", "tahap",
+    "tahapannya", "alurnya", "mekanismenya",
 }
 
 BROAD_CONTAINER_TOKENS = {
@@ -374,6 +641,21 @@ KENAL_RE = re.compile(
     re.I,
 )
 
+DAFTAR_PERTANYAAN_RE = re.compile(
+    r"(?:"
+    r"(?:daftar|contoh|rekomendasi|pilihan|menu|kategori)\s+(?:pertanyaan|topik|layanan\s+yang\s+bisa\s+ditanyakan)|"
+    r"pertanyaan\s+(?:apa\s+saja|apa|yang\s+bisa|yang\s+tersedia)|"
+    r"topik\s+(?:apa\s+saja|apa|yang\s+bisa|yang\s+tersedia|yang\s+dibahas)|"
+    r"(?:apa\s+saja|apa)\s+yang\s+(?:bisa|boleh|dapat)\s+(?:saya\s+|kita\s+|kamu\s+)?(?:tanyakan|tanya|nanya|ditanyakan|bahas|dibahas|jawab|dijawab)|"
+    r"(?:bisa|boleh|dapat)\s+(?:tanya|nanya|bertanya|menanyakan|tanyakan|bahas|jawab)\s+(?:tentang\s+|soal\s+|seputar\s+)?apa(?:\s+saja|\s+aja)?|"
+    r"^(?:tanya|nanya|bertanya|menanyakan|tanyakan|bahas)\s+(?:tentang\s+|soal\s+|seputar\s+)?apa(?:\s+saja|\s+aja)?(?:\s+di\s+sini)?[\s?!.]*$|"
+    r"(?:saya|kita|aku)\s+(?:bisa|boleh)\s+(?:tanya|nanya|bertanya|menanyakan|tanyakan)\s+(?:tentang\s+|soal\s+)?apa(?:\s+saja|\s+aja)?|"
+    r"(?:kamu|chatbot(?:\s+ini)?|ai(?:\s+ini)?)\s+(?:bisa|paham|tahu|mengerti)\s+(?:jawab|menjawab|bahas|membahas|tentang)\s+apa(?:\s+saja|\s+aja)?|"
+    r"informasi\s+apa\s+saja\s+yang\s+(?:ada|tersedia|bisa\s+ditanyakan)"
+    r")",
+    re.I,
+)
+
 KELUHAN_SINGKAT_RE = re.compile(
     r"^(?:(?:aduh+|waduh+|wah+|yah+|astaga+|hmm+|eh+|duh+|bingung+|aku\s+bingung|saya\s+bingung|"
     r"tolong+|tolongin|bantu\s+saya|bantuin|gimana\s+nih|gimana\s+ini|bagaimana\s+ini|kok\s+gini|susah\s+banget)"
@@ -384,13 +666,14 @@ KELUHAN_SINGKAT_RE = re.compile(
 KATA_KUNCI = {
     "aplikasi": [
         r"govsmart", r"aplikasi", r"portal", r"akun", r"login", r"\w*lapor\w*", r"\w*aduan\w*", r"keluhan",
-        r"nik", r"password", r"kata\s+sandi", r"sandi", r"chatbot", r"dasbor", r"dashboard", r"fitur",
+        r"nik", r"nip", r"password", r"kata\s+sandi", r"sandi", r"chatbot", r"dasbor", r"dashboard", r"fitur",
         r"\w*unggah\w*", r"upload", r"daftar\s+akun", r"mendaftar\s+(?:akun|sebagai\s+warga)", r"registrasi\s+akun",
         r"register", r"masuk", r"keluar", r"logout", r"profil", r"urgensi", r"darurat",
         r"status\s+(?:laporan|pengaduan|aduan|diterima|diproses|selesai|ditolak|dibatalkan)",
         r"audit\s+log", r"riwayat", r"foto\s+bukti", r"lampiran", r"koordinat", r"gps", r"peta",
         r"admin\s+dinas", r"super\s*admin", r"dinas\s+tujuan", r"\w*batal\w*", r"edit", r"mengedit",
-        r"diedit", r"hapus", r"menghapus", r"dihapus",
+        r"diedit", r"hapus", r"menghapus", r"dihapus", r"penilaian", r"rating", r"ulasan", r"kepuasan",
+        r"bintang", r"tindak\s+lanjut", r"feedback", r"csv", r"pdf", r"unduh",
     ],
     "pemerintah": [
         r"\w*izin\w*", r"\w*ijin\w*", r"nib", r"oss", r"kkpr", r"pemanfaatan\s+ruang", r"kesesuaian\s+kegiatan",
@@ -891,6 +1174,461 @@ CURATED_INTENTS = [
             "chunk_id": "uud1945_perubahan4-0002",
         },
     },
+    {
+        "id": "faq_rating_kepuasan_warga",
+        "koleksi": "aplikasi",
+        "patterns": [
+            r"(?:cara|bagaimana|kapan|syarat)\s+(?:memberi|memberikan|beri|kasih|mengisi|isi|ubah|mengubah)\s+(?:penilaian|rating|bintang|ulasan|kepuasan)",
+            r"(?:penilaian|rating|ulasan|bintang)\s+(?:kepuasan|laporan|pengaduan|warga|petugas|dinas)",
+            r"(?:menilai|nilai)\s+(?:kepuasan|hasil\s+kerja|tindak\s+lanjut|penanganan|laporan)",
+        ],
+        "jawaban": (
+            "Panduan Penilaian (Rating) Kepuasan Warga di Aplikasi GovSmart [1]:\n\n"
+            "1. Syarat Memberi Penilaian: Fitur penilaian kepuasan otomatis muncul pada kartu laporan Anda di menu 'Pengaduan' setelah status laporan diubah menjadi 'Selesai' oleh Admin Dinas.\n"
+            "2. Skala Bintang (1–5): Pilih tingkat kepuasan Anda dari 1 Bintang (Sangat Tidak Puas) hingga 5 Bintang (Sangat Puas).\n"
+            "3. Ulasan Singkat (Opsional): Anda dapat menuliskan masukan atau apresiasi terhadap hasil penanganan petugas lapangan (maksimal 500 karakter), lalu klik 'Kirim Penilaian'.\n"
+            "4. Ubah Penilaian: Anda tetap dapat memperbarui penilaian melalui tombol 'Ubah Penilaian' pada laporan tersebut. Rata-rata penilaian warga ditampilkan secara transparan pada kartu KPI 'Kepuasan Warga' di Dasbor Admin [1]."
+        ),
+        "sumber": {
+            "no": 1,
+            "doc_id": "faq_aplikasi",
+            "judul": "FAQ Aplikasi GovSmart",
+            "konteks": "Penilaian Kepuasan Penanganan Laporan Warga",
+            "layanan": "Transparansi Pengaduan GovSmart",
+            "halaman": "1",
+            "jenis": "faq",
+            "tetangga": False,
+            "chunk_id": "faq_aplikasi-0019",
+        },
+    },
+    {
+        "id": "faq_edit_profil_pengguna",
+        "koleksi": "aplikasi",
+        "patterns": [
+            r"(?:cara|bagaimana|bisa|apakah\s+bisa)\s+(?:melihat|lihat|mengubah|ubah|edit|mengedit|ganti|mengganti|memperbarui|update)\s+(?:profil|biodata|data\s+diri|data\s+akun|email|nomor\s+telepon|alamat)",
+            r"(?:apakah|bisa|boleh)\s+(?:nik|nip)\s+(?:diubah|diganti|diedit)",
+            r"(?:lihat|edit|ubah)\s+profil\s+(?:pengguna|akun|warga|admin)?",
+            r"menu\s+profil\s+(?:pengguna|akun)?",
+        ],
+        "jawaban": (
+            "Panduan Melihat & Mengedit Profil Pengguna di GovSmart [1]:\n\n"
+            "1. Membuka Profil: Klik tombol akun (ikon inisial & nama/email Anda) di pojok kanan atas bilah navigasi (navbar), lalu pilih menu dropdown 'Lihat Profil Pengguna'.\n"
+            "2. Mengedit Data Profil: Klik tombol 'Edit Profil' di dalam jendela profil. Anda dapat memperbarui:\n"
+            "   - Nama Lengkap\n"
+            "   - Alamat Email (sistem otomatis memperbarui sesi login Anda)\n"
+            "   - Nomor Telepon / WhatsApp\n"
+            "   - Alamat Domisili\n"
+            "   - Kata Sandi Baru (opsional, minimal 8 karakter dengan huruf besar, huruf kecil, angka, dan simbol).\n"
+            "3. Ketentuan NIK / NIP: Nomor Induk Kependudukan (NIK KTP) atau NIP Aparatur dikunci permanen sebagai identitas unik akun dan TIDAK DAPAT diubah [1]."
+        ),
+        "sumber": {
+            "no": 1,
+            "doc_id": "faq_aplikasi",
+            "judul": "FAQ Aplikasi GovSmart",
+            "konteks": "Manajemen Profil & Keamanan Akun Pengguna",
+            "layanan": "Layanan Akun GovSmart",
+            "halaman": "1",
+            "jenis": "faq",
+            "tetangga": False,
+            "chunk_id": "faq_aplikasi-0007",
+        },
+    },
+    {
+        "id": "faq_upload_foto_dan_gps",
+        "koleksi": "aplikasi",
+        "patterns": [
+            r"(?:cara|aturan|syarat|format|ukuran|batas)\s+(?:unggah|upload|melampirkan|lampiran)\s+(?:foto|gambar|bukti|dokumen)",
+            r"(?:foto\s+bukti|lampiran\s+foto)\s+(?:laporan|pengaduan|maksimal|format)",
+            r"(?:cara|bagaimana|fungsi)\s+(?:pakai|menggunakan|gunakan|isi|menentukan)\s+(?:lokasi\s+gps|koordinat|titik\s+lokasi|peta)",
+        ],
+        "jawaban": (
+            "Ketentuan Lampiran Foto Bukti & Titik Koordinat GPS pada Laporan GovSmart [1]:\n\n"
+            "1. Foto Bukti Lapangan (Opsional): Mendukung format gambar JPEG (.jpg/.jpeg), PNG (.png), atau WEBP (.webp) dengan ukuran file maksimal 5 MB. Anda dapat menarik file (drag & drop) atau klik kotak unggah foto.\n"
+            "2. Titik Koordinat Lokasi GPS (Opsional): Klik tombol 'Gunakan Lokasi Saya' pada formulir pengaduan untuk mendeteksi koordinat Latitude & Longitude secara otomatis dari perangkat Anda, atau ketik koordinat secara manual.\n"
+            "3. Manfaat: Laporan dengan koordinat GPS otomatis tampil pada 'Peta Sebaran Laporan Kabupaten Lamongan' di Dasbor Admin sehingga tim lapangan dinas lebih cepat menemukan lokasi kerusakan [1]."
+        ),
+        "sumber": {
+            "no": 1,
+            "doc_id": "panduan_pelaporan",
+            "judul": "Panduan Pelaporan GovSmart",
+            "konteks": "Lampiran Foto Bukti & Koordinat GPS",
+            "layanan": "Layanan Pengaduan Masyarakat",
+            "halaman": "1",
+            "jenis": "panduan",
+            "tetangga": False,
+            "chunk_id": "panduan_pelaporan-0005",
+        },
+    },
+    {
+        "id": "faq_dokumen_feedback_dan_export",
+        "koleksi": "aplikasi",
+        "patterns": [
+            r"(?:dokumen|foto|bukti)\s+(?:tindak\s+lanjut|feedback)(?:\s+dari)?\s+(?:dinas|petugas|admin)",
+            r"(?:cara|bagaimana)\s+(?:melihat|lihat|buka|unduh)\s+(?:dokumen\s+|foto\s+|bukti\s+)?(?:tindak\s+lanjut|feedback|catatan\s+petugas|csv|pdf)",
+            r"(?:cara|bagaimana)\s+(?:unduh|export|ekspor|cetak)\s+(?:laporan|data\s+pengaduan|csv|pdf)",
+        ],
+        "jawaban": (
+            "Panduan Dokumen Tindak Lanjut (Feedback) Dinas & Unduh Laporan (CSV/PDF) [1]:\n\n"
+            "1. Catatan & Dokumen Feedback Dinas: Saat Admin Dinas memperbarui status laporan (misalnya menjadi 'Diproses' atau 'Selesai'), petugas dapat menyertakan 'Catatan Tindak Lanjut' serta mengunggah foto perbaikan atau dokumen PDF resmi. Warga pelapor dapat langsung mengklik tombol 'Lihat Dokumen' pada kartu laporan.\n"
+            "2. Ekspor Data Laporan (Khusus Admin / Admin Dinas): Pada daftar pengaduan, pilih 'Filter Periode' (Hari Ini, Minggu Ini, Bulan Ini, Tahun Ini, atau Rentang Khusus) lalu klik tombol 'CSV' untuk mengunduh tabel Excel/CSV atau 'PDF' untuk mencetak laporan resmi [1]."
+        ),
+        "sumber": {
+            "no": 1,
+            "doc_id": "faq_aplikasi",
+            "judul": "FAQ Aplikasi GovSmart",
+            "konteks": "Tindak Lanjut Dinas & Ekspor Laporan",
+            "layanan": "Dasbor Manajemen Pengaduan",
+            "halaman": "1",
+            "jenis": "faq",
+            "tetangga": False,
+            "chunk_id": "faq_aplikasi-0021",
+        },
+    },
+    {
+        "id": "faq_perizinan_kkpr",
+        "koleksi": "pemerintah",
+        "patterns": [
+            r"(?:syarat|cara|panduan|prosedur|alur|dokumen|berkas)\s+(?:mengurus|urus|membuat|buat|bikin|daftar|registrasi|pengajuan|permohonan|penerbitan|persetujuan)\s+kkpr",
+            r"apa\s+itu\s+kkpr",
+            r"kkpr\s+(?:itu\s+apa|syaratnya\s+apa|urus\s+dimana|berapa\s+lama|biayanya\s+berapa)",
+        ],
+        "jawaban": (
+            "Panduan Standar Pelayanan KKPR (Kesesuaian Kegiatan Pemanfaatan Ruang) di DPMPTSP Kab. Lamongan [1]:\n\n"
+            "1. Jenis & Jangka Waktu Penyelesaian (SK Standar Pelayanan 2026):\n"
+            "   - Registrasi KKPR: Diselesaikan dalam 1 (satu) hari kerja sejak berkas dinyatakan lengkap (hal. 18).\n"
+            "   - Penerbitan Persetujuan KKPR (PKKPR): Maksimal 10 (sepuluh) hari kerja sejak berkas dinyatakan lengkap (hal. 28).\n"
+            "2. Biaya / Tarif: 100% GRATIS (Rp 0 / Tidak dipungut biaya administrasi di DPMPTSP).\n"
+            "3. Persyaratan Utama: Formulir permohonan, fotokopi KTP-el / NIB pemohon, koordinat poligon lokasi lahan, rencana teknis pemanfaatan ruang/bangunan, serta bukti kepemilikan/penguasaan tanah yang sah (SHM/SHGB/Akta/Sewa).\n"
+            "4. Kanal Pengajuan: Melalui portal OSS (oss.go.id) atau loket DPMPTSP di Mal Pelayanan Publik (MPP) Kabupaten Lamongan [1]."
+        ),
+        "sumber": {
+            "no": 1,
+            "doc_id": "sk_dpmptsp_lamongan_standar_pelayanan_2026",
+            "judul": "SK Standar Pelayanan Publik DPMPTSP Kab. Lamongan Tahun 2026",
+            "konteks": "Standar Pelayanan Registrasi & Penerbitan Persetujuan KKPR",
+            "layanan": "DPMPTSP Kabupaten Lamongan",
+            "halaman": "18-28",
+            "jenis": "sk",
+            "tetangga": False,
+            "chunk_id": "sk_dpmptsp_lamongan_standar_pelayanan_2026-0022",
+        },
+    },
+    {
+        "id": "faq_perizinan_pbg_slf",
+        "koleksi": "pemerintah",
+        "patterns": [
+            r"(?:syarat|cara|panduan|prosedur|alur|dokumen|berkas|rumus|hitung|menghitung)\s+(?:mengurus|urus|membuat|buat|bikin|daftar|pengajuan|permohonan|retribusi|biaya|legalisir)?\s*(?:pbg|slf|persetujuan\s+bangunan\s+gedung|sertifikat\s+laik\s+fungsi)",
+            r"apa\s+itu\s+(?:pbg|slf)",
+            r"(?:pbg|slf)\s+(?:itu\s+apa|syaratnya\s+apa|urus\s+dimana|berapa\s+lama|biayanya\s+berapa)",
+        ],
+        "jawaban": (
+            "Panduan Standar Pelayanan PBG (Persetujuan Bangunan Gedung / pengganti IMB) & SLF di Kab. Lamongan [1]:\n\n"
+            "1. Kanal Pengajuan: Diajukan secara daring melalui portal resmi SIMBG (https://simbg.pu.go.id) atau konsultasi di loket DPMPTSP Mal Pelayanan Publik (MPP) Lamongan.\n"
+            "2. Persyaratan Dokumen: Data pemohon (KTP-el/NIB), bukti hak atas tanah (SHM/SHGB/Akta), dokumen KKPR, dokumen lingkungan (SPPL/UKL-UPL/AMDAL), dan gambar rencana teknis bangunan (arsitektur, struktur, utilitas/MEP).\n"
+            "3. Jangka Waktu Penyelesaian:\n"
+            "   - Penerbitan PBG di DPMPTSP: Maksimal 3 (tiga) hari kerja setelah rekomendasi teknis Dinas PU Cipta Karya terbit dan retribusi dilunasi (hal. 61).\n"
+            "   - Legalisir Dokumen PBG/IMB: 1 (satu) hari kerja dan GRATIS (hal. 15).\n"
+            "4. Biaya / Retribusi PBG: Dikenakan Retribusi Daerah sesuai Perda Kab. Lamongan tentang PDRD dengan rumus: Luas Total Lantai x Indeks Lokalitas x Standar Harga Satuan Tertinggi (SHST) x Indeks Terintegrasi (It) x Indeks Bangunan Gedung (Ibg) [1]."
+        ),
+        "sumber": {
+            "no": 1,
+            "doc_id": "sk_dpmptsp_lamongan_standar_pelayanan_2026",
+            "judul": "SK Standar Pelayanan Publik DPMPTSP Kab. Lamongan Tahun 2026",
+            "konteks": "Standar Pelayanan Penerbitan PBG & Legalisir PBG/IMB",
+            "layanan": "DPMPTSP Kabupaten Lamongan",
+            "halaman": "15-61",
+            "jenis": "sk",
+            "tetangga": False,
+            "chunk_id": "sk_dpmptsp_lamongan_standar_pelayanan_2026-0058",
+        },
+    },
+    {
+        "id": "faq_perizinan_lingkungan_amdal_sppl",
+        "koleksi": "pemerintah",
+        "patterns": [
+            r"(?:syarat|cara|panduan|prosedur|waktu|lama|biaya)\s+(?:mengurus|urus|membuat|buat|bikin|pengajuan|penerbitan)?\s*(?:sppl|pkplh|skkl|amdal|ukl-upl|persetujuan\s+lingkungan|izin\s+lingkungan)",
+            r"apa\s+(?:itu|perbedaan)\s+(?:sppl|pkplh|skkl|amdal|ukl-upl)",
+        ],
+        "jawaban": (
+            "Panduan Standar Pelayanan Persetujuan Lingkungan (SPPL, PKPLH/UKL-UPL, & SKKL/AMDAL) di DPMPTSP Kab. Lamongan [1]:\n\n"
+            "1. Jangka Waktu Penyelesaian (SK Standar Pelayanan 2026):\n"
+            "   - SPPL (Surat Pernyataan Kesanggupan Pengelolaan dan Pemantauan Lingkungan Hidup — usaha dampak kecil): Maksimal 150 menit / 2,5 jam sejak berkas lengkap (hal. 36 & 57).\n"
+            "   - PKPLH (Pernyataan Kesanggupan Pengelolaan Lingkungan Hidup / UKL-UPL — dampak menengah): Maksimal 45 hari kerja sejak persyaratan lengkap (hal. 39).\n"
+            "   - SKKL (Surat Kelayakan Lingkungan Hidup / AMDAL — dampak penting): Maksimal 60 hari kerja sejak persyaratan lengkap (hal. 42).\n"
+            "2. Biaya / Tarif: 100% GRATIS (Rp 0 / Tidak dipungut biaya di DPMPTSP).\n"
+            "3. Kanal Pengajuan: Melalui portal OSS (oss.go.id) / Amdalnet dengan verifikasi teknis Dinas Lingkungan Hidup (DLH) dan loket DPMPTSP di MPP Kabupaten Lamongan [1]."
+        ),
+        "sumber": {
+            "no": 1,
+            "doc_id": "sk_dpmptsp_lamongan_standar_pelayanan_2026",
+            "judul": "SK Standar Pelayanan Publik DPMPTSP Kab. Lamongan Tahun 2026",
+            "konteks": "Standar Pelayanan Persetujuan Lingkungan (SPPL, PKPLH, SKKL)",
+            "layanan": "DPMPTSP Kabupaten Lamongan",
+            "halaman": "36-57",
+            "jenis": "sk",
+            "tetangga": False,
+            "chunk_id": "sk_dpmptsp_lamongan_standar_pelayanan_2026-0036",
+        },
+    },
+    {
+        "id": "faq_perizinan_reklame_nakes_penelitian",
+        "koleksi": "pemerintah",
+        "patterns": [
+            r"(?:syarat|cara|panduan|prosedur|waktu|lama|biaya)\s+(?:mengurus|urus|membuat|buat|bikin|daftar|pengajuan|perpanjang|perpanjangan)?\s*(?:izin\s+reklame|reklame|baliho|spanduk|izin\s+praktik|izin\s+praktek|sip\s+dokter|sip\s+nakes|tenaga\s+kesehatan|dokter\s+hewan|veteriner|surat\s+keterangan\s+penelitian|izin\s+penelitian)",
+        ],
+        "jawaban": (
+            "Standar Pelayanan Izin Reklame, SIP Tenaga Kesehatan/Veteriner, & Surat Keterangan Penelitian (DPMPTSP Kab. Lamongan) [1]:\n\n"
+            "1. Izin Penyelenggaraan Reklame (hal. 76):\n"
+            "   - Syarat: Formulir permohonan, KTP-el/NIB, desain & ukuran reklame, foto titik lokasi, dan bukti pelunasan Pajak Reklame Bapenda.\n"
+            "   - Waktu & Biaya: Diproses segera sesuai sistem (± 3–5 hari kerja); layanan administrasi DPMPTSP GRATIS (di luar Pajak Reklame Daerah).\n"
+            "2. Surat Izin Praktik (SIP) Tenaga Kesehatan & Tenaga Kesehatan Hewan (hal. 81 & 85):\n"
+            "   - Syarat: KTP-el, STR aktif, ijazah profesi, surat keterangan tempat praktik/fasilitas kesehatan, rekomendasi profesi/Dinkes, dan pas foto.\n"
+            "   - Waktu & Biaya: Diproses segera sesuai sistem (± 1–5 hari kerja) dan 100% GRATIS (Rp 0).\n"
+            "3. Surat Keterangan Penelitian / Survey / KKN / Magang (hal. 88):\n"
+            "   - Syarat: Surat pengantar resmi dari Kampus/Instansi/Bakesbangpol, proposal penelitian, dan fotokopi KTP-el peneliti.\n"
+            "   - Waktu & Biaya: Diproses ± 1–2 hari kerja di loket DPMPTSP MPP Lamongan dan 100% GRATIS [1]."
+        ),
+        "sumber": {
+            "no": 1,
+            "doc_id": "sk_dpmptsp_lamongan_standar_pelayanan_2026",
+            "judul": "SK Standar Pelayanan Publik DPMPTSP Kab. Lamongan Tahun 2026",
+            "konteks": "Izin Reklame, SIP Nakes/Veteriner, dan Surat Keterangan Penelitian",
+            "layanan": "DPMPTSP Kabupaten Lamongan",
+            "halaman": "76-88",
+            "jenis": "sk",
+            "tetangga": False,
+            "chunk_id": "sk_dpmptsp_lamongan_standar_pelayanan_2026-0076",
+        },
+    },
+    {
+        "id": "faq_pengaduan_jalan_jembatan_sda",
+        "koleksi": "pemerintah",
+        "patterns": [
+            r"(?:lapor|melapor|melaporkan|pengaduan|aduan|keluhan|perbaikan)\s+.*?(?:jalan\s+rusak|jalan\s+berlubang|aspal|jembatan|trotoar|drainase|selokan|saluran\s+air|irigasi|banjir|tanggul|longsor)",
+            r"(?:jalan\s+rusak|jalan\s+berlubang|jembatan\s+rusak|trotoar\s+rusak|banjir|drainase\s+tersumbat|selokan\s+tersumbat|tanggul\s+jebol).*?(?:lapor|dinas|kemana|ke\s+mana|bagaimana)",
+            r"dinas\s+(?:pekerjaan\s+umum|bina\s+marga|sumber\s+daya\s+air|pupr)",
+        ],
+        "jawaban": (
+            "Panduan Pengaduan Jalan, Jembatan, Drainase, & Banjir di Kabupaten Lamongan [1]:\n\n"
+            "1. Dinas Berwenang (Otomatis via AI Routing GovSmart):\n"
+            "   - Dinas Pekerjaan Umum Bina Marga: Menangani jalan kabupaten rusak/berlubang, aspal mengelupas, jembatan rusak/amblas, dan trotoar.\n"
+            "   - Dinas Pekerjaan Umum Sumber Daya Air (PU SDA): Menangani saluran drainase/selokan tersumbat, jaringan irigasi pertanian, pintu air, tanggul sungai jebol, dan genangan banjir.\n"
+            "2. Cara Melapor di GovSmart: Buka menu 'Pengaduan' -> isi judul & lokasi spesifik (nama jalan, desa/kelurahan, kecamatan) -> aktifkan 'Gunakan Lokasi Saya' (GPS) -> lampirkan foto kondisi kerusakan -> klik 'Kirim Pengaduan'.\n"
+            "3. Biaya & Target Respons: 100% GRATIS. Laporan dengan kerusakan membahayakan keselamatan (misalnya jembatan ambrol atau tanggul jebol) otomatis diklasifikasikan berurgensi 'Darurat' untuk penanganan prioritas [1]."
+        ),
+        "sumber": {
+            "no": 1,
+            "doc_id": "layanan_publik_lamongan",
+            "judul": "Panduan Pelayanan Publik Organisasi Perangkat Daerah Kab. Lamongan",
+            "konteks": "2. Dinas PU Bina Marga & 3. Dinas PU Sumber Daya Air",
+            "layanan": "Infrastruktur & Pekerjaan Umum Lamongan",
+            "halaman": "1",
+            "jenis": "panduan",
+            "tetangga": False,
+            "chunk_id": "layanan_publik_lamongan-0005",
+        },
+    },
+    {
+        "id": "faq_pengaduan_pju_dishub",
+        "koleksi": "pemerintah",
+        "patterns": [
+            r"(?:lapor|melapor|melaporkan|pengaduan|aduan|perbaikan)\s+.*?(?:lampu\s+jalan|pju|penerangan\s+jalan|rambu|traffic\s+light|lampu\s+merah|parkir|uji\s+kir|dishub)",
+            r"(?:lampu\s+jalan|pju|lampu\s+merah|rambu)\s+(?:padam|mati|rusak|roboh)",
+            r"(?:syarat|cara|layanan)\s+uji\s+kir",
+            r"dinas\s+perhubungan",
+        ],
+        "jawaban": (
+            "Panduan Layanan & Pengaduan Dinas Perhubungan (Dishub) Kabupaten Lamongan [1]:\n\n"
+            "1. Cakupan Layanan & Pengaduan Dishub:\n"
+            "   - Lampu Penerangan Jalan Umum (PJU) padam, berkedip, atau tiang PJU miring/rusak.\n"
+            "   - Lampu lalu lintas (traffic light) mati, rambu jalan rusak/tertutup, marka jalan, dan penertiban parkir liar di bahu jalan.\n"
+            "   - Pelayanan pengujian kendaraan bermotor berkala (Uji KIR) bagi angkutan barang dan penumpang.\n"
+            "2. Cara Melapor PJU / Rambu Rusak: Ajukan laporan melalui menu 'Pengaduan' di aplikasi GovSmart dengan menyertakan patokan lokasi jalan/desa, titik koordinat GPS, serta foto tiang/lampu PJU. Sistem AI otomatis meneruskan laporan ke Dinas Perhubungan Kab. Lamongan (100% GRATIS) [1]."
+        ),
+        "sumber": {
+            "no": 1,
+            "doc_id": "layanan_publik_lamongan",
+            "judul": "Panduan Pelayanan Publik Organisasi Perangkat Daerah Kab. Lamongan",
+            "konteks": "4. Dinas Perhubungan (Dishub)",
+            "layanan": "Dinas Perhubungan Kabupaten Lamongan",
+            "halaman": "1",
+            "jenis": "panduan",
+            "tetangga": False,
+            "chunk_id": "layanan_publik_lamongan-0009",
+        },
+    },
+    {
+        "id": "faq_pengaduan_sampah_dlh",
+        "koleksi": "pemerintah",
+        "patterns": [
+            r"(?:lapor|melapor|melaporkan|pengaduan|aduan|keluhan)\s+.*?(?:sampah|tps|tpa|pohon\s+tumbang|pohon\s+rawan|limbah|polusi|pencemaran|bau\s+sampah|dlh)",
+            r"(?:sampah\s+menumpuk|tumpukan\s+sampah|pohon\s+tumbang|pencemaran\s+limbah)",
+            r"dinas\s+lingkungan\s+hidup",
+        ],
+        "jawaban": (
+            "Panduan Pengaduan Sampah, Pohon Tumbang, & Lingkungan Hidup (DLH Kab. Lamongan) [1]:\n\n"
+            "1. Kewenangan Dinas Lingkungan Hidup (DLH):\n"
+            "   - Pengangkutan tumpukan sampah liar, kontainer TPS penuh, dan pengelolaan TPA.\n"
+            "   - Pemangkasan pohon peneduh jalan yang rawan roboh serta evakuasi pohon tumbang di jalan umum.\n"
+            "   - Pengawasan dan penanganan dugaan pencemaran limbah cair, udara, atau B3 dari kegiatan usaha/industri.\n"
+            "2. Cara Melapor: Kirim pengaduan melalui menu 'Pengaduan' di GovSmart beserta foto bukti dan titik lokasi GPS. Laporan pohon tumbang yang menutup jalan otomatis mendapat prioritas urgensi 'Darurat' untuk penanganan cepat petugas DLH [1]."
+        ),
+        "sumber": {
+            "no": 1,
+            "doc_id": "layanan_publik_lamongan",
+            "judul": "Panduan Pelayanan Publik Organisasi Perangkat Daerah Kab. Lamongan",
+            "konteks": "5. Dinas Lingkungan Hidup (DLH)",
+            "layanan": "Dinas Lingkungan Hidup Kabupaten Lamongan",
+            "halaman": "1",
+            "jenis": "panduan",
+            "tetangga": False,
+            "chunk_id": "layanan_publik_lamongan-0012",
+        },
+    },
+    {
+        "id": "faq_layanan_bansos_dinsos",
+        "koleksi": "pemerintah",
+        "patterns": [
+            r"(?:cara|syarat|panduan|prosedur|daftar|mendaftar|pengajuan|usulan|cek)\s+.*?(?:bansos|bantuan\s+sosial|dtks|pkh|bpnt|blt|warga\s+miskin|lansia|disabilitas|dinsos)",
+            r"(?:bansos|bantuan\s+sosial|dtks|pkh|bpnt)\s+(?:syaratnya\s+apa|daftar\s+dimana|cara\s+daftar)",
+            r"dinas\s+sosial",
+        ],
+        "jawaban": (
+            "Panduan Pendaftaran Bantuan Sosial (DTKS, PKH, & BPNT) Dinas Sosial Kabupaten Lamongan [1]:\n\n"
+            "1. Syarat Utama Pengusulan DTKS (Data Terpadu Kesejahteraan Sosial):\n"
+            "   - Warga kurang mampu/rentan miskin ber-KTP dan KK Kabupaten Lamongan.\n"
+            "   - Bukan anggota ASN, TNI, Polri, atau perangkat BUMN/BUMD.\n"
+            "   - Membawa fotokopi KTP-el, Kartu Keluarga (KK), dan foto kondisi rumah tampak depan/dalam.\n"
+            "2. Alur Pendaftaran:\n"
+            "   - Warga mendaftarkan usulan ke Kantor Desa / Kelurahan setempat melalui operator SIKS-NG Desa untuk dibahas dalam Musyawarah Desa/Kelurahan (Musdes/Muskel).\n"
+            "   - Hasil Musdes diverifikasi oleh Dinas Sosial Kabupaten Lamongan dan diajukan ke Kemensos RI untuk penetapan penerima PKH, BPNT/Sembako, atau PBI-JKN (BPJS Gratis).\n"
+            "3. Biaya & Pengaduan: Pengusulan DTKS 100% GRATIS. Jika menemukan kendala penyaluran bansos atau warga terlantar/disabilitas yang butuh bantuan darurat, laporkan melalui menu 'Pengaduan' GovSmart (tujuan: Dinas Sosial) [1]."
+        ),
+        "sumber": {
+            "no": 1,
+            "doc_id": "layanan_publik_lamongan",
+            "judul": "Panduan Pelayanan Publik Organisasi Perangkat Daerah Kab. Lamongan",
+            "konteks": "8. Dinas Sosial (Dinsos) > DTKS, PKH, BPNT",
+            "layanan": "Dinas Sosial Kabupaten Lamongan",
+            "halaman": "1",
+            "jenis": "panduan",
+            "tetangga": False,
+            "chunk_id": "layanan_publik_lamongan-0018",
+        },
+    },
+    {
+        "id": "faq_layanan_kesehatan_dinkes",
+        "koleksi": "pemerintah",
+        "patterns": [
+            r"(?:layanan|cara|syarat|berobat|biaya|jam\s+buka|jadwal|pengaduan)\s+.*?(?:puskesmas|rsud|soegiri|rumah\s+sakit|bpjs\s+kesehatan|\bkis\b|stunting|posyandu|imunisasi|ambulans|dinkes)",
+            r"dinas\s+kesehatan",
+        ],
+        "jawaban": (
+            "Panduan Layanan Kesehatan (Puskesmas, RSUD, & BPJS Kesehatan) Dinas Kesehatan Kab. Lamongan [1]:\n\n"
+            "1. Fasilitas Kesehatan Daerah:\n"
+            "   - Faskes Tingkat Pertama: Puskesmas di seluruh kecamatan se-Kabupaten Lamongan (rawat jalan, KIA/imunisasi, posyandu, pencegahan stunting, serta IGD/persalinan 24 jam di Puskesmas Perawatan).\n"
+            "   - Rumah Sakit Rujukan Daerah: RSUD dr. Soegiri Lamongan, RSUD Ngimbang, dan RSUD Karangkembang (layanan IGD 24 jam, poliklinik spesialis, rawat inap, dan ambulans).\n"
+            "2. Biaya & Kepesertaan BPJS Kesehatan / JKN-KIS:\n"
+            "   - Berobat GRATIS (Rp 0) bagi peserta aktif BPJS Kesehatan / KIS dengan membawa KTP-el atau kartu JKN-KIS sesuai alur rujukan berjenjang dari Puskesmas/FKTP (kecuali kondisi gawat darurat dapat langsung ke IGD RSUD).\n"
+            "3. Pengaduan Layanan Kesehatan: Keluhan pelayanan Puskesmas/RSUD atau kebutuhan darurat kesehatan lingkungan (seperti fogging DBD) dapat dilaporkan melalui menu 'Pengaduan' di aplikasi GovSmart [1]."
+        ),
+        "sumber": {
+            "no": 1,
+            "doc_id": "layanan_publik_lamongan",
+            "judul": "Panduan Pelayanan Publik Organisasi Perangkat Daerah Kab. Lamongan",
+            "konteks": "6. Dinas Kesehatan (Dinkes) > Puskesmas, RSUD, JKN-KIS",
+            "layanan": "Dinas Kesehatan Kabupaten Lamongan",
+            "halaman": "1",
+            "jenis": "panduan",
+            "tetangga": False,
+            "chunk_id": "layanan_publik_lamongan-0014",
+        },
+    },
+    {
+        "id": "faq_layanan_pendidikan_beasiswa",
+        "koleksi": "pemerintah",
+        "patterns": [
+            r"(?:syarat|cara|panduan|daftar|mendaftar|pendaftaran|info|informasi|jadwal)\s+.*?(?:beasiswa|perintis|beasiswa\s+perintis)",
+            r"(?:lapor|pengaduan|aduan)\s+.*?(?:sekolah\s+rusak|fasilitas\s+sekolah|dinas\s+pendidikan|disdik)",
+            r"beasiswa\s+perintis",
+            r"dinas\s+pendidikan",
+        ],
+        "jawaban": (
+            "Panduan Layanan Dinas Pendidikan & Program Beasiswa Perintis Kabupaten Lamongan [1]:\n\n"
+            "1. Program Beasiswa Perintis Pemkab Lamongan:\n"
+            "   - Diperuntukkan bagi siswa dan mahasiswa berprestasi dari keluarga kurang mampu (terdaftar di DTKS/SKTM) yang ber-KTP dan KK asli Kabupaten Lamongan.\n"
+            "   - Persyaratan Umum: KTP-el & KK Lamongan, bukti diterima/aktif kuliah atau sekolah, transkrip nilai/rapor, dan dokumen pendukung sesuai pengumuman seleksi periodik Dinas Pendidikan Kab. Lamongan (pendaftaran 100% GRATIS).\n"
+            "2. Pengaduan Sarana Prasarana Sekolah (PAUD, SD, SMP):\n"
+            "   - Kerusakan ruang kelas, atap sekolah bocor, atau kendala layanan pendidikan dasar di Kabupaten Lamongan dapat dilaporkan langsung melalui menu 'Pengaduan' di aplikasi GovSmart (otomatis diarahkan ke Dinas Pendidikan) [1]."
+        ),
+        "sumber": {
+            "no": 1,
+            "doc_id": "layanan_publik_lamongan",
+            "judul": "Panduan Pelayanan Publik Organisasi Perangkat Daerah Kab. Lamongan",
+            "konteks": "7. Dinas Pendidikan (Disdik) > Beasiswa Perintis & Sekolah",
+            "layanan": "Dinas Pendidikan Kabupaten Lamongan",
+            "halaman": "1",
+            "jenis": "panduan",
+            "tetangga": False,
+            "chunk_id": "layanan_publik_lamongan-0016",
+        },
+    },
+    {
+        "id": "faq_layanan_satpol_pertanian_perikanan_naker",
+        "koleksi": "pemerintah",
+        "patterns": [
+            r"(?:lapor|pengaduan|aduan|layanan)\s+.*?(?:satpol\s+pp|ketertiban|pkl|kebisingan|miras|pungli|pupuk|hama|sawah|pertanian|nelayan|tambak|perikanan|lowongan\s+kerja|pelatihan\s+kerja|disnaker|tenaga\s+kerja|pdam|air\s+bersih)",
+            r"dinas\s+(?:ketahanan\s+pangan|pertanian|perikanan|tenaga\s+kerja|perumahan\s+rakyat|koperasi)",
+            r"satpol\s+pp",
+        ],
+        "jawaban": (
+            "Panduan Layanan & Pengaduan OPD Sektoral Kabupaten Lamongan di GovSmart [1]:\n\n"
+            "1. Satuan Polisi Pamong Praja (Satpol PP): Penanganan gangguan ketertiban umum (Trantibum), penertiban PKL yang melanggar bahu jalan/trotoar, kebisingan, miras ilegal, dan pelanggaran Perda.\n"
+            "2. Dinas Perumahan Rakyat, Kawasan Permukiman & Cipta Karya: Pengaduan distribusi air bersih/PDAM, sanitasi lingkungan, dan kawasan permukiman kumuh.\n"
+            "3. Dinas Ketahanan Pangan & Pertanian: Pengaduan kelangkaan pupuk bersubsidi, serangan hama tanaman/sawah, dan pendampingan penyuluh pertanian.\n"
+            "4. Dinas Perikanan: Layanan pemberdayaan nelayan, kartu KUSUKA, serta pembinaan budidaya ikan/tambak.\n"
+            "5. Dinas Tenaga Kerja (Disnaker): Informasi bursa lowongan kerja daerah, pelatihan keterampilan kerja (BLK), dan mediasi hubungan industrial.\n\n"
+            "Seluruh kendala di atas dapat dilaporkan melalui menu 'Pengaduan' di aplikasi GovSmart dan otomatis diteruskan oleh AI ke dinas terkait [1]."
+        ),
+        "sumber": {
+            "no": 1,
+            "doc_id": "panduan_pelaporan",
+            "judul": "Panduan Pelaporan GovSmart",
+            "konteks": "Daftar 20 Dinas & Cakupan Penanganan Masalah Daerah",
+            "layanan": "Sistem AI Routing GovSmart",
+            "halaman": "1",
+            "jenis": "panduan",
+            "tetangga": False,
+            "chunk_id": "panduan_pelaporan-0009",
+        },
+    },
+    {
+        "id": "kenegaraan_bendera_bahasa_lambang_lagu",
+        "koleksi": "kenegaraan",
+        "patterns": [
+            r"(?:aturan|ketentuan|ukuran|makna|arti|fungsi|larangan)\s+(?:bendera\s+negara|bendera\s+merah\s+putih|sang\s+merah\s+putih|bahasa\s+indonesia|bahasa\s+negara|lambang\s+negara|garuda\s+pancasila|bhinneka\s+tunggal\s+ika|lagu\s+kebangsaan|indonesia\s+raya)",
+            r"(?:apa\s+itu|jelaskan)\s+(?:garuda\s+pancasila|bhinneka\s+tunggal\s+ika|sang\s+merah\s+putih|lagu\s+kebangsaan)",
+            r"jumlah\s+bulu\s+garuda",
+        ],
+        "jawaban": (
+            "Ketentuan Simbol Kedaulatan & Identitas Nasional menurut UUD 1945 (Pasal 35–36B) dan UU No. 24 Tahun 2009 [1]:\n\n"
+            "1. Bendera Negara (Pasal 4 UU 24/2009): Sang Merah Putih berbentuk empat persegi panjang dengan ukuran lebar 2/3 (dua-pertiga) dari panjang; bagian atas berwarna merah dan bagian bawah berwarna putih yang kedua bagiannya berukuran sama.\n"
+            "2. Bahasa Negara (Pasal 25 UU 24/2009): Bahasa Indonesia merupakan bahasa resmi nasional yang wajib digunakan dalam peraturan perundang-undangan, dokumen resmi negara, pendidikan, dan pelayanan administrasi publik.\n"
+            "3. Lambang Negara (Pasal 46–48 UU 24/2009): Garuda Pancasila dengan kepala menoleh lurus ke sebelah kanan, perisai berupa jantung yang memuat 5 simbol sila Pancasila, serta pita bertuliskan semboyan 'Bhinneka Tunggal Ika' (Berbeda-beda tetapi tetap satu). Jumlah bulu melambangkan tanggal Proklamasi 17-8-1945 (17 helai bulu sayap, 8 helai bulu ekor, 19 helai pangkal ekor, dan 45 helai bulu leher).\n"
+            "4. Lagu Kebangsaan (Pasal 58 UU 24/2009): Indonesia Raya yang digubah oleh Wage Rudolf Supratman [1]."
+        ),
+        "sumber": {
+            "no": 1,
+            "doc_id": "uu_24_2009_bendera_bahasa_lambang",
+            "judul": "UU No. 24 Tahun 2009 tentang Bendera, Bahasa, dan Lambang Negara serta Lagu Kebangsaan",
+            "konteks": "Ketentuan Bendera, Bahasa, Lambang Negara, dan Lagu Kebangsaan",
+            "layanan": "",
+            "halaman": "3-24",
+            "jenis": "uu",
+            "tetangga": False,
+            "chunk_id": "uu_24_2009_bendera_bahasa_lambang-0005",
+        },
+    },
 ]
 
 
@@ -942,28 +1680,46 @@ def llm_tersedia():
 
 def panggil_llm(messages, timeout=None):
     timeout = timeout or float(os.getenv("LLM_TIMEOUT", "90"))
-    url = os.environ["LLM_BASE_URL"].rstrip("/") + "/chat/completions"
+    base_url = os.environ["LLM_BASE_URL"].rstrip("/")
+    kandidat_urls = [base_url + "/chat/completions"]
+    if "localhost" in base_url:
+        kandidat_urls.append(base_url.replace("localhost", "host.docker.internal") + "/chat/completions")
+    elif "host.docker.internal" in base_url:
+        kandidat_urls.append(base_url.replace("host.docker.internal", "localhost") + "/chat/completions")
+
     headers = {"Content-Type": "application/json"}
     if os.getenv("LLM_API_KEY"):
         headers["Authorization"] = "Bearer " + os.environ["LLM_API_KEY"]
     payload = {
         "model": os.environ["LLM_MODEL"],
         "messages": messages,
-        "temperature": 0.2,
+        "temperature": float(os.getenv("LLM_TEMPERATURE", "0.35")),
         "max_tokens": int(os.getenv("LLM_MAX_TOKENS", "800")),
     }
-    try:
-        import httpx
-        r = httpx.post(url, headers=headers, json=payload, timeout=timeout)
-        r.raise_for_status()
-        data = r.json()
-    except ImportError:
-        import urllib.request
-        req = urllib.request.Request(url, data=json.dumps(payload).encode(), headers=headers, method="POST")
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
+    last_err = None
+    data = None
+    for url in kandidat_urls:
+        try:
+            try:
+                import httpx
+                r = httpx.post(url, headers=headers, json=payload, timeout=timeout)
+                r.raise_for_status()
+                data = r.json()
+            except ImportError:
+                import urllib.request
+                req = urllib.request.Request(url, data=json.dumps(payload).encode(), headers=headers, method="POST")
+                with urllib.request.urlopen(req, timeout=timeout) as resp:
+                    data = json.loads(resp.read().decode("utf-8"))
+            break
+        except Exception as e:
+            last_err = e
+    if data is None:
+        raise last_err
     teks = data["choices"][0]["message"]["content"] or ""
-    return re.sub(r"<think>.*?</think>", "", teks, flags=re.S).strip()
+    teks = re.sub(r"<think>.*?</think>", "", teks, flags=re.S).strip()
+    # Normalisasi sitasi seperti [Sumber 1] atau (Sumber 1) menjadi [1]
+    teks = re.sub(r"[\[\(]\s*sumber\s*(\d+)\s*[\]\)]", r"[\1]", teks, flags=re.I)
+    return teks
 
 
 SINONIM = {
@@ -1083,9 +1839,696 @@ def _format_standar_pelayanan(c: dict, query: str, no_sumber: int) -> str:
     return f"Informasi Standar Pelayanan {produk} ({c['judul']}, hal. {c['halaman_mulai']}) [{no_sumber}]:\n\n{potongan}"
 
 
+TOPIK_MULTITURN = [
+    {
+        "id": "kkpr",
+        "label": "Registrasi KKPR",
+        "query_inject": "registrasi kkpr",
+        "regex": re.compile(r"\b(?:kkpr|kesesuaian\s+kegiatan\s+pemanfaatan\s+ruang|pemanfaatan\s+ruang)\b", re.I),
+    },
+    {
+        "id": "nib_oss",
+        "label": "Izin Usaha NIB & OSS UMKM",
+        "query_inject": "nib oss umkm",
+        "regex": re.compile(r"\b(?:nib|oss|nomor\s+induk\s+berusaha|izin\s+usaha|kbli)\b", re.I),
+    },
+    {
+        "id": "pbg",
+        "label": "Persetujuan Bangunan Gedung (PBG)",
+        "query_inject": "persetujuan bangunan gedung pbg",
+        "regex": re.compile(r"\b(?:pbg|persetujuan\s+bangunan\s+gedung|imb|simbg)\b", re.I),
+    },
+    {
+        "id": "slf",
+        "label": "Sertifikat Laik Fungsi (SLF)",
+        "query_inject": "sertifikat laik fungsi slf",
+        "regex": re.compile(r"\b(?:slf|sertifikat\s+laik\s+fungsi|laik\s+fungsi)\b", re.I),
+    },
+    {
+        "id": "reklame",
+        "label": "Izin Penyelenggaraan Reklame",
+        "query_inject": "izin reklame",
+        "regex": re.compile(r"\b(?:reklame|spanduk|baliho)\b", re.I),
+    },
+    {
+        "id": "lingkungan",
+        "label": "Persetujuan Lingkungan (AMDAL/UKL-UPL/SPPL)",
+        "query_inject": "persetujuan lingkungan amdal sppl pkplh skkl",
+        "regex": re.compile(r"\b(?:amdal|ukl-upl|sppl|pkplh|skkl|persetujuan\s+lingkungan)\b", re.I),
+    },
+    {
+        "id": "praktik_nakes",
+        "label": "Izin Praktik Tenaga Kesehatan / Veteriner",
+        "query_inject": "izin praktik tenaga kesehatan dokter hewan",
+        "regex": re.compile(r"\b(?:izin\s+praktik|izin\s+praktek|tenaga\s+kesehatan|nakes|dokter\s+hewan|veteriner)\b", re.I),
+    },
+    {
+        "id": "penelitian",
+        "label": "Surat Keterangan Penelitian",
+        "query_inject": "surat keterangan penelitian",
+        "regex": re.compile(r"\b(?:surat\s+keterangan\s+penelitian|izin\s+penelitian)\b", re.I),
+    },
+    {
+        "id": "adminduk_ktp",
+        "label": "Layanan KTP-el & Adminduk Disdukcapil",
+        "query_inject": "e-ktp ktp kk akta disdukcapil",
+        "regex": re.compile(r"\b(?:e-?ktp|ktp-el|ktp|kartu\s+keluarga|\bkk\b|kia|kartu\s+identitas\s+anak|akta\s+kelahiran|akta\s+kematian|surat\s+pindah|disdukcapil|dukcapil|adminduk)\b", re.I),
+    },
+    {
+        "id": "jalan_rusak",
+        "label": "Pengaduan Jalan & Jembatan (PU Bina Marga)",
+        "query_inject": "laporan jalan rusak bina marga",
+        "regex": re.compile(r"\b(?:jalan\s+rusak|jalan\s+berlubang|jembatan\s+rusak|bina\s+marga|aspal)\b", re.I),
+    },
+    {
+        "id": "pju_dishub",
+        "label": "Pengaduan Lampu PJU & Dishub",
+        "query_inject": "laporan lampu jalan pju dishub",
+        "regex": re.compile(r"\b(?:pju|lampu\s+jalan|lampu\s+padam|lampu\s+mati|rambu|traffic\s+light|dishub|perhubungan)\b", re.I),
+    },
+    {
+        "id": "sampah_dlh",
+        "label": "Pengaduan Sampah & Lingkungan (DLH)",
+        "query_inject": "laporan sampah pohon tumbang dlh",
+        "regex": re.compile(r"\b(?:sampah|tps|tpa|pohon\s+tumbang|dlh|dinas\s+lingkungan\s+hidup)\b", re.I),
+    },
+    {
+        "id": "bansos_dinsos",
+        "label": "Bantuan Sosial (DTKS/PKH Dinas Sosial)",
+        "query_inject": "bantuan sosial bansos dtks pkh dinsos",
+        "regex": re.compile(r"\b(?:bansos|bantuan\s+sosial|pkh|bpnt|blt|dtks|dinsos|dinas\s+sosial)\b", re.I),
+    },
+    {
+        "id": "kesehatan_dinkes",
+        "label": "Layanan Kesehatan (Puskesmas/RSUD/Dinkes)",
+        "query_inject": "layanan kesehatan puskesmas rsud bpjs kesehatan dinkes",
+        "regex": re.compile(r"\b(?:puskesmas|rsud|soegiri|bpjs\s+kesehatan|\bkis\b|stunting|ambulans|dinkes|dinas\s+kesehatan)\b", re.I),
+    },
+    {
+        "id": "pendidikan_disdik",
+        "label": "Layanan Pendidikan & Beasiswa Perintis",
+        "query_inject": "layanan pendidikan beasiswa perintis sekolah disdik",
+        "regex": re.compile(r"\b(?:beasiswa|perintis|sekolah\s+rusak|dinas\s+pendidikan|disdik)\b", re.I),
+    },
+    {
+        "id": "satpol_pp",
+        "label": "Ketertiban Umum (Satpol PP)",
+        "query_inject": "ketertiban umum satpol pp",
+        "regex": re.compile(r"\b(?:satpol\s+pp|satpol|ketertiban|pkl|razia|kebisingan)\b", re.I),
+    },
+    {
+        "id": "akun_govsmart",
+        "label": "Akun & Login Aplikasi GovSmart",
+        "query_inject": "akun login password govsmart",
+        "regex": re.compile(r"\b(?:daftar\s+akun|bikin\s+akun|buat\s+akun|registrasi\s+akun|login|masuk\s+akun|kata\s+sandi|password)\b", re.I),
+    },
+    {
+        "id": "profil_govsmart",
+        "label": "Profil Pengguna Aplikasi GovSmart",
+        "query_inject": "edit profil pengguna nik govsmart",
+        "regex": re.compile(r"\b(?:edit\s+profil|lihat\s+profil|ubah\s+profil|profil\s+pengguna|profil\s+akun|biodata)\b", re.I),
+    },
+    {
+        "id": "rating_govsmart",
+        "label": "Penilaian (Rating) Kepuasan Warga",
+        "query_inject": "penilaian rating kepuasan laporan govsmart",
+        "regex": re.compile(r"\b(?:rating|penilaian\s+kepuasan|kepuasan\s+warga|beri\s+bintang|ulasan\s+warga)\b", re.I),
+    },
+    {
+        "id": "laporan_govsmart",
+        "label": "Laporan Pengaduan Aplikasi GovSmart",
+        "query_inject": "laporan pengaduan fasilitas rusak govsmart",
+        "regex": re.compile(r"\b(?:buat\s+laporan|bikin\s+laporan|cara\s+melapor|laporan\s+fasilitas|laporan\s+pengaduan|status\s+laporan|edit\s+laporan|batalkan\s+laporan|unggah\s+foto|upload\s+foto)\b", re.I),
+    },
+    {
+        "id": "wawasan_kebangsaan",
+        "label": "Wawasan Kebangsaan (Pancasila & UUD 1945)",
+        "query_inject": "pancasila uud 1945 wawasan kebangsaan",
+        "regex": re.compile(r"\b(?:pancasila|uud\s*1945|bpupk|bhinneka\s+tunggal\s+ika|lambang\s+negara|garuda|sumpah\s+pemuda|bela\s+negara)\b", re.I),
+    },
+]
+
+FOLLOWUP_SIGNAL_RE = re.compile(
+    r"(?:"
+    r"^(?:kalau|kalo|terus|trus|lalu|kemudian|nah\s+kalau|jadi\s+kalau|untuk|soal|terkait|tentang|dan\s+kalau|misalnya)\b|"
+    r"\b(?:itu|tersebut|tadi|tsb|di\s+atas)\b|"
+    r"\b(?:biayanya|tarifnya|retribusinya|ongkosnya|prosesnya|waktunya|lamanya|syaratnya|persyaratannya|dokumennya|berkasnya|kelengkapannya|lampirannya|prosedurnya|caranya|langkahnya|tahapannya|alurnya|mekanismenya|urusnya|mengurusnya|pengurusannya|penyelesaiannya|penerbitannya|penanganannya|pembuatannya|daftarnya|pendaftarannya|lokasinya|tempatnya|kantornya|loketnya|alamatnya|websitenya|portalnya|aplikasinya|statusnya|editnya|batalinnya)\b|"
+    r"\b(?:berapa\s+lama|jangka\s+waktu|estimasi\s+waktu|berapa\s+hari|berapa\s+jam|berapa\s+biaya|biaya|tarif|retribusi|apakah\s+gratis|gratis\s+atau\s+bayar|bayar\s+berapa|dipungut\s+biaya|syarat(?:nya)?|persyaratan(?:nya)?|dokumen\s+(?:apa|yang)|berkas\s+(?:apa|yang)|perlu\s+(?:disiapkan|dibawa|dilampirkan|dokumen|berkas|apa)|harus\s+(?:disiapkan|dibawa|dilampirkan|bawa\s+apa)|bawa\s+(?:apa|dokumen|berkas)|siapkan\s+apa|disiapkan\s+apa|mengurus(?:nya)?\s+di\s*mana|urus(?:nya)?\s+di\s*mana|di\s*mana\s+mengurus|lewat\s+mana|secara\s+online|kalau\s+hilang|kalau\s+rusak|bisa\s+diedit|bisa\s+dibatalkan|bisa\s+diwakilkan|langkah-?langkah)\b"
+    r")",
+    re.I,
+)
+
+ASPEK_REGEX = {
+    "waktu": re.compile(
+        r"\b(?:berapa\s+lama|lama(?:nya)?|jangka\s+waktu|estimasi\s+waktu|waktu\s+(?:proses|penyelesaian|pelayanan|pengurusan|penerbitan|penanganan)|penyelesaian(?:nya)?|berapa\s+(?:hari|jam|menit)|prosesnya\s+berapa|selesai(?:nya)?\s+berapa|butuh\s+waktu|kapan\s+(?:selesai|jadi|terbit))\b",
+        re.I,
+    ),
+    "biaya": re.compile(
+        r"\b(?:berapa\s+biaya|biaya(?:nya)?|tarif(?:nya)?|retribusi(?:nya)?|bayar(?:nya)?(?:\s+berapa)?|pembayaran(?:nya)?|apakah\s+(?:gratis|bayar|berbayar)|gratis\s*(?:gak|ga|tidak|kah|apa|atau)?|dipungut\s+biaya|pungutan|ongkos(?:nya)?)\b",
+        re.I,
+    ),
+    "lokasi": re.compile(
+        r"\b(?:di\s*mana|dimana|lokasi(?:nya)?(?!\s+gps|\s+kejadian|\s+peta)|tempat(?:nya)?|kantor(?:nya)?|loket(?:nya)?|alamat(?:nya)?|kemana|ke\s+mana|lewat\s+(?:mana|apa)|secara\s+(?:online|daring|offline)|website(?:nya)?|web(?:nya)?|portal(?:nya)?|urus(?:nya)?\s+di\s*mana|mengurus(?:nya)?\s+di\s*mana|daftar(?:nya)?\s+di\s*mana|datang\s+ke\s+mana)\b",
+        re.I,
+    ),
+    "syarat": re.compile(
+        r"\b(?:syarat(?:nya)?|persyaratan(?:nya)?|dokumen(?:nya)?|berkas(?:nya)?|kelengkapan(?:nya)?|lampiran(?:nya)?|bawa\s+apa|harus\s+bawa|perlu\s+(?:berkas|dokumen|disiapkan|dibawa)|disiapkan\s+apa|siapkan\s+apa|butuh\s+(?:dokumen|berkas|apa\s+saja))\b",
+        re.I,
+    ),
+    "prosedur": re.compile(
+        r"\b(?:bagaimana\s+cara|gimana\s+cara|cara(?:nya)?\s*(?:gimana|bagaimana|mengurus|urus|buat|bikin|daftar|ajukan)?|langkah(?:-?langkah)?(?:nya)?|prosedur(?:nya)?|tahapan(?:nya)?|mekanisme(?:nya)?|alur(?:nya)?|proses\s+pengurusan(?:nya)?)\b",
+        re.I,
+    ),
+}
+
+_SUMBER_DPMPTSP_2026 = {
+    "no": 1,
+    "doc_id": "sk_dpmptsp_lamongan_standar_pelayanan_2026",
+    "judul": "SK Standar Pelayanan Publik DPMPTSP Kab. Lamongan Tahun 2026",
+    "konteks": "Standar Pelayanan Perizinan & Non-Perizinan",
+    "layanan": "DPMPTSP Kabupaten Lamongan",
+    "halaman": "7-88",
+    "jenis": "sk",
+    "tetangga": False,
+    "chunk_id": "sk_dpmptsp_lamongan_standar_pelayanan_2026-0013",
+}
+_SUMBER_LAYANAN_OPD = {
+    "no": 1,
+    "doc_id": "layanan_publik_lamongan",
+    "judul": "Panduan Pelayanan Publik Organisasi Perangkat Daerah Kab. Lamongan",
+    "konteks": "Standar Layanan Publik OPD Lamongan",
+    "layanan": "Pemerintah Kabupaten Lamongan",
+    "halaman": "1",
+    "jenis": "panduan",
+    "tetangga": False,
+    "chunk_id": "layanan_publik_lamongan-0001",
+}
+_SUMBER_APP_GOVSMART = {
+    "no": 1,
+    "doc_id": "panduan_pelaporan",
+    "judul": "FAQ & Panduan Pelaporan Aplikasi GovSmart",
+    "konteks": "Panduan Penggunaan & Pengaduan GovSmart",
+    "layanan": "Portal Layanan GovSmart",
+    "halaman": "1",
+    "jenis": "panduan",
+    "tetangga": False,
+    "chunk_id": "panduan_pelaporan-0001",
+}
+
+ASPEK_TOPIK_JAWABAN = {
+    "nib_oss": {
+        "koleksi": "pemerintah",
+        "sumber": _SUMBER_DPMPTSP_2026,
+        "waktu": (
+            "Estimasi Waktu Pengurusan NIB & Layanan OSS UMKM [1]:\n\n"
+            "1. Penerbitan Mandiri via Portal OSS (oss.go.id): Untuk UMKM risiko rendah dan menengah rendah, NIB terbit otomatis pada hari yang sama (± 15–30 menit) segera setelah pengisian data usaha, kode KBLI 5 digit, dan pernyataan mandiri selesai.\n"
+            "2. Layanan Pendampingan di Loket DPMPTSP / MPP Lamongan: Berdasarkan SK Standar Pelayanan DPMPTSP Kab. Lamongan Tahun 2026 (hal. 7 & 10), waktu pelayanan konsultasi maksimal 60 menit dan layanan pendampingan pengurusan NIB maksimal 120 menit (2 jam) sejak dokumen persyaratan dinyatakan lengkap [1]."
+        ),
+        "biaya": (
+            "Biaya Pengurusan NIB & OSS UMKM [1]:\n\n"
+            "Pengurusan dan penerbitan Nomor Induk Berusaha (NIB) melalui portal resmi oss.go.id maupun layanan konsultasi/pendampingan petugas di loket DPMPTSP Mal Pelayanan Publik (MPP) Kabupaten Lamongan adalah 100% GRATIS (Rp 0 / Tidak ada biaya atau tarif) [1]."
+        ),
+        "lokasi": (
+            "Lokasi & Kanal Pengurusan NIB UMKM [1]:\n\n"
+            "1. Secara Daring (Online 24 Jam): Diakses mandiri melalui portal resmi https://oss.go.id atau aplikasi seluler OSS Indonesia.\n"
+            "2. Tatap Muka (Offline): Jika membutuhkan pendampingan pengisian OSS, kunjungi loket DPMPTSP di Mal Pelayanan Publik (MPP) Kabupaten Lamongan [1]."
+        ),
+        "syarat": (
+            "Persyaratan Data Pembuatan NIB UMKM melalui OSS [1]:\n\n"
+            "1. NIK KTP-el pemilik atau penanggung jawab usaha.\n"
+            "2. Nomor WhatsApp dan alamat email aktif.\n"
+            "3. Nama usaha, alamat lokasi usaha, luas lahan, serta besaran modal usaha.\n"
+            "4. Kode KBLI 5 digit sesuai bidang usaha (dan NPWP jika berbentuk badan usaha) [1]."
+        ),
+        "prosedur": (
+            "Langkah-langkah Pembuatan NIB UMKM di Portal OSS [1]:\n\n"
+            "1. Daftar dan login menggunakan akun UMK di portal oss.go.id.\n"
+            "2. Pilih menu 'Perizinan Berusaha' -> 'Permohonan Baru' atau 'Kelola NIB'.\n"
+            "3. Lengkapi Data Pelaku Usaha dan Tambah Bidang Usaha (kode KBLI 5 digit).\n"
+            "4. Lakukan 'Validasi Risiko' dan centang pernyataan mandiri (K3L, tata ruang, SPPL).\n"
+            "5. Klik 'Terbitkan Perizinan Berusaha / NIB' lalu unduh dokumen NIB Anda [1]."
+        ),
+    },
+    "kkpr": {
+        "koleksi": "pemerintah",
+        "sumber": _SUMBER_DPMPTSP_2026,
+        "waktu": (
+            "Jangka Waktu Penyelesaian Layanan KKPR (DPMPTSP Kab. Lamongan) [1]:\n\n"
+            "1. Registrasi KKPR: Diselesaikan dalam 1 (satu) hari kerja sejak kelengkapan persyaratan permohonan dinyatakan lengkap dan diterima (SK Standar Pelayanan 2026, hal. 18).\n"
+            "2. Penerbitan Persetujuan KKPR (PKKPR): Maksimal 10 (sepuluh) hari kerja sejak kelengkapan persyaratan dinyatakan lengkap dan diterima (hal. 28) [1]."
+        ),
+        "biaya": (
+            "Biaya / Tarif Layanan KKPR (DPMPTSP Kab. Lamongan) [1]:\n\n"
+            "Berdasarkan SK Standar Pelayanan DPMPTSP Kabupaten Lamongan Tahun 2026 (hal. 18 & 28), layanan Registrasi KKPR maupun Penerbitan Persetujuan KKPR di DPMPTSP adalah GRATIS (Tidak ada biaya/tarif) [1]."
+        ),
+        "lokasi": (
+            "Lokasi & Kanal Pengurusan KKPR [1]:\n\n"
+            "1. Secara Daring (Online): Diajukan melalui portal OSS (oss.go.id) yang terintegrasi dengan sistem tata ruang.\n"
+            "2. Tatap Muka / Konsultasi: Loket DPMPTSP di Mal Pelayanan Publik (MPP) Kabupaten Lamongan [1]."
+        ),
+        "syarat": (
+            "Persyaratan Dokumen Registrasi / Persetujuan KKPR [1]:\n\n"
+            "1. Formulir permohonan Registrasi / Persetujuan KKPR.\n"
+            "2. Fotokopi KTP-el pemohon dan/atau NIB serta akta pendirian (untuk badan usaha).\n"
+            "3. Koordinat poligon lokasi lahan dan rencana teknis pemanfaatan ruang/bangunan.\n"
+            "4. Bukti penguasaan/kepemilikan tanah yang sah (SHM/SHGB/Akta/Perjanjian Sewa) [1]."
+        ),
+        "prosedur": (
+            "Alur Pengurusan KKPR di DPMPTSP Lamongan [1]:\n\n"
+            "1. Pemohon mengajukan permohonan melalui sistem OSS atau loket DPMPTSP dengan mengunggah dokumen persyaratan & titik koordinat lahan.\n"
+            "2. Petugas memverifikasi kelengkapan berkas dan melakukan kajian kesesuaian tata ruang bersama Dinas Teknis.\n"
+            "3. Kepala DPMPTSP menerbitkan dokumen KKPR yang dapat langsung diunduh oleh pemohon [1]."
+        ),
+    },
+    "pbg": {
+        "koleksi": "pemerintah",
+        "sumber": _SUMBER_DPMPTSP_2026,
+        "waktu": (
+            "Jangka Waktu Penyelesaian PBG (Persetujuan Bangunan Gedung) [1]:\n\n"
+            "1. Proses Penerbitan PBG di DPMPTSP: Maksimal 3 (tiga) hari kerja setelah rekomendasi teknis terbit dan retribusi dibayarkan (SK Standar Pelayanan 2026, hal. 61).\n"
+            "2. Proses Konsultasi & Pemeriksaan Teknis di Dinas Teknis (Dinas PU Cipta Karya): Maksimal 25 hari kerja sesuai klasifikasi bangunan.\n"
+            "3. Legalisir Dokumen PBG/IMB: 1 (satu) hari kerja sejak berkas dinyatakan lengkap (hal. 15) [1]."
+        ),
+        "biaya": (
+            "Biaya / Retribusi PBG (Persetujuan Bangunan Gedung) [1]:\n\n"
+            "1. Penerbitan PBG Baru: Membayar Retribusi Daerah sesuai Perda Kabupaten Lamongan tentang PDRD (dihitung berdasarkan Luas Total Lantai x Indeks Lokalitas x Standar Harga Satuan Tertinggi x Indeks Terintegrasi x Indeks Bangunan Gedung) [1].\n"
+            "2. Legalisir Dokumen PBG/IMB: GRATIS (Tidak ada biaya/tarif) [1]."
+        ),
+        "lokasi": (
+            "Lokasi & Kanal Pengurusan PBG / SLF [1]:\n\n"
+            "Diajukan secara daring melalui portal resmi SIMBG (https://simbg.pu.go.id), dengan layanan konsultasi teknis di Dinas Perumahan Rakyat, Kawasan Permukiman & Cipta Karya serta loket DPMPTSP di Mal Pelayanan Publik (MPP) Kabupaten Lamongan [1]."
+        ),
+        "syarat": (
+            "Persyaratan Dokumen Pengajuan PBG [1]:\n\n"
+            "1. Data Pemohon (KTP-el / NIB) dan bukti kepemilikan/penguasaan tanah (SHM/SHGB/Akta).\n"
+            "2. Dokumen KKPR / KRK dan dokumen lingkungan (SPPL/UKL-UPL/AMDAL).\n"
+            "3. Dokumen Rencana Teknis Bangunan (gambar arsitektur, struktur, dan utilitas/MEP) [1]."
+        ),
+        "prosedur": (
+            "Alur Pengurusan PBG via SIMBG [1]:\n\n"
+            "1. Daftar & ajukan permohonan PBG melalui simbg.pu.go.id dengan melampirkan data tanah, KKPR, dan rencana teknis.\n"
+            "2. Ikuti pemeriksaan & konsultasi teknis bersama TPA/TPT Dinas Teknis hingga terbit Pernyataan Pemenuhan Standar Teknis.\n"
+            "3. Lunasi retribusi daerah sesuai SKRD, lalu DPMPTSP menerbitkan Surat PBG dalam maksimal 3 hari kerja [1]."
+        ),
+    },
+    "slf": {
+        "koleksi": "pemerintah",
+        "sumber": _SUMBER_DPMPTSP_2026,
+        "waktu": (
+            "Estimasi Waktu Pengurusan SLF (Sertifikat Laik Fungsi) [1]:\n\n"
+            "Diproses melalui portal SIMBG mengikuti tahapan verifikasi pemeriksaan kelaikan fungsi bangunan oleh Dinas Teknis, kemudian diterbitkan oleh DPMPTSP dalam 1 s.d. 3 hari kerja setelah rekomendasi kelaikan teknis dinyatakan lengkap [1]."
+        ),
+        "biaya": (
+            "Biaya Pelayanan SLF [1]:\n\n"
+            "Pelayanan administrasi penerbitan SLF di DPMPTSP Kabupaten Lamongan tidak dipungut biaya retribusi administrasi (Rp 0) [1]."
+        ),
+        "lokasi": (
+            "Lokasi & Kanal Pengurusan SLF [1]:\n\n"
+            "Diajukan secara daring melalui portal SIMBG (https://simbg.pu.go.id) atau konsultasi di loket DPMPTSP Mal Pelayanan Publik (MPP) Kabupaten Lamongan [1]."
+        ),
+        "syarat": (
+            "Persyaratan Dokumen Pengajuan SLF (Sertifikat Laik Fungsi) [1]:\n\n"
+            "1. KTP-el pemohon / NIB badan usaha dan bukti kepemilikan tanah.\n"
+            "2. Dokumen PBG / IMB beserta gambar terbangun (as-built drawing).\n"
+            "3. Laporan pemeriksaan kelaikan fungsi bangunan gedung dari Pengkaji Teknis bersertifikat [1]."
+        ),
+        "prosedur": (
+            "Alur Pengurusan SLF melalui SIMBG [1]:\n\n"
+            "1. Ajukan permohonan SLF melalui portal simbg.pu.go.id dengan mengunggah PBG/IMB, as-built drawing, dan laporan kelaikan fungsi.\n"
+            "2. Dinas Teknis melakukan verifikasi dan pemeriksaan lapangan atas kelaikan fungsi bangunan.\n"
+            "3. Setelah rekomendasi teknis terbit, DPMPTSP menerbitkan dokumen SLF [1]."
+        ),
+    },
+    "lingkungan": {
+        "koleksi": "pemerintah",
+        "sumber": _SUMBER_DPMPTSP_2026,
+        "waktu": (
+            "Jangka Waktu Penyelesaian Persetujuan Lingkungan (DPMPTSP Kab. Lamongan) [1]:\n\n"
+            "1. SPPL (Surat Pernyataan Pengelolaan Lingkungan): Maksimal 150 menit (2,5 jam) sejak persyaratan dinyatakan lengkap (hal. 36 & 57).\n"
+            "2. PKPLH (UKL-UPL): Maksimal 45 (empat puluh lima) hari sejak persyaratan dinyatakan lengkap (hal. 39).\n"
+            "3. SKKL (AMDAL): Maksimal 60 (enam puluh) hari sejak persyaratan dinyatakan lengkap (hal. 42) [1]."
+        ),
+        "biaya": (
+            "Biaya Persetujuan Lingkungan (SPPL / PKPLH / SKKL) [1]:\n\n"
+            "Berdasarkan SK Standar Pelayanan DPMPTSP Kab. Lamongan Tahun 2026, layanan penerbitan SPPL, PKPLH, maupun SKKL adalah 100% GRATIS (Tidak ada biaya/tarif) [1]."
+        ),
+        "lokasi": (
+            "Lokasi & Kanal Pengurusan Persetujuan Lingkungan [1]:\n\n"
+            "Diajukan secara daring melalui sistem OSS (oss.go.id) / Amdalnet serta verifikasi teknis di Dinas Lingkungan Hidup (DLH) dan loket DPMPTSP Mal Pelayanan Publik (MPP) Kabupaten Lamongan [1]."
+        ),
+        "syarat": (
+            "Persyaratan Dokumen Persetujuan Lingkungan (SPPL / PKPLH / SKKL) [1]:\n\n"
+            "1. Formulir permohonan, NIB, dan KTP-el pelaku usaha/penanggung jawab.\n"
+            "2. Dokumen KKPR (Kesesuaian Kegiatan Pemanfaatan Ruang) dan bukti penguasaan lahan.\n"
+            "3. Formulir SPPL (untuk risiko rendah) atau Dokumen Kajian UKL-UPL / AMDAL beserta Persetujuan Teknis (Pertek) dari Dinas Lingkungan Hidup [1]."
+        ),
+        "prosedur": (
+            "Alur Pengurusan Persetujuan Lingkungan [1]:\n\n"
+            "1. Pelaku usaha mengajukan permohonan melalui portal OSS / Amdalnet atau loket DPMPTSP MPP Lamongan.\n"
+            "2. Dinas Lingkungan Hidup (DLH) melakukan pemeriksaan substansi dokumen lingkungan (SPPL / UKL-UPL / AMDAL).\n"
+            "3. Setelah rekomendasi kelayakan terbit, DPMPTSP menerbitkan dokumen SPPL, PKPLH, atau SKKL [1]."
+        ),
+    },
+    "reklame": {
+        "koleksi": "pemerintah",
+        "sumber": _SUMBER_DPMPTSP_2026,
+        "waktu": (
+            "Jangka Waktu Pengurusan Izin Reklame [1]:\n\n"
+            "Berdasarkan SK Standar Pelayanan DPMPTSP Kab. Lamongan Tahun 2026 (hal. 76), permohonan diproses sesuai sistem segera sejak kelengkapan persyaratan dinyatakan lengkap dan diterima (estimasi 3 s.d. 5 hari kerja) [1]."
+        ),
+        "biaya": (
+            "Biaya Izin Reklame [1]:\n\n"
+            "Pelayanan administrasi perizinan di DPMPTSP tidak dipungut biaya/tarif (Rp 0), namun pemohon wajib melunasi Pajak Reklame Daerah di Bapenda Kabupaten Lamongan sesuai ukuran dan jenis reklame [1]."
+        ),
+        "lokasi": (
+            "Lokasi Pengurusan Izin Reklame [1]:\n\n"
+            "Diajukan melalui layanan perizinan DPMPTSP di Mal Pelayanan Publik (MPP) Kabupaten Lamongan [1]."
+        ),
+        "syarat": (
+            "Persyaratan Dokumen Izin Penyelenggaraan Reklame [1]:\n\n"
+            "1. Formulir permohonan bermeterai, fotokopi KTP-el pemohon, dan NIB/NPWP.\n"
+            "2. Desain visual, ukuran/dimensi, teks naskah reklame, dan foto titik lokasi pemasangan.\n"
+            "3. Bukti pelunasan Pajak Reklame Daerah (SSPD) dari Bapenda Kab. Lamongan (serta perhitungan konstruksi & PBG untuk reklame papan besar/billboard) [1]."
+        ),
+        "prosedur": (
+            "Alur Pengurusan Izin Reklame di DPMPTSP Lamongan [1]:\n\n"
+            "1. Ajukan berkas permohonan dan desain reklame di loket DPMPTSP Mal Pelayanan Publik (MPP) Lamongan.\n"
+            "2. Lakukan pembayaran Pajak Reklame sesuai ketetapan Bapenda dan verifikasi titik pemasangan.\n"
+            "3. Lampirkan bukti bayar pajak, lalu DPMPTSP menerbitkan Surat Izin Penyelenggaraan Reklame [1]."
+        ),
+    },
+    "praktik_nakes": {
+        "koleksi": "pemerintah",
+        "sumber": _SUMBER_DPMPTSP_2026,
+        "waktu": (
+            "Jangka Waktu Pengurusan Surat Izin Praktik (SIP) Tenaga Kesehatan / Hewan [1]:\n\n"
+            "Berdasarkan SK Standar Pelayanan DPMPTSP Kab. Lamongan Tahun 2026 (hal. 81 & 85), permohonan SIP diproses sesuai sistem sejak seluruh berkas persyaratan dinyatakan lengkap dan diterima verifikator (umumnya 1 s.d. 5 hari kerja) [1]."
+        ),
+        "biaya": (
+            "Biaya Penerbitan SIP Tenaga Kesehatan / Tenaga Kesehatan Hewan [1]:\n\n"
+            "Berdasarkan SK Standar Pelayanan DPMPTSP Kab. Lamongan Tahun 2026 (hal. 81 & 85), pengurusan SIP adalah 100% GRATIS (Tidak ada biaya/tarif) [1]."
+        ),
+        "lokasi": (
+            "Lokasi Pengurusan SIP Tenaga Kesehatan [1]:\n\n"
+            "Diajukan melalui portal perizinan daring DPMPTSP / MPP Digital atau datang langsung ke loket DPMPTSP di Mal Pelayanan Publik (MPP) Kabupaten Lamongan [1]."
+        ),
+        "syarat": (
+            "Persyaratan Dokumen Surat Izin Praktik (SIP) Tenaga Kesehatan & Dokter Hewan [1]:\n\n"
+            "1. Formulir permohonan, fotokopi KTP-el, dan pas foto berwarna terbaru.\n"
+            "2. Fotokopi Ijazah profesi dan Surat Tanda Registrasi (STR) yang masih berlaku.\n"
+            "3. Surat pernyataan memiliki tempat praktik atau surat keterangan pimpinan fasilitas pelayanan kesehatan.\n"
+            "4. Rekomendasi dari Dinas Kesehatan / Dinas Peternakan & Kesehatan Hewan / organisasi profesi terkait [1]."
+        ),
+        "prosedur": (
+            "Alur Pengurusan SIP Tenaga Kesehatan di DPMPTSP Lamongan [1]:\n\n"
+            "1. Ajukan permohonan melalui MPP Digital / portal perizinan DPMPTSP atau loket MPP Lamongan dengan mengunggah STR, ijazah, dan surat tempat praktik.\n"
+            "2. Petugas DPMPTSP dan Dinas Teknis memverifikasi keabsahan dokumen.\n"
+            "3. Dokumen SIP diterbitkan secara resmi dan gratis (Rp 0) [1]."
+        ),
+    },
+    "penelitian": {
+        "koleksi": "pemerintah",
+        "sumber": _SUMBER_DPMPTSP_2026,
+        "waktu": (
+            "Jangka Waktu Surat Keterangan Penelitian [1]:\n\n"
+            "Berdasarkan SK Standar Pelayanan DPMPTSP Kab. Lamongan Tahun 2026 (hal. 88), permohonan diproses segera sesuai sistem sejak persyaratan dinyatakan lengkap dan diterima (estimasi 1 s.d. 2 hari kerja) [1]."
+        ),
+        "biaya": (
+            "Biaya Surat Keterangan Penelitian [1]:\n\n"
+            "Berdasarkan SK Standar Pelayanan DPMPTSP Kab. Lamongan Tahun 2026 (hal. 88), penerbitan Surat Keterangan Penelitian adalah GRATIS (Tanpa biaya) [1]."
+        ),
+        "lokasi": (
+            "Lokasi Pengurusan Surat Keterangan Penelitian [1]:\n\n"
+            "Dilayani di loket DPMPTSP Mal Pelayanan Publik (MPP) Kabupaten Lamongan [1]."
+        ),
+        "syarat": (
+            "Persyaratan Dokumen Surat Keterangan Penelitian / Survey / Magang / KKN [1]:\n\n"
+            "1. Surat pengantar resmi dari Perguruan Tinggi / Lembaga / Instansi asal (atau rekomendasi Bakesbangpol).\n"
+            "2. Proposal penelitian / rencana kegiatan.\n"
+            "3. Fotokopi KTP-el peneliti / mahasiswa yang bersangkutan [1]."
+        ),
+        "prosedur": (
+            "Alur Pengurusan Surat Keterangan Penelitian [1]:\n\n"
+            "1. Serahkan surat pengantar kampus/instansi, proposal, dan fotokopi KTP-el di loket DPMPTSP Mal Pelayanan Publik (MPP) Lamongan.\n"
+            "2. Petugas memverifikasi berkas dan menerbitkan Surat Keterangan Penelitian yang ditujukan ke instansi/lokasi objek penelitian (GRATIS) [1]."
+        ),
+    },
+    "adminduk_ktp": {
+        "koleksi": "pemerintah",
+        "sumber": _SUMBER_LAYANAN_OPD,
+        "waktu": (
+            "Estimasi Waktu Pengurusan Dokumen Kependudukan (KTP-el, KK, KIA, Akta, Surat Pindah) [1]:\n\n"
+            "Pelayanan administrasi kependudukan di Disdukcapil Kabupaten Lamongan diproses cepat dalam 1 (satu) hari kerja / selesai pada hari yang sama, sepanjang berkas persyaratan lengkap dan jaringan SIAK Terpusat Kemendagri normal [1]."
+        ),
+        "biaya": (
+            "Biaya Pengurusan KTP-el, KK, KIA, Akta, dan Surat Pindah (Disdukcapil Lamongan) [1]:\n\n"
+            "Seluruh pelayanan administrasi kependudukan di Kabupaten Lamongan adalah 100% GRATIS (Rp 0 / Tanpa pungutan biaya apa pun) [1]."
+        ),
+        "lokasi": (
+            "Lokasi Pengurusan KTP-el & Dokumen Kependudukan [1]:\n\n"
+            "Dapat diurus langsung di:\n"
+            "1. Kantor Disdukcapil Kabupaten Lamongan.\n"
+            "2. Loket Disdukcapil di Mal Pelayanan Publik (MPP) Kabupaten Lamongan.\n"
+            "3. Loket pelayanan Adminduk di Kantor Kecamatan setempat [1]."
+        ),
+        "syarat": (
+            "Persyaratan Dokumen Kependudukan Disdukcapil Kabupaten Lamongan [1]:\n\n"
+            "1. Perekaman KTP-el Baru: Berusia 17 tahun (atau sudah menikah) dan membawa fotokopi Kartu Keluarga (KK).\n"
+            "2. KTP-el Hilang / Rusak: Surat Keterangan Kehilangan dari Kepolisian (jika hilang) atau fisik KTP lama (jika rusak), serta fotokopi KK.\n"
+            "3. Kartu Keluarga (KK) Baru / Perubahan Data: Buku Nikah/Akta Perkawinan, surat keterangan lahir/kematian, dan KK lama.\n"
+            "4. KIA (Kartu Identitas Anak): Fotokopi Akta Kelahiran, KK orang tua, dan pas foto 2x3 (untuk anak usia > 5 tahun).\n"
+            "5. Akta Kelahiran: Surat keterangan lahir dari RS/Puskesmas/Bidan, Buku Nikah orang tua, KK, dan KTP-el orang tua.\n"
+            "6. Surat Pindah (SKPWNI): Cukup membawa fotokopi KK dan KTP-el tanpa perlu pengantar RT/RW [1]."
+        ),
+        "prosedur": (
+            "Alur Pengurusan Dokumen Kependudukan di Disdukcapil Lamongan [1]:\n\n"
+            "1. Siapkan berkas persyaratan sesuai dokumen yang dibutuhkan (fotokopi KK, KTP, atau surat pendukung).\n"
+            "2. Datang ke Kantor Kecamatan setempat, loket Disdukcapil di MPP Lamongan, atau Kantor Disdukcapil Lamongan.\n"
+            "3. Petugas memverifikasi data pada sistem SIAK dan mencetak dokumen kependudukan Anda secara GRATIS (1 hari kerja) [1]."
+        ),
+    },
+    "laporan_govsmart": {
+        "koleksi": "aplikasi",
+        "sumber": _SUMBER_APP_GOVSMART,
+        "waktu": (
+            "Estimasi Waktu Penanganan Laporan Pengaduan di GovSmart [1]:\n\n"
+            "1. Penerimaan & Perutean AI: Berlangsung otomatis dalam hitungan detik setelah laporan dikirim (status langsung 'Diterima' dan masuk ke dinas terkait).\n"
+            "2. Target Respons Awal Admin Dinas: Target verifikasi awal petugas dinas di GovSmart adalah kurang dari 24 jam (untuk pengaduan layanan DPMPTSP maksimal 4 hari kerja).\n"
+            "3. Penyelesaian Lapangan: Menyesuaikan tingkat kerusakan dan antrean prioritas (laporan berurgensi 'Darurat' ditempatkan di urutan paling atas) [1]."
+        ),
+        "biaya": (
+            "Biaya Pengaduan di Aplikasi GovSmart [1]:\n\n"
+            "Seluruh layanan pengaduan masyarakat dan tindak lanjut fasilitas publik melalui aplikasi GovSmart adalah 100% GRATIS tanpa dipungut biaya apa pun [1]."
+        ),
+        "lokasi": (
+            "Tempat / Kanal Membuat Laporan Pengaduan [1]:\n\n"
+            "Dilakukan secara daring 24 jam langsung di portal web GovSmart Kabupaten Lamongan melalui menu 'Pengaduan' -> formulir 'Buat Pengaduan Baru' [1]."
+        ),
+        "syarat": (
+            "Ketentuan & Data yang Perlu Disiapkan untuk Membuat Laporan di GovSmart [1]:\n\n"
+            "1. Akun Warga Terdaftar (sudah login di portal GovSmart).\n"
+            "2. Judul Laporan singkat dan jelas (panjang 5 s.d. 100 karakter).\n"
+            "3. Deskripsi Detail Masalah & Patokan Lokasi seperti nama jalan, desa/kelurahan, dan kecamatan (panjang 20 s.d. 2.000 karakter).\n"
+            "4. Opsional (Sangat Disarankan): Foto bukti lapangan (format JPEG/PNG/WEBP maks. 5 MB) dan titik koordinat GPS ('Gunakan Lokasi Saya') [1]."
+        ),
+        "prosedur": (
+            "Langkah-langkah Membuat & Memantau Laporan Pengaduan di GovSmart [1]:\n\n"
+            "1. Login ke portal GovSmart lalu pilih menu 'Buat & Pantau Pengaduan'.\n"
+            "2. Isi Judul (5-100 karakter) dan Deskripsi Masalah beserta patokan lokasi (20-2.000 karakter).\n"
+            "3. Klik 'Gunakan Lokasi Saya' untuk titik GPS dan unggah foto bukti (maks. 5 MB), lalu tekan 'Kirim Pengaduan'.\n"
+            "4. Sistem AI otomatis merutekan laporan ke dinas terkait (dari 20 OPD) dan menetapkan tingkat urgensi (Normal/Penting/Darurat).\n"
+            "5. Pantau progresnya di tab 'Riwayat & Status Laporan' (selama masih 'Diterima' bisa diedit/dibatalkan; setelah 'Selesai' bisa diberi rating 1-5 bintang) [1]."
+        ),
+    },
+    "akun_govsmart": {
+        "koleksi": "aplikasi",
+        "sumber": _SUMBER_APP_GOVSMART,
+        "waktu": (
+            "Waktu Aktivasi Akun & Masa Berlaku Sesi Login GovSmart [1]:\n\n"
+            "1. Aktivasi Akun Baru: Akun warga langsung aktif seketika (< 1 menit) setelah formulir 'Daftar Baru' berhasil dikirim.\n"
+            "2. Masa Berlaku Sesi Login: Sesi login berlaku selama 24 jam, setelah itu pengguna perlu masuk (login) kembali demi keamanan akun [1]."
+        ),
+        "biaya": (
+            "Biaya Pembuatan Akun GovSmart [1]:\n\n"
+            "Pendaftaran dan penggunaan akun warga di portal GovSmart adalah 100% GRATIS [1]."
+        ),
+        "lokasi": (
+            "Tempat Pendaftaran & Login Akun GovSmart [1]:\n\n"
+            "Melalui halaman utama (Portal Login) aplikasi web GovSmart Kabupaten Lamongan menggunakan browser modern (Chrome, Firefox, Safari) di ponsel maupun komputer [1]."
+        ),
+        "syarat": (
+            "Syarat Pendaftaran Akun Baru di GovSmart [1]:\n\n"
+            "1. NIK KTP-el 16 digit yang valid dan belum pernah didaftarkan sebelumnya.\n"
+            "2. Alamat Email aktif yang belum terdaftar pada akun lain.\n"
+            "3. Nama Lengkap, Nomor Telepon/WhatsApp, dan Alamat Domisili.\n"
+            "4. Password Aman: Minimal 8 karakter dengan kombinasi wajib huruf besar (A-Z), huruf kecil (a-z), angka (0-9), dan simbol unik (seperti !@#$%) [1]."
+        ),
+        "prosedur": (
+            "Langkah-langkah Pendaftaran & Login Akun GovSmart [1]:\n\n"
+            "1. Buka halaman login GovSmart lalu klik tombol 'Daftar Baru'.\n"
+            "2. Masukkan 16 digit NIK, Email aktif, Nama Lengkap, dan Password yang memenuhi kriteria keamanan.\n"
+            "3. Klik 'Daftar'. Akun Anda langsung aktif.\n"
+            "4. Masuk (Login) menggunakan Email atau NIK beserta password Anda [1]."
+        ),
+    },
+    "profil_govsmart": {
+        "koleksi": "aplikasi",
+        "sumber": _SUMBER_APP_GOVSMART,
+        "waktu": (
+            "Waktu Pembaruan Profil Pengguna GovSmart [1]:\n\n"
+            "Perubahan data profil (nama, email, nomor telepon, alamat, maupun password baru) tersimpan dan berlaku seketika (real-time) begitu Anda menekan tombol 'Simpan Perubahan' [1]."
+        ),
+        "biaya": (
+            "Biaya Fitur Profil Pengguna GovSmart [1]:\n\n"
+            "Seluruh fitur manajemen akun dan pembaruan profil di GovSmart adalah 100% GRATIS [1]."
+        ),
+        "lokasi": (
+            "Letak Menu Lihat & Edit Profil Pengguna di GovSmart [1]:\n\n"
+            "Berada di pojok kanan atas bilah navigasi (Navbar): klik tombol Dropdown Profil Pengguna (yang menampilkan nama/email Anda), lalu pilih menu 'Lihat & Edit Profil' [1]."
+        ),
+        "syarat": (
+            "Ketentuan Data pada Edit Profil Pengguna GovSmart [1]:\n\n"
+            "1. Data yang DAPAT diubah: Nama Lengkap, Alamat Email, Nomor Telepon/WhatsApp, Alamat Domisili, dan Password baru (minimal 8 karakter dengan huruf besar, huruf kecil, angka, & simbol).\n"
+            "2. Data yang TIDAK DAPAT diubah: NIK (16 digit) dikunci secara permanen sebagai identitas tunggal kependudukan [1]."
+        ),
+        "prosedur": (
+            "Cara Melihat dan Mengedit Profil Pengguna di GovSmart [1]:\n\n"
+            "1. Klik tombol Dropdown Profil Anda di pojok kanan atas layar.\n"
+            "2. Pilih menu 'Lihat & Edit Profil' pada daftar dropdown.\n"
+            "3. Ubah data yang diinginkan (Nama, Email, No. Telepon, Alamat, atau isi Password Baru jika ingin ganti sandi).\n"
+            "4. Klik tombol 'Simpan Perubahan' [1]."
+        ),
+    },
+    "rating_govsmart": {
+        "koleksi": "aplikasi",
+        "sumber": _SUMBER_APP_GOVSMART,
+        "waktu": (
+            "Kapan Bisa Memberikan Rating Kepuasan di GovSmart [1]:\n\n"
+            "Fitur penilaian kepuasan (rating bintang 1–5) otomatis muncul segera setelah status laporan pengaduan Anda diubah menjadi 'Selesai' oleh Admin Dinas terkait [1]."
+        ),
+        "biaya": (
+            "Biaya Memberikan Rating & Evaluasi Layanan [1]:\n\n"
+            "Memberikan penilaian dan ulasan kepuasan masyarakat di GovSmart adalah 100% GRATIS [1]."
+        ),
+        "lokasi": (
+            "Letak Fitur Rating Kepuasan Warga [1]:\n\n"
+            "Terdapat langsung di bagian bawah kartu laporan yang berstatus 'Selesai' pada tab 'Riwayat & Status Laporan' di dasbor warga [1]."
+        ),
+        "syarat": (
+            "Syarat Memberikan Rating Kepuasan pada Laporan [1]:\n\n"
+            "1. Laporan merupakan milik akun Anda sendiri.\n"
+            "2. Status laporan sudah dinyatakan 'Selesai' oleh Admin Dinas.\n"
+            "3. Memilih jumlah bintang (1 sampai 5 bintang) dan dapat disertai komentar/ulasan singkat [1]."
+        ),
+        "prosedur": (
+            "Langkah-langkah Memberi Rating Kepuasan Laporan di GovSmart [1]:\n\n"
+            "1. Buka tab 'Riwayat & Status Laporan' lalu cari kartu laporan Anda yang berstatus 'Selesai'.\n"
+            "2. Pilih rating bintang (1 = Sangat Tidak Puas s.d. 5 = Sangat Puas).\n"
+            "3. Tuliskan ulasan atau masukan singkat mengenai hasil kerja petugas dinas.\n"
+            "4. Klik tombol 'Kirim Penilaian' [1]."
+        ),
+    },
+    "bansos_dinsos": {
+        "koleksi": "pemerintah",
+        "sumber": _SUMBER_LAYANAN_OPD,
+        "waktu": (
+            "Jadwal & Waktu Usulan Bantuan Sosial (DTKS / PKH / BPNT) [1]:\n\n"
+            "Pendaftaran dan pemutakhiran usulan baru DTKS dilakukan secara berkala melalui jadwal Musyawarah Desa/Kelurahan (Musdes/Muskel) bulanan, kemudian diverifikasi Dinas Sosial Kab. Lamongan sebelum penetapan oleh Kemensos RI [1]."
+        ),
+        "biaya": (
+            "Biaya Pendaftaran Bantuan Sosial (DTKS / PKH / BPNT) [1]:\n\n"
+            "Pengusulan DTKS dan seluruh program bantuan sosial di Dinas Sosial Kabupaten Lamongan adalah 100% GRATIS tanpa pungutan biaya [1]."
+        ),
+        "lokasi": (
+            "Lokasi Pengajuan Usulan Bansos / DTKS [1]:\n\n"
+            "Diajukan melalui Kantor Desa / Kelurahan setempat (operator SIKS-NG desa) untuk kemudian diverifikasi oleh Dinas Sosial Kabupaten Lamongan [1]."
+        ),
+        "syarat": (
+            "Persyaratan Dokumen Pengusulan Bantuan Sosial (DTKS / PKH / BPNT) [1]:\n\n"
+            "1. Warga kurang mampu / rentan miskin yang berdomisili dan memiliki KTP-el serta Kartu Keluarga (KK) Kabupaten Lamongan.\n"
+            "2. Bukan anggota ASN, TNI, Polri, atau pegawai BUMN/BUMD.\n"
+            "3. Membawa fotokopi KTP-el, KK, Surat Keterangan Tidak Mampu (SKTM) / pengantar RT-RW, dan foto kondisi rumah [1]."
+        ),
+        "prosedur": (
+            "Alur Pendaftaran Usulan Bantuan Sosial (DTKS) di Kab. Lamongan [1]:\n\n"
+            "1. Warga melapor ke Pemerintah Desa/Kelurahan setempat dengan membawa KTP-el dan KK.\n"
+            "2. Usulan dibahas dalam Musyawarah Desa/Kelurahan (Musdes/Muskel) dan diinput oleh operator SIKS-NG Desa.\n"
+            "3. Dinas Sosial Kab. Lamongan melakukan verifikasi lapangan sebelum pengesahan DTKS oleh Kemensos RI [1]."
+        ),
+    },
+    "kesehatan_dinkes": {
+        "koleksi": "pemerintah",
+        "sumber": _SUMBER_LAYANAN_OPD,
+        "waktu": (
+            "Jam Pelayanan Fasilitas Kesehatan (Puskesmas & RSUD Lamongan) [1]:\n\n"
+            "Layanan IGD dan Persalinan buka 24 jam setiap hari di Puskesmas perawatan serta RSUD dr. Soegiri, RSUD Ngimbang, dan RSUD Karangkembang; sedangkan poliklinik rawat jalan mengikuti jam pelayanan kerja harian [1]."
+        ),
+        "biaya": (
+            "Biaya Layanan Kesehatan (Puskesmas & RSUD Lamongan) [1]:\n\n"
+            "GRATIS (Rp 0) bagi warga peserta aktif BPJS Kesehatan / JKN-KIS sesuai prosedur rujukan berjenjang [1]."
+        ),
+        "lokasi": (
+            "Lokasi Layanan Kesehatan Daerah Lamongan [1]:\n\n"
+            "Tersedia di Puskesmas seluruh kecamatan se-Kabupaten Lamongan (faskes tingkat pertama) serta rumah sakit rujukan daerah: RSUD dr. Soegiri Lamongan, RSUD Ngimbang, dan RSUD Karangkembang [1]."
+        ),
+        "syarat": (
+            "Persyaratan Berobat dengan BPJS Kesehatan / JKN-KIS di Puskesmas & RSUD Lamongan [1]:\n\n"
+            "1. Menunjukkan KTP-el (NIK) atau Kartu BPJS Kesehatan / KIS / aplikasi Mobile JKN yang berstatus aktif.\n"
+            "2. Surat Rujukan dari Puskesmas / FKTP untuk berobat ke poliklinik spesialis RSUD (khusus kondisi gawat darurat dapat langsung ke IGD RSUD 24 jam tanpa surat rujukan) [1]."
+        ),
+        "prosedur": (
+            "Alur Pelayanan Kesehatan Berjenjang di Kabupaten Lamongan [1]:\n\n"
+            "1. Kunjungi Puskesmas / Faskes Tingkat Pertama (FKTP) terdekat dengan membawa KTP-el atau kartu BPJS/KIS.\n"
+            "2. Dokter Puskesmas melakukan pemeriksaan medis; jika memerlukan penanganan spesialis, Puskesmas menerbitkan rujukan ke RSUD dr. Soegiri / RSUD Ngimbang / RSUD Karangkembang.\n"
+            "3. Untuk kondisi gawat darurat medis, pasien langsung menuju IGD Puskesmas atau IGD RSUD terdekat (24 jam) [1]."
+        ),
+    },
+    "pendidikan_disdik": {
+        "koleksi": "pemerintah",
+        "sumber": _SUMBER_LAYANAN_OPD,
+        "waktu": (
+            "Jadwal Program Beasiswa Perintis & Layanan Dinas Pendidikan [1]:\n\n"
+            "Pendaftaran Beasiswa Perintis Lamongan dibuka secara periodik mengikuti jadwal tahun ajaran/anggaran Pemerintah Kabupaten Lamongan sesuai pengumuman resmi Dinas Pendidikan [1]."
+        ),
+        "biaya": (
+            "Biaya Pendaftaran Beasiswa Perintis & Layanan Pendidikan [1]:\n\n"
+            "Pendaftaran seleksi Beasiswa Perintis Lamongan maupun pelaporan rehabilitasi gedung sekolah rusak adalah 100% GRATIS [1]."
+        ),
+        "lokasi": (
+            "Lokasi Layanan Dinas Pendidikan Lamongan [1]:\n\n"
+            "Melalui Kantor Dinas Pendidikan Kabupaten Lamongan (dan menu 'Pengaduan' di aplikasi GovSmart untuk melaporkan kerusakan sarana prasarana sekolah) [1]."
+        ),
+        "syarat": (
+            "Persyaratan Dokumen Program Beasiswa Perintis Kabupaten Lamongan [1]:\n\n"
+            "1. KTP-el dan Kartu Keluarga (KK) asli penduduk Kabupaten Lamongan.\n"
+            "2. Terdaftar dalam DTKS / keluarga kurang mampu atau memiliki prestasi akademik/non-akademik.\n"
+            "3. Surat keterangan aktif sekolah/kuliah, rapor atau transkrip nilai/IPK, dan berkas pendukung sesuai juknis Dinas Pendidikan Kab. Lamongan [1]."
+        ),
+        "prosedur": (
+            "Alur Pendaftaran Beasiswa Perintis & Pengaduan Sekolah di Dinas Pendidikan Lamongan [1]:\n\n"
+            "1. Untuk Beasiswa Perintis: Siapkan berkas KTP/KK Lamongan, surat aktif belajar, nilai akademik, dan bukti DTKS/SKTM, lalu daftarkan pada jadwal pembukaan seleksi resmi Dinas Pendidikan Kab. Lamongan.\n"
+            "2. Untuk Pengaduan Fasilitas Sekolah Rusak: Laporkan melalui menu 'Pengaduan' di portal GovSmart disertai foto kondisi ruang kelas/sekolah dan titik lokasi GPS [1]."
+        ),
+    },
+}
+
+# Pemetaan topik pengaduan OPD ke aspek penanganan pengaduan GovSmart
+for _opd_topik in ("jalan_rusak", "pju_dishub", "sampah_dlh", "satpol_pp"):
+    ASPEK_TOPIK_JAWABAN[_opd_topik] = ASPEK_TOPIK_JAWABAN["laporan_govsmart"]
+
+
 class GovSmartChatbot:
     def __init__(self, retriever=None):
         self.r = retriever or Retriever()
+
+    @staticmethod
+    def _is_frame_token(t: str) -> bool:
+        if t in FRAME_TOKENS:
+            return True
+        for suf in ("nya", "ku", "mu", "lah", "kah"):
+            if len(t) > len(suf) + 2 and t.endswith(suf) and t[:-len(suf)] in FRAME_TOKENS:
+                return True
+        return False
 
     def _memuat_entitas_luar_rag(self, q: str, q_norm: str) -> bool:
         """Cek apakah pertanyaan menyebut pola atau kata kunci spesifik yang tidak ada di korpus RAG."""
@@ -1094,9 +2537,15 @@ class GovSmartChatbot:
         if not hasattr(self.r, "corpus_vocab"):
             return False
         for t in tokenize(q_norm):
-            if t in FRAME_TOKENS:
+            if self._is_frame_token(t):
                 continue
-            if t not in self.r.corpus_vocab and stem_id(t) not in self.r.corpus_stems:
+            base_t = t[:-3] if (len(t) > 5 and t.endswith("nya")) else t
+            if (
+                t not in self.r.corpus_vocab
+                and base_t not in self.r.corpus_vocab
+                and stem_id(t) not in self.r.corpus_stems
+                and stem_id(base_t) not in self.r.corpus_stems
+            ):
                 return True
         return False
 
@@ -1254,7 +2703,7 @@ class GovSmartChatbot:
                 "3. Lakukan 'Validasi Risiko', lengkapi data produk/jasa serta pernyataan mandiri (K3L dan SPPL), lalu klik 'Proses Penerbitan NIB' -> 'Terbitkan' untuk mengunduh NIB."
             )
         elif c1["jenis"] in ("faq", "panduan") and c1["doc_id"] in (
-            "faq_aplikasi", "panduan_pelaporan", "layanan_publik_lamongan"
+            "faq_aplikasi", "panduan_umum_govsmart", "panduan_pelaporan", "layanan_publik_lamongan"
         ):
             bersih1 = _bersihkan_markdown_chunk(c1["teks"], q)
             bagian_jawaban.append(f"{bersih1} [{utama_s['no']}]")
@@ -1276,7 +2725,106 @@ class GovSmartChatbot:
         base.update(kw)
         return base
 
-    def tanya(self, pertanyaan, pakai_llm=True, debug=False):
+    @staticmethod
+    def _deteksi_topik_teks(teks: str):
+        if not teks:
+            return None
+        teks_norm = koreksi_teks(teks)
+        for item in TOPIK_MULTITURN:
+            if item["regex"].search(teks) or item["regex"].search(teks_norm):
+                return item
+        return None
+
+    @staticmethod
+    def _deteksi_aspek(q_raw: str, q_norm: str) -> list:
+        aspek = []
+        for nama in ("waktu", "biaya", "lokasi", "syarat", "prosedur"):
+            rx = ASPEK_REGEX[nama]
+            if rx.search(q_raw) or rx.search(q_norm):
+                aspek.append(nama)
+        return aspek
+
+    @staticmethod
+    def _jawab_aspek_spesifik(topik_id: str, aspek_list: list):
+        if not topik_id or not aspek_list:
+            return None
+        data = ASPEK_TOPIK_JAWABAN.get(topik_id)
+        if not data:
+            return None
+        bagian = [data[a] for a in aspek_list if a in data]
+        if not bagian:
+            return None
+        return {
+            "jawaban": "\n\n".join(bagian),
+            "koleksi": data["koleksi"],
+            "sumber": data["sumber"],
+        }
+
+    def _resolusi_multiturn(self, q_target: str, q_norm: str, riwayat: list):
+        """
+        Jika pertanyaan saat ini merupakan pertanyaan lanjutan (follow-up) yang merujuk pada
+        topik percakapan sebelumnya (dan tidak mengandung entitas luar RAG), perkaya query
+        dengan topik terakhir dari riwayat. Mendukung rentetan multi-turn panjang (>2 giliran).
+        """
+        if not riwayat or not isinstance(riwayat, list):
+            return q_target, q_norm, None
+
+        # Jika pertanyaan saat ini sudah menyebut topik spesifik sendiri, gunakan topik baru tersebut
+        if self._deteksi_topik_teks(q_target) or self._deteksi_topik_teks(q_norm):
+            return q_target, q_norm, None
+
+        # Jika pertanyaan mengandung kata/entitas asing di luar RAG, JANGAN injeksi konteks lama
+        if self._memuat_entitas_luar_rag(q_target, q_norm):
+            return q_target, q_norm, None
+
+        # Deteksi apakah pertanyaan ini adalah follow-up (menanyakan aspek layanan, sinyal lanjutan, atau token umum tanpa subjek baru)
+        aspek_terdeteksi = bool(self._deteksi_aspek(q_target, q_norm))
+        sinyal_followup = bool(FOLLOWUP_SIGNAL_RE.search(q_target) or FOLLOWUP_SIGNAL_RE.search(q_norm))
+        narrow_tokens = [
+            t for t in tokenize(q_norm)
+            if not self._is_frame_token(t) and t not in BROAD_CONTAINER_TOKENS and len(t) > 1
+        ]
+        if not (aspek_terdeteksi or sinyal_followup or not narrow_tokens):
+            return q_target, q_norm, None
+
+        # Cari topik valid paling mutakhir dari riwayat percakapan (hingga 10 giliran ke belakang)
+        topik_sebelumnya = None
+        for turn in reversed(riwayat[-10:]):
+            if not isinstance(turn, dict):
+                continue
+            prev_q = str(turn.get("prompt") or turn.get("pertanyaan") or turn.get("text") or "").strip()
+            prev_a = str(turn.get("response") or turn.get("jawaban") or "").strip()
+            # Abaikan giliran yang ditolak guardrail luar topik
+            if "tidak tersedia di dalam basis dokumen resmi" in prev_a.lower():
+                continue
+
+            # 1. Prioritaskan topik eksplisit dari pertanyaan pengguna (prev_q)
+            topik_sebelumnya = self._deteksi_topik_teks(prev_q)
+            if topik_sebelumnya:
+                break
+
+            # 2. Cek apakah header jawaban sebelumnya menyebut label topik multi-turn secara eksplisit
+            header_a = "\n".join(prev_a.splitlines()[:3])
+            for item in TOPIK_MULTITURN:
+                if item["label"].lower() in header_a.lower():
+                    topik_sebelumnya = item
+                    break
+            if topik_sebelumnya:
+                break
+
+            # 3. Cek baris judul pertama jawaban (sebelum rincian poin yang mungkin menyebut istilah lain)
+            topik_sebelumnya = self._deteksi_topik_teks(header_a) or self._deteksi_topik_teks(prev_a)
+            if topik_sebelumnya:
+                break
+
+        if not topik_sebelumnya:
+            return q_target, q_norm, None
+
+        q_enriched = f"{q_target} {topik_sebelumnya['query_inject']}"
+        q_norm_enriched = koreksi_teks(q_enriched)
+        return q_enriched, q_norm_enriched, topik_sebelumnya
+
+    def tanya(self, pertanyaan, pakai_llm=True, debug=False, riwayat=None):
         t0 = time.time()
         q = sanitasi(pertanyaan)
         if INJEKSI_RE.search(q):
@@ -1289,51 +2837,147 @@ class GovSmartChatbot:
 
         # 2. CEK GUARDRAIL LUAR TOPIK:
         # Jika pertanyaan berada di luar konteks aplikasi/RAG, tetap gagal (di_luar_topik)
-        if OUT_OF_RAG_RE.search(q) or OUT_OF_RAG_RE.search(q_target):
+        if OUT_OF_RAG_RE.search(q) or OUT_OF_RAG_RE.search(q_target) or OUT_OF_RAG_RE.search(q_norm):
             return self._hasil(t0, "di_luar_topik", DI_LUAR, rute="guardrail_rag", mode="guardrail_rag")
 
-        # 3. Cek apakah cocok dengan panduan terkurasi resmi
+        # 2b. Cek pertanyaan aspek spesifik langsung (waktu, biaya, lokasi) untuk topik resmi yang disebut eksplisit
+        topik_langsung = self._deteksi_topik_teks(q_target) or self._deteksi_topik_teks(q_norm)
+        if topik_langsung and not self._memuat_entitas_luar_rag(q_target, q_norm):
+            aspek_langsung = self._deteksi_aspek(q_target, q_norm)
+            if any(a in ("waktu", "biaya", "lokasi") for a in aspek_langsung):
+                ans_aspek = self._jawab_aspek_spesifik(topik_langsung["id"], aspek_langsung)
+                if ans_aspek:
+                    teks_aspek = _bingkai_jawaban_variatif(ans_aspek["jawaban"], q, riwayat=riwayat)
+                    return self._hasil(
+                        t0,
+                        "jawab",
+                        teks_aspek,
+                        koleksi=[ans_aspek["koleksi"]],
+                        sumber=[ans_aspek["sumber"]],
+                        rute="kata_kunci",
+                        mode="aspek_spesifik",
+                    )
+
+        # 3. Cek daftar pertanyaan & basa-basi murni (sapaan/apresiasi/pamit) sebelum resolusi multi-turn
+        q_check = q_core if q_core else q
+        q_norm_check = koreksi_teks(q_check)
+
+        if (
+            DAFTAR_PERTANYAAN_RE.search(q_check)
+            or DAFTAR_PERTANYAAN_RE.search(q_norm_check)
+            or DAFTAR_PERTANYAAN_RE.search(q)
+            or DAFTAR_PERTANYAAN_RE.search(q_norm)
+        ):
+            return self._hasil(
+                t0,
+                "daftar_pertanyaan",
+                _pilih_variasi(DAFTAR_PERTANYAAN_VARIASI, q, riwayat),
+                koleksi=["aplikasi", "pemerintah", "kenegaraan"],
+                sumber=[_SUMBER_APP_GOVSMART],
+                rute="kata_kunci",
+                mode="humanizer",
+            )
+
+        if not q_core:
+            return self._hasil(t0, "sapaan", _pilih_variasi(SAPAAN_SINGKAT_VARIASI, q, riwayat), mode="humanizer")
+        if KABAR_RE.search(q_check) or KABAR_RE.search(q_norm_check):
+            return self._hasil(t0, "sapaan", _pilih_variasi(KABAR_VARIASI, q, riwayat), mode="humanizer")
+        if PUJIAN_RE.search(q_check) or PUJIAN_RE.search(q_norm_check):
+            return self._hasil(t0, "sapaan", _pilih_variasi(PUJIAN_VARIASI, q, riwayat), mode="humanizer")
+        if HUMOR_RE.search(q_check) or HUMOR_RE.search(q_norm_check):
+            return self._hasil(t0, "sapaan", _pilih_variasi(HUMOR_VARIASI, q, riwayat), mode="humanizer")
+        if PAMIT_RE.search(q_check) or PAMIT_RE.search(q_norm_check):
+            return self._hasil(t0, "sapaan", _pilih_variasi(PAMIT_VARIASI, q, riwayat), mode="humanizer")
+        if TERIMA_KASIH_RE.search(q_check) or TERIMA_KASIH_RE.search(q_norm_check):
+            return self._hasil(t0, "sapaan", _pilih_variasi(APRESIASI_VARIASI, q, riwayat), mode="humanizer")
+        if PERSONA_RE.search(q_check) or PERSONA_RE.search(q_norm_check):
+            return self._hasil(t0, "perkenalan", _pilih_variasi(PERSONA_VARIASI, q, riwayat), mode="humanizer")
+        if KENAL_RE.search(q_check) or KENAL_RE.search(q_norm_check):
+            return self._hasil(t0, "perkenalan", _pilih_variasi(SAPAAN_VARIASI, q, riwayat), mode="humanizer")
+
+        # 4. Multi-Turn Memory Resolution: jika pertanyaan saat ini tidak menyebut topik baru,
+        # sambungkan terlebih dahulu dengan topik percakapan sebelumnya (mendukung rentetan >2 giliran)
+        konteks_sebelumnya = None
+        if riwayat and not topik_langsung:
+            q_orig_target, q_orig_norm = q_target, q_norm
+            q_target, q_norm, topik_mt = self._resolusi_multiturn(q_target, q_norm, riwayat)
+            if topik_mt:
+                konteks_sebelumnya = topik_mt["label"]
+                aspek_mt = self._deteksi_aspek(q_orig_target, q_orig_norm)
+                if aspek_mt:
+                    ans_mt = self._jawab_aspek_spesifik(topik_mt["id"], aspek_mt)
+                    if ans_mt:
+                        teks_mt = _bingkai_jawaban_variatif(
+                            ans_mt["jawaban"], q, riwayat=riwayat, konteks_sebelumnya=konteks_sebelumnya
+                        )
+                        return self._hasil(
+                            t0,
+                            "jawab",
+                            teks_mt,
+                            koleksi=[ans_mt["koleksi"]],
+                            sumber=[ans_mt["sumber"]],
+                            rute="kata_kunci",
+                            mode="aspek_multiturn",
+                            konteks_sebelumnya=konteks_sebelumnya,
+                        )
+                curated_mt = self._cek_intent_terkurasi(q_target, q_norm)
+                if curated_mt:
+                    teks_cmt = _bingkai_jawaban_variatif(
+                        curated_mt["jawaban"], q, riwayat=riwayat, konteks_sebelumnya=konteks_sebelumnya
+                    )
+                    return self._hasil(
+                        t0,
+                        "jawab",
+                        teks_cmt,
+                        koleksi=[curated_mt["koleksi"]],
+                        sumber=[curated_mt["sumber"]],
+                        rute="kata_kunci",
+                        mode="terkurasi_multiturn",
+                        konteks_sebelumnya=konteks_sebelumnya,
+                    )
+
+        # 5. Cek apakah cocok dengan panduan terkurasi resmi (atau aspek syarat/prosedur langsung)
         curated = self._cek_intent_terkurasi(q_target, q_norm)
         if not curated and q_target != q:
             curated = self._cek_intent_terkurasi(q, koreksi_teks(q))
         if curated:
+            teks_curated = _bingkai_jawaban_variatif(
+                curated["jawaban"], q, riwayat=riwayat, konteks_sebelumnya=konteks_sebelumnya
+            )
             return self._hasil(
                 t0,
                 "jawab",
-                curated["jawaban"],
+                teks_curated,
                 koleksi=[curated["koleksi"]],
                 sumber=[curated["sumber"]],
                 rute="kata_kunci",
                 mode="terkurasi",
+                **({"konteks_sebelumnya": konteks_sebelumnya} if konteks_sebelumnya else {}),
             )
 
-        # 4. Humanizer: Cek basa-basi ramah / small talk jika tidak menanyakan SOP resmi
-        q_check = q_core if q_core else q
-        q_norm_check = koreksi_teks(q_check)
+        if topik_langsung and not self._memuat_entitas_luar_rag(q_target, q_norm):
+            aspek_langsung = self._deteksi_aspek(q_target, q_norm)
+            if aspek_langsung:
+                ans_aspek = self._jawab_aspek_spesifik(topik_langsung["id"], aspek_langsung)
+                if ans_aspek:
+                    teks_aspek = _bingkai_jawaban_variatif(ans_aspek["jawaban"], q, riwayat=riwayat)
+                    return self._hasil(
+                        t0,
+                        "jawab",
+                        teks_aspek,
+                        koleksi=[ans_aspek["koleksi"]],
+                        sumber=[ans_aspek["sumber"]],
+                        rute="kata_kunci",
+                        mode="aspek_spesifik",
+                    )
 
-        if KABAR_RE.search(q_check) or KABAR_RE.search(q_norm_check):
-            return self._hasil(t0, "sapaan", KABAR_JAWABAN, mode="humanizer")
         if BISA_BANTU_RE.search(q_check) or BISA_BANTU_RE.search(q_norm_check):
-            return self._hasil(t0, "sapaan", BANTU_TAWARAN, mode="humanizer")
-        if PUJIAN_RE.search(q_check) or PUJIAN_RE.search(q_norm_check):
-            return self._hasil(t0, "sapaan", PUJIAN_JAWABAN, mode="humanizer")
-        if HUMOR_RE.search(q_check) or HUMOR_RE.search(q_norm_check):
-            return self._hasil(t0, "sapaan", HUMOR_JAWABAN, mode="humanizer")
-        if PAMIT_RE.search(q_check) or PAMIT_RE.search(q_norm_check):
-            return self._hasil(t0, "sapaan", PAMIT_JAWABAN, mode="humanizer")
-        if TERIMA_KASIH_RE.search(q_check) or TERIMA_KASIH_RE.search(q_norm_check):
-            return self._hasil(t0, "sapaan", APRESIASI, mode="humanizer")
-        if PERSONA_RE.search(q_check) or PERSONA_RE.search(q_norm_check):
-            return self._hasil(t0, "perkenalan", PERSONA_JAWABAN, mode="humanizer")
-        if KENAL_RE.search(q_check) or KENAL_RE.search(q_norm_check):
-            return self._hasil(t0, "perkenalan", SAPAAN, mode="humanizer")
+            return self._hasil(t0, "sapaan", _pilih_variasi(BANTU_TAWARAN_VARIASI, q, riwayat), mode="humanizer")
         if KELUHAN_SINGKAT_RE.match(q_check) or KELUHAN_SINGKAT_RE.match(q_norm_check):
             return self._hasil(t0, "bantuan_awal", BANTUAN_AWAL, mode="humanizer")
-        if not q_core:
-            return self._hasil(t0, "sapaan", SAPAAN_SINGKAT, mode="humanizer")
 
-        # 5. Cek entitas di luar RAG untuk pertanyaan umum
-        if self._memuat_entitas_luar_rag(q, q_norm) or self._memuat_entitas_luar_rag(q_target, q_norm):
+        # 6. Cek entitas di luar RAG untuk pertanyaan umum
+        if self._memuat_entitas_luar_rag(q_target, q_norm):
             return self._hasil(t0, "di_luar_topik", DI_LUAR, rute="guardrail_rag", mode="guardrail_rag")
 
         koleksi, metode, max_cos = self.rute(q_target, q_norm)
@@ -1343,18 +2987,20 @@ class GovSmartChatbot:
             return self._hasil(t0, "di_luar_topik", DI_LUAR, rute=metode, max_cos=max_cos, mode="kanned")
 
         hasil = self.r.search(q_norm, k=K_UTAMA, koleksi=koleksi, tetangga=1)
-        if not hasil and q_norm != q:
-            hasil = self.r.search(q, k=K_UTAMA, koleksi=koleksi, tetangga=1)
+        if not hasil and q_norm != q_target:
+            hasil = self.r.search(q_target, k=K_UTAMA, koleksi=koleksi, tetangga=1)
 
         konteks, sumber, dipakai = self.bangun_konteks(hasil)
         info = {"koleksi": koleksi, "sumber": sumber, "rute": metode, "max_cos": max_cos}
+        if konteks_sebelumnya:
+            info["konteks_sebelumnya"] = konteks_sebelumnya
         if debug:
             info["konteks"] = konteks
             info["q_norm"] = q_norm
         if not hasil:
             return self._hasil(t0, "tanpa_konteks", DI_LUAR, mode="kanned", **info)
 
-        if not self._verifikasi_relevansi_rag(q, q_norm, dipakai):
+        if not self._verifikasi_relevansi_rag(q_target, q_norm, dipakai):
             return self._hasil(t0, "di_luar_topik", DI_LUAR, rute=metode, max_cos=max_cos, mode="guardrail_rag")
 
         if not (pakai_llm and llm_tersedia()):
@@ -1376,10 +3022,14 @@ class GovSmartChatbot:
 
         dikutip = {int(n) for n in re.findall(r"\[(\d+)\]", jawaban)}
         nomor_valid = {s["no"] for s in sumber}
-        if not dikutip or not dikutip.issubset(nomor_valid):
+        dikutip_valid = dikutip & nomor_valid
+        if not dikutip_valid and jawaban and "tidak ditemukan di dokumen" not in jawaban.lower() and sumber:
+            jawaban = jawaban.rstrip() + " [1]"
+            dikutip_valid = {sumber[0]["no"]}
+        if not dikutip_valid:
             teks, info["sumber"] = self.jawab_ekstraktif(dipakai, sumber, q_norm)
             return self._hasil(t0, "jawab", teks, mode="ekstraktif_guardrail", **info)
-        info["sumber"] = [s for s in sumber if s["no"] in dikutip]
+        info["sumber"] = [s for s in sumber if s["no"] in dikutip_valid]
         return self._hasil(t0, "jawab", jawaban, mode="llm", **info)
 
 

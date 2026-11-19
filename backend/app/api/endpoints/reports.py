@@ -3,7 +3,7 @@ from sqlalchemy import desc
 from sqlalchemy.orm import Session
 from typing import List, Optional, cast
 from app.database import get_db
-from app.schemas.report import ReportCreate, ReportUpdate, ReportUpdateStatus, ReportResponse
+from app.schemas.report import ReportCreate, ReportUpdate, ReportUpdateStatus, ReportRatingInput, ReportResponse
 from app.crud.report import (
     create_report,
     get_report_by_id,
@@ -12,6 +12,7 @@ from app.crud.report import (
     update_report,
     cancel_report,
     update_report_status,
+    rate_report,
 )
 from app.api.deps import get_current_user, get_current_active_admin
 from app.models.user import User
@@ -102,6 +103,27 @@ def cancel_my_report(
     if report.status != "diterima":
         raise HTTPException(status_code=409, detail="Laporan hanya dapat dibatalkan sebelum diproses")
     return cancel_report(db, report)
+
+
+@router.post("/{report_id}/rating", response_model=ReportResponse)
+def submit_report_rating(
+    report_id: int,
+    rating_in: ReportRatingInput,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Memberikan penilaian kepuasan warga (1-5 bintang) beserta ulasan opsional
+    terhadap laporan yang sudah berstatus 'selesai'.
+    """
+    report = get_report_by_id(db, report_id)
+    if not report:
+        raise HTTPException(status_code=404, detail="Laporan tidak ditemukan")
+    if current_user.role != "warga" or report.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Hanya warga pemilik laporan yang dapat memberikan penilaian")
+    if report.status != "selesai":
+        raise HTTPException(status_code=409, detail="Penilaian kepuasan hanya dapat diberikan pada laporan yang telah selesai ditangani")
+    return rate_report(db, report, rating_in)
 
 
 @router.get("/{report_id}", response_model=ReportResponse)
@@ -341,7 +363,7 @@ def export_reports_csv(
 
     output = io.StringIO()
     writer = csv.writer(output)
-    writer.writerow(["ID", "Judul", "Isi Laporan", "Urgensi", "Dinas", "Status", "Lokasi Lat", "Lokasi Long", "Catatan Petugas", "Tanggal Dibuat", "Nama Pengguna"])
+    writer.writerow(["ID", "Judul", "Isi Laporan", "Urgensi", "Dinas", "Status", "Lokasi Lat", "Lokasi Long", "Catatan Petugas", "Rating Kepuasan", "Ulasan Warga", "Tanggal Dibuat", "Nama Pengguna"])
     user_cache = {}
     for r in reports:
         dept = get_department(db, cast(int, r.dept_id)) if r.dept_id else None
@@ -352,6 +374,8 @@ def export_reports_csv(
         user_label = user_cache[r.user_id]
         created_val = getattr(r, "created_at", None)
         created_str = created_val.strftime("%Y-%m-%d %H:%M:%S") if created_val else ""
+        rating_val = getattr(r, "rating_kepuasan", None)
+        ulasan_val = getattr(r, "ulasan_warga", None)
         writer.writerow([
             r.id,
             r.judul,
@@ -362,6 +386,8 @@ def export_reports_csv(
             r.lat or "",
             r.long or "",
             r.catatan_petugas or "",
+            f"{rating_val}/5" if rating_val else "",
+            ulasan_val or "",
             created_str,
             user_label
         ])

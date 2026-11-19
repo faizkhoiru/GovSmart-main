@@ -465,3 +465,41 @@ def test_admin_dinas_upload_feedback_report_not_found(client, super_admin_header
     )
     assert upload_res.status_code == 404
 
+
+def test_warga_rating_kepuasan_only_after_selesai(client, warga_headers, super_admin_headers):
+    """Warga hanya dapat memberikan rating kepuasan (1-5 bintang) setelah laporan berstatus 'selesai'."""
+    rep_res = client.post("/api/v1/reports/", json={
+        "judul": "Lampu jalan PJU mati di Sukodadi",
+        "isi_laporan": "Lampu penerangan jalan umum mati total sejak dua malam lalu di poros Sukodadi.",
+    }, headers=warga_headers)
+    assert rep_res.status_code == 201
+    report_id = rep_res.json()["id"]
+
+    # 1. Coba beri rating saat status masih 'diterima' -> harus ditolak 409
+    early_rate = client.post(
+        f"/api/v1/reports/{report_id}/rating",
+        json={"rating_kepuasan": 5, "ulasan_warga": "Cepat sekali"},
+        headers=warga_headers,
+    )
+    assert early_rate.status_code == 409
+
+    # 2. Admin ubah status menjadi 'selesai'
+    upd_res = client.patch(
+        f"/api/v1/reports/{report_id}/status",
+        json={"status": "selesai", "catatan_petugas": "Bohlam PJU telah diganti oleh tim Dishub."},
+        headers=super_admin_headers,
+    )
+    assert upd_res.status_code == 200
+
+    # 3. Warga beri rating 5 bintang + ulasan -> harus berhasil 200
+    rate_res = client.post(
+        f"/api/v1/reports/{report_id}/rating",
+        json={"rating_kepuasan": 5, "ulasan_warga": "Terima kasih, lampu jalan sudah menyala terang kembali."},
+        headers=warga_headers,
+    )
+    assert rate_res.status_code == 200
+    rated_data = rate_res.json()
+    assert rated_data["rating_kepuasan"] == 5
+    assert rated_data["ulasan_warga"] == "Terima kasih, lampu jalan sudah menyala terang kembali."
+    assert rated_data["rated_at"] is not None
+

@@ -5,7 +5,8 @@ Nama file sudah disederhanakan (tanpa spasi). Rename file PDF di foldermu agar c
 | No | File | Topik | Judul Dokumen | Penerbit | Tahun | Jenis teks | URL |
 |---|---|---|---|---|---|---|---|
 | 1 | app/faq_aplikasi.md | app | FAQ Aplikasi GovSmart | Tim GovSmart | 2026 | teks | - |
-| 2 | pelaporan/panduan_pelaporan.md | pelaporan | Panduan Pelaporan GovSmart | Tim GovSmart | 2026 | teks | - |
+| 2 | app/panduan_umum_govsmart.md | app | Panduan Umum & FAQ Lengkap Portal GovSmart Kabupaten Lamongan | Tim GovSmart | 2026 | teks | - |
+| 3 | pelaporan/panduan_pelaporan.md | pelaporan | Panduan Pelaporan GovSmart | Tim GovSmart | 2026 | teks | - |
 | 3 | pemerintah/perbup_lamongan_40_2025_sop_perizinan.pdf | pemerintah | Peraturan Bupati Lamongan Nomor 40 Tahun 2025 tentang SOP Pelayanan Perizinan Berusaha dan Non Perizinan | Bupati Lamongan | 2025 | SCAN (perlu OCR) | (isi URL JDIH Lamongan) |
 | 4 | pemerintah/sk_dpmptsp_lamongan_standar_pelayanan_2026.pdf | pemerintah | Keputusan Kepala DPMPTSP Kab. Lamongan No. 000.9.3.2/19/KEP/413.111/2026 tentang Standar Pelayanan Publik | DPMPTSP Kab. Lamongan | 2026 | SCAN (perlu OCR) | (isi URL situs DPMPTSP) |
 | 5 | pemerintah/panduan_nib_oss.pdf | pemerintah | Panduan Pembuatan NIB | OSS / Kementerian Investasi | (isi tahun) | teks tipis, banyak tangkapan layar (cek OCR) | https://oss.go.id |

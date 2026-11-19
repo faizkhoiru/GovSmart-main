@@ -39,6 +39,7 @@ KOLEKSI = {
 # nama file (tanpa ekstensi) -> (judul, jenis). Sesuaikan judulnya bila perlu.
 DOC_META = {
     "faq_aplikasi": ("FAQ Aplikasi GovSmart", "faq"),
+    "panduan_umum_govsmart": ("Panduan Umum & FAQ Lengkap Portal GovSmart Kabupaten Lamongan", "panduan"),
     "panduan_pelaporan": ("Panduan Pelaporan GovSmart", "panduan"),
     "panduan_nib_oss": ("Panduan NIB dan OSS", "panduan"),
     "perbup_lamongan_40_2025_sop_perizinan": (

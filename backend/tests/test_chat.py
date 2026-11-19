@@ -116,3 +116,42 @@ def test_clear_chat_history_isolated_per_user(client, warga_user, warga_headers,
     res_b = client.get("/api/v1/chat/history", headers=headers_b)
     assert res_b.json()["count"] == 1
     assert "Pertanyaan B1" in res_b.json()["results"][0]["prompt"]
+
+
+def test_multiturn_memory_builtin_fallback(client, warga_headers, monkeypatch):
+    """Multi-Turn Memory harus meneruskan konteks topik sebelumnya pada pertanyaan lanjutan, dan tetap menolak topik di luar RAG."""
+    import httpx
+
+    class _UnavailableClient:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *args):
+            return False
+
+        async def post(self, url, json=None, headers=None):
+            raise httpx.ConnectError("Service down, test builtin fallback")
+
+    monkeypatch.setattr(httpx, "AsyncClient", _UnavailableClient)
+
+    # Turn 1: Tanya syarat e-KTP
+    r1 = client.post("/api/v1/chat/", json={"pertanyaan": "Apa syarat buat e-KTP baru?"}, headers=warga_headers)
+    assert r1.status_code == 200
+    d1 = r1.json()
+    assert d1["intent"] == "faq_adminduk"
+
+    # Turn 2: Pertanyaan lanjutan (follow-up) tanpa menyebut KTP lagi
+    r2 = client.post("/api/v1/chat/", json={"pertanyaan": "Kalau biayanya berapa?"}, headers=warga_headers)
+    assert r2.status_code == 200
+    d2 = r2.json()
+    assert d2["intent"] == "faq_adminduk"
+    assert d2["konteks_sebelumnya"] is not None
+
+    # Turn 3: Pertanyaan di luar konteks (harus tetap gagal / di_luar_topik)
+    r3 = client.post("/api/v1/chat/", json={"pertanyaan": "Kalau cara membuat negara gimana?"}, headers=warga_headers)
+    assert r3.status_code == 200
+    d3 = r3.json()
+    assert d3["intent"] == "di_luar_topik"

@@ -22,7 +22,18 @@ import {
   Download,
   RotateCcw,
   Users,
+  Star,
+  User,
+  ChevronDown,
 } from "lucide-react";
+
+const RATING_LABELS = {
+  1: "1/5 — Sangat Tidak Puas",
+  2: "2/5 — Kurang Puas",
+  3: "3/5 — Cukup Puas",
+  4: "4/5 — Puas",
+  5: "5/5 — Sangat Puas",
+};
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -120,6 +131,17 @@ function RecenterMap({ center }) {
   return null;
 }
 
+function MapInvalidateSize({ trigger }) {
+  const map = useMap();
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      map.invalidateSize();
+    }, 90);
+    return () => clearTimeout(timer);
+  }, [trigger, map]);
+  return null;
+}
+
 function ToastViewport({ notifications, dismiss }) {
   return (
     <div className="toast-viewport" role="status" aria-live="polite">
@@ -207,6 +229,37 @@ export default function App() {
   const [userEmail, setUserEmail] = useState(
     localStorage.getItem("govsmart_email") || "",
   );
+  const [userProfile, setUserProfile] = useState(null);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [profileForm, setProfileForm] = useState({
+    nama_lengkap: "",
+    email: "",
+    no_telepon: "",
+    alamat: "",
+    password: "",
+  });
+  const userMenuRef = useRef(null);
+
+  useEffect(() => {
+    if (!userMenuOpen) return;
+    const handleClickOutside = (event) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
+        setUserMenuOpen(false);
+      }
+    };
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") setUserMenuOpen(false);
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [userMenuOpen]);
 
   // Auth Modal State
   const [authMode, setAuthMode] = useState("login"); // 'login' | 'register'
@@ -246,10 +299,13 @@ export default function App() {
   const [feedbackUploadMsg, setFeedbackUploadMsg] = useState("");
 
   const QUICK_PROMPTS = [
+    "Daftar pertanyaan yang bisa ditanyakan?",
     "Berapa lama proses registrasi KKPR?",
     "Bagaimana syarat izin NIB UMKM?",
     "Apa saja syarat permohonan e-KTP baru?",
     "Bagaimana cara membuat laporan fasilitas rusak?",
+    "Bagaimana cara memberi rating kepuasan laporan?",
+    "Bagaimana cara edit profil pengguna?",
   ];
 
   // Super Admin Register State
@@ -259,6 +315,12 @@ export default function App() {
   const [adminDeptId, setAdminDeptId] = useState("");
   const [adminSuccess, setAdminSuccess] = useState("");
   const [adminDinasList, setAdminDinasList] = useState([]);
+  const [adminDeptFilter, setAdminDeptFilter] = useState("all");
+  const [adminSearchQuery, setAdminSearchQuery] = useState("");
+  const [adminMobileTab, setAdminMobileTab] = useState("peta"); // 'peta' | 'daftar'
+  const [mapDeptFilter, setMapDeptFilter] = useState("all");
+  const [mapStatusMode, setMapStatusMode] = useState("active"); // 'active' | 'all'
+  const [showMapLegend, setShowMapLegend] = useState(false);
   const [editingAdmin, setEditingAdmin] = useState(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const [statusFilter, setStatusFilter] = useState("all"); // 'all' | 'diterima' | 'diproses' | 'selesai' | 'ditolak'
@@ -268,14 +330,15 @@ export default function App() {
   const [editForm, setEditForm] = useState({ nip: "", email: "", password: "", dept_id: "" });
 
   // AI Chatbot Widget State
-  const [showChatbot, setShowChatbot] = useState(false);
-  const [chatPrompt, setChatPrompt] = useState("");
-  const [chatMessages, setChatMessages] = useState([
+  const DEFAULT_CHAT_WELCOME = [
     {
       role: "ai",
       text: "Halo! Saya Asisten AI GovSmart. Ada yang bisa saya bantu terkait perizinan UMKM/NIB atau panduan layanan publik?",
     },
-  ]);
+  ];
+  const [showChatbot, setShowChatbot] = useState(false);
+  const [chatPrompt, setChatPrompt] = useState("");
+  const [chatMessages, setChatMessages] = useState(DEFAULT_CHAT_WELCOME);
   const [chatLoading, setChatLoading] = useState(false);
   const chatContainerRef = useRef(null);
   const chatEndRef = useRef(null);
@@ -397,7 +460,7 @@ export default function App() {
                 ? (await navigator.serviceWorker).active?.postMessage({ type: "newReport", count: newCount })
                 : new Notification("GovSmart — Laporan Baru", {
                     body: `${newCount} laporan baru untuk dinas Anda`,
-                    icon: "/favicon.svg",
+                    icon: "/favicon.png",
                   });
               // Sound efek kecil (data URI, <1KB)
               const audio = new Audio("data:audio/wav;base64,UklGRlgAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YVgAAAFg////AYGA////AP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AA==");
@@ -432,24 +495,54 @@ export default function App() {
   }, [statusFilter, dateFilter, customStartDate, customEndDate]);
 
   useEffect(() => {
+    let cancelled = false;
+    // Selalu reset riwayat chat di layar setiap kali akun / token berganti agar riwayat per user terisolasi
+    setChatMessages(DEFAULT_CHAT_WELCOME);
+    setChatPrompt("");
+
+    if (!token) {
+      setReports([]);
+      setUserProfile(null);
+      setUserMenuOpen(false);
+      setShowProfileModal(false);
+      return;
+    }
+
     fetchReports();
     fetchDepartments();
     fetchAdminDinas();
-    if (!token) return;
+
+    (async () => {
+      try {
+        const profRes = await apiFetch("/api/v1/admin/me", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (profRes.ok && !cancelled) {
+          const profData = await profRes.json();
+          if (!cancelled) {
+            setUserProfile(profData);
+            if (profData.role) setUserRole(profData.role);
+            if (profData.email) setUserEmail(profData.email);
+          }
+        }
+      } catch (_) { /* profil opsional */ }
+    })();
+
     (async () => {
       try {
         const res = await apiFetch("/api/v1/chat/history?limit=20", {
           headers: { Authorization: `Bearer ${token}` },
         });
-        if (!res.ok) return;
+        if (!res.ok || cancelled) return;
         const data = await res.json();
+        if (cancelled) return;
         const rows = (data.results || []).slice().reverse();
-        if (!rows.length) return;
+        if (!rows.length) {
+          setChatMessages(DEFAULT_CHAT_WELCOME);
+          return;
+        }
         setChatMessages([
-          {
-            role: "ai",
-            text: "Halo! Saya Asisten AI GovSmart. Ada yang bisa saya bantu terkait perizinan UMKM/NIB atau panduan layanan publik?",
-          },
+          ...DEFAULT_CHAT_WELCOME,
           ...rows.flatMap((r) => [
             { role: "user", text: r.prompt },
             { role: "ai", text: r.response },
@@ -457,6 +550,10 @@ export default function App() {
         ]);
       } catch (_) { /* riwayat opsional */ }
     })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [token]);
 
   // Auth Handlers
@@ -567,7 +664,18 @@ export default function App() {
     setToken("");
     setUserRole("");
     setUserEmail("");
+    setUserProfile(null);
+    setUserMenuOpen(false);
+    setShowProfileModal(false);
     setMainView("options");
+    setChatMessages(DEFAULT_CHAT_WELCOME);
+    setChatPrompt("");
+    setReports([]);
+    setRatingDrafts({});
+    setEditingRatingId(null);
+    setSelectedReport(null);
+    setShowAuditModal(false);
+    setUnreadCount(0);
   };
 
   // Submit Report Handler
@@ -917,6 +1025,7 @@ export default function App() {
       setAdminEmail("");
       setAdminPassword("");
       setAdminDeptId("");
+      fetchAdminDinas();
     } catch (e) {
       notify(e.message);
     }
@@ -1011,9 +1120,75 @@ export default function App() {
     return "Maaf, terjadi kesalahan saat menghubungi server AI.";
   };
 
+  // State Penilaian Kepuasan Warga (per report ID)
+  const [ratingDrafts, setRatingDrafts] = useState({});
+  const [editingRatingId, setEditingRatingId] = useState(null);
+  const [submittingRatingId, setSubmittingRatingId] = useState(null);
+
+  const getRatingDraft = (report) => {
+    if (ratingDrafts[report.id]) return ratingDrafts[report.id];
+    return {
+      rating: report.rating_kepuasan || 5,
+      ulasan: report.ulasan_warga || "",
+    };
+  };
+
+  const setRatingDraftField = (report, field, value) => {
+    const current = getRatingDraft(report);
+    setRatingDrafts((prev) => ({
+      ...prev,
+      [report.id]: { ...current, [field]: value },
+    }));
+  };
+
+  const handleSubmitRating = async (report) => {
+    const draft = getRatingDraft(report);
+    if (!draft.rating || draft.rating < 1 || draft.rating > 5) {
+      notify("Silakan pilih penilaian bintang 1 sampai 5.");
+      return;
+    }
+    setSubmittingRatingId(report.id);
+    try {
+      const res = await apiFetch(`/api/v1/reports/${report.id}/rating`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          rating_kepuasan: Number(draft.rating),
+          ulasan_warga: draft.ulasan ? draft.ulasan.trim() : null,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || "Gagal menyimpan penilaian kepuasan");
+      }
+      setEditingRatingId(null);
+      await fetchReports();
+      notify("Terima kasih! Penilaian kepuasan Anda telah tersimpan.", "success");
+    } catch (e) {
+      notify(e.message);
+    } finally {
+      setSubmittingRatingId(null);
+    }
+  };
+
   const sendChatMessage = async (rawPrompt) => {
     const text = String(rawPrompt || "").trim();
     if (!text || chatLoading) return;
+
+    // Susun riwayat percakapan (Multi-Turn Memory) dari pasangan pesan user & AI sebelumnya
+    const riwayatPairs = [];
+    for (let i = 1; i < chatMessages.length - 1; i++) {
+      if (chatMessages[i].role === "user" && chatMessages[i + 1]?.role === "ai") {
+        riwayatPairs.push({
+          prompt: chatMessages[i].text,
+          response: chatMessages[i + 1].text,
+        });
+      }
+    }
+    const recentRiwayat = riwayatPairs.slice(-4);
 
     setChatMessages((prev) => [...prev, { role: "user", text }]);
     setChatPrompt("");
@@ -1027,7 +1202,7 @@ export default function App() {
       const res = await apiFetch("/api/v1/chat/", {
         method: "POST",
         headers,
-        body: JSON.stringify({ pertanyaan: text }),
+        body: JSON.stringify({ pertanyaan: text, riwayat: recentRiwayat }),
       });
 
       if (res.ok) {
@@ -1039,6 +1214,7 @@ export default function App() {
             text: data.jawaban || "Tidak ada jawaban.",
             sumber: Array.isArray(data.sumber) ? data.sumber : [],
             intent: data.intent,
+            konteks_sebelumnya: data.konteks_sebelumnya || null,
           },
         ]);
       } else {
@@ -1074,12 +1250,494 @@ export default function App() {
     return judul.includes(q) || isi.includes(q) || dinas.includes(q) || idStr.includes(q);
   });
 
+  // Filtered Admin Dinas list by department name / search query
+  const filteredAdminDinas = adminDinasList.filter((a) => {
+    const deptName = (
+      a.nama_dinas ||
+      departments.find((d) => d.id === a.dept_id)?.nama_dinas ||
+      ""
+    ).toLowerCase();
+    if (adminDeptFilter !== "all" && String(a.dept_id || "") !== adminDeptFilter) {
+      return false;
+    }
+    if (adminSearchQuery.trim()) {
+      const q = adminSearchQuery.trim().toLowerCase();
+      const email = (a.email || "").toLowerCase();
+      const nip = (a.nik_or_nip || "").toLowerCase();
+      return deptName.includes(q) || email.includes(q) || nip.includes(q);
+    }
+    return true;
+  });
+
   // KPI Metrics Calculation
   const kpiTotal = reports.length;
   const kpiDarurat = reports.filter((r) => r.urgensi === "darurat").length;
   const kpiDiproses = reports.filter((r) => r.status === "diproses").length;
   const kpiSelesai = reports.filter((r) => r.status === "selesai").length;
   const kpiPersenSelesai = kpiTotal > 0 ? Math.round((kpiSelesai / kpiTotal) * 100) : 0;
+  const ratedReports = reports.filter((r) => Number(r.rating_kepuasan) >= 1 && Number(r.rating_kepuasan) <= 5);
+  const kpiAvgRating =
+    ratedReports.length > 0
+      ? (ratedReports.reduce((acc, r) => acc + Number(r.rating_kepuasan), 0) / ratedReports.length).toFixed(1)
+      : null;
+
+  // Map Filtering Calculation (Decluttered Map for Admin / Super Admin)
+  const allCoordReports = reports.filter((r) => r.lat && r.long);
+  const coordReportsByDept = allCoordReports.filter(
+    (r) => mapDeptFilter === "all" || String(r.dept_id || "") === mapDeptFilter,
+  );
+  const activeCoordReportsByDept = coordReportsByDept.filter(
+    (r) => r.status === "diterima" || r.status === "diproses",
+  );
+  const mapFilteredReports =
+    mapStatusMode === "active" ? activeCoordReportsByDept : coordReportsByDept;
+
+  const formatRoleLabel = (role) => {
+    if (role === "super_admin") return "Super Admin";
+    if (role === "admin" || role === "admin_dinas") return "Admin Dinas";
+    return "Warga";
+  };
+
+  const displayName = userProfile?.nama_lengkap || userEmail;
+  const userInitial = (displayName || "U").trim().charAt(0).toUpperCase();
+  const profileDeptName =
+    userProfile?.nama_dinas ||
+    (userProfile?.dept_id
+      ? departments.find((d) => Number(d.id) === Number(userProfile.dept_id))?.nama_dinas
+      : null);
+
+  const openProfileEdit = () => {
+    setProfileForm({
+      nama_lengkap: userProfile?.nama_lengkap || "",
+      email: userProfile?.email || userEmail || "",
+      no_telepon: userProfile?.no_telepon || "",
+      alamat: userProfile?.alamat || "",
+      password: "",
+    });
+    setIsEditingProfile(true);
+  };
+
+  const handleSaveProfile = async (e) => {
+    e.preventDefault();
+    if (!token) return;
+    setSavingProfile(true);
+    try {
+      const payload = {
+        nama_lengkap: profileForm.nama_lengkap.trim(),
+        email: profileForm.email.trim(),
+        no_telepon: profileForm.no_telepon.trim(),
+        alamat: profileForm.alamat.trim(),
+      };
+      if (profileForm.password.trim()) {
+        payload.password = profileForm.password.trim();
+      }
+      const res = await apiFetch("/api/v1/admin/me", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        let errorMsg = "Gagal menyimpan perubahan profil";
+        if (typeof err.detail === "string") {
+          errorMsg = err.detail;
+        } else if (Array.isArray(err.detail)) {
+          errorMsg = err.detail.map((d) => d.msg).join(" | ");
+        }
+        throw new Error(errorMsg);
+      }
+      const data = await res.json();
+      setUserProfile(data);
+      if (data.email) {
+        setUserEmail(data.email);
+        localStorage.setItem("govsmart_email", data.email);
+      }
+      if (data.access_token) {
+        localStorage.setItem("govsmart_token", data.access_token);
+        setToken(data.access_token);
+      }
+      setIsEditingProfile(false);
+      setProfileForm((prev) => ({ ...prev, password: "" }));
+      notify("Profil pengguna berhasil diperbarui.", "success");
+    } catch (err) {
+      notify(err.message);
+    } finally {
+      setSavingProfile(false);
+    }
+  };
+
+  const renderAccountDropdown = (showBell = false) => (
+    <div className="user-nav-actions">
+      {showBell && userRole === "admin" && (
+        <button
+          type="button"
+          className="user-bell-btn"
+          onClick={() => {
+            setUnreadCount(0);
+            setMainView("admin");
+          }}
+          title="Notifikasi Laporan Masuk"
+        >
+          <Bell size={19} />
+          {unreadCount > 0 && <span className="user-bell-badge">{unreadCount}</span>}
+        </button>
+      )}
+      <div className="user-menu-wrapper" ref={userMenuRef}>
+        <button
+          type="button"
+          className={`user-menu-trigger ${userMenuOpen ? "is-open" : ""}`}
+          onClick={() => setUserMenuOpen((open) => !open)}
+          aria-expanded={userMenuOpen}
+          aria-haspopup="menu"
+        >
+          <span className="user-avatar-circle">{userInitial}</span>
+          <span className="user-menu-meta">
+            <span className="user-menu-email">{displayName}</span>
+            <span className="user-menu-role">{formatRoleLabel(userRole)}</span>
+          </span>
+          <ChevronDown size={16} className="user-menu-chevron" />
+        </button>
+
+        {userMenuOpen && (
+          <div className="user-dropdown-menu" role="menu">
+            <div className="user-dropdown-header">
+              <div className="user-dropdown-email">{displayName}</div>
+              {userProfile?.nama_lengkap && (
+                <div style={{ fontSize: "0.78rem", color: "#486581", marginTop: "0.15rem", wordBreak: "break-all" }}>
+                  {userEmail}
+                </div>
+              )}
+              <span className="user-dropdown-role-badge">{formatRoleLabel(userRole)}</span>
+            </div>
+            <button
+              type="button"
+              role="menuitem"
+              className="user-dropdown-item"
+              onClick={() => {
+                setUserMenuOpen(false);
+                setIsEditingProfile(false);
+                setShowProfileModal(true);
+              }}
+            >
+              <User size={16} />
+              <span>Lihat Profil Pengguna</span>
+            </button>
+            <div className="user-dropdown-divider" />
+            <button
+              type="button"
+              role="menuitem"
+              className="user-dropdown-item user-dropdown-logout"
+              onClick={() => {
+                setUserMenuOpen(false);
+                handleLogout();
+              }}
+            >
+              <LogOut size={16} />
+              <span>Keluar (Logout)</span>
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  const renderProfileModal = () =>
+    showProfileModal && (
+      <div
+        className="modal-overlay"
+        onClick={() => {
+          setShowProfileModal(false);
+          setIsEditingProfile(false);
+        }}
+      >
+        <div
+          className="modal-content"
+          onClick={(e) => e.stopPropagation()}
+          style={{ maxWidth: "500px", maxHeight: "90vh", overflowY: "auto", padding: "2rem" }}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: "1.25rem",
+            }}
+          >
+            <h3 style={{ fontSize: "1.25rem", fontWeight: 800, margin: 0, display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <User size={22} className="text-accent-primary" />
+              {isEditingProfile ? "Edit Profil Pengguna" : "Profil Pengguna"}
+            </h3>
+            <button
+              type="button"
+              className="nav-btn"
+              onClick={() => {
+                setShowProfileModal(false);
+                setIsEditingProfile(false);
+              }}
+              style={{ padding: "0.35rem" }}
+              aria-label="Tutup profil"
+            >
+              <X size={20} />
+            </button>
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "1rem",
+              padding: "1rem",
+              background: "#edf4fa",
+              borderRadius: "12px",
+              border: "1px solid rgba(14, 86, 168, 0.18)",
+              marginBottom: "1.25rem",
+            }}
+          >
+            <div
+              style={{
+                width: "54px",
+                height: "54px",
+                borderRadius: "50%",
+                background: "linear-gradient(135deg, #0e56a8, #072b5e)",
+                color: "#f5d01a",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "1.4rem",
+                fontWeight: 800,
+                flexShrink: 0,
+                border: "2px solid #f2cb05",
+              }}
+            >
+              {userInitial}
+            </div>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontWeight: 800, fontSize: "1rem", color: "#0d223a", wordBreak: "break-word" }}>
+                {userProfile?.nama_lengkap || userProfile?.email || userEmail}
+              </div>
+              {userProfile?.nama_lengkap && (
+                <div style={{ fontSize: "0.84rem", color: "#486581", wordBreak: "break-all" }}>
+                  {userProfile?.email || userEmail}
+                </div>
+              )}
+              <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginTop: "0.35rem", flexWrap: "wrap" }}>
+                <span
+                  style={{
+                    fontSize: "0.78rem",
+                    fontWeight: 700,
+                    padding: "0.2rem 0.6rem",
+                    borderRadius: "999px",
+                    background: "#0e56a8",
+                    color: "#ffffff",
+                  }}
+                >
+                  {formatRoleLabel(userProfile?.role || userRole)}
+                </span>
+                <span
+                  style={{
+                    fontSize: "0.78rem",
+                    fontWeight: 700,
+                    padding: "0.2rem 0.6rem",
+                    borderRadius: "999px",
+                    background: "rgba(21, 128, 61, 0.14)",
+                    color: "#15803d",
+                  }}
+                >
+                  {userProfile?.is_active === false ? "Non-aktif" : "Akun Aktif"}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {!isEditingProfile ? (
+            <>
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.65rem", fontSize: "0.94rem" }}>
+                <div className="profile-info-row">
+                  <span>Nama Lengkap</span>
+                  <strong>{userProfile?.nama_lengkap || "-"}</strong>
+                </div>
+                <div className="profile-info-row">
+                  <span>{userRole === "warga" ? "NIK KTP" : "NIP Aparatur"}</span>
+                  <strong>{userProfile?.nik_or_nip || "-"}</strong>
+                </div>
+                <div className="profile-info-row">
+                  <span>Alamat Email</span>
+                  <strong>{userProfile?.email || userEmail || "-"}</strong>
+                </div>
+                <div className="profile-info-row">
+                  <span>No. Telepon / WA</span>
+                  <strong>{userProfile?.no_telepon || "-"}</strong>
+                </div>
+                <div className="profile-info-row">
+                  <span>Alamat Domisili</span>
+                  <strong>{userProfile?.alamat || "-"}</strong>
+                </div>
+                <div className="profile-info-row">
+                  <span>Instansi / Dinas</span>
+                  <strong>
+                    {profileDeptName ||
+                      (userRole === "super_admin"
+                        ? "Pemerintah Kabupaten Lamongan (Pusat)"
+                        : "Masyarakat / UMKM Kabupaten Lamongan")}
+                  </strong>
+                </div>
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.75rem", marginTop: "1.75rem", flexWrap: "wrap" }}>
+                <button
+                  type="button"
+                  className="nav-btn"
+                  onClick={() => {
+                    setShowProfileModal(false);
+                    handleLogout();
+                  }}
+                  style={{
+                    background: "#fef2f2",
+                    color: "#dc2626",
+                    borderColor: "#fecaca",
+                    padding: "0.55rem 1rem",
+                    fontSize: "0.9rem",
+                  }}
+                >
+                  <LogOut size={16} /> Keluar
+                </button>
+                <div style={{ display: "flex", gap: "0.65rem" }}>
+                  <button
+                    type="button"
+                    className="nav-btn"
+                    onClick={() => setShowProfileModal(false)}
+                    style={{ borderColor: "var(--border-color)", padding: "0.55rem 1rem", fontSize: "0.9rem" }}
+                  >
+                    Tutup
+                  </button>
+                  <button
+                    type="button"
+                    className="nav-btn nav-btn-primary"
+                    onClick={openProfileEdit}
+                    style={{ padding: "0.55rem 1.15rem", fontSize: "0.9rem" }}
+                  >
+                    Edit Profil
+                  </button>
+                </div>
+              </div>
+            </>
+          ) : (
+            <form onSubmit={handleSaveProfile}>
+              <div className="form-group" style={{ marginBottom: "1rem" }}>
+                <label className="form-label" style={{ fontSize: "0.9rem" }}>
+                  {userRole === "warga" ? "NIK KTP (Tidak dapat diubah)" : "NIP Aparatur (Tidak dapat diubah)"}
+                </label>
+                <input
+                  type="text"
+                  className="form-input"
+                  value={userProfile?.nik_or_nip || "-"}
+                  disabled
+                  readOnly
+                  style={{
+                    background: "#f1f5f9",
+                    color: "#64748b",
+                    cursor: "not-allowed",
+                    fontSize: "0.95rem",
+                    padding: "0.7rem 0.95rem",
+                  }}
+                />
+              </div>
+
+              <div className="form-group" style={{ marginBottom: "1rem" }}>
+                <label className="form-label" style={{ fontSize: "0.9rem" }}>Nama Lengkap</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  maxLength={120}
+                  placeholder="Masukkan nama lengkap Anda"
+                  value={profileForm.nama_lengkap}
+                  onChange={(e) => setProfileForm({ ...profileForm, nama_lengkap: e.target.value })}
+                  style={{ fontSize: "0.95rem", padding: "0.7rem 0.95rem" }}
+                />
+              </div>
+
+              <div className="form-group" style={{ marginBottom: "1rem" }}>
+                <label className="form-label" style={{ fontSize: "0.9rem" }}>Alamat Email</label>
+                <input
+                  type="email"
+                  className="form-input"
+                  required
+                  value={profileForm.email}
+                  onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })}
+                  style={{ fontSize: "0.95rem", padding: "0.7rem 0.95rem" }}
+                />
+              </div>
+
+              <div className="form-group" style={{ marginBottom: "1rem" }}>
+                <label className="form-label" style={{ fontSize: "0.9rem" }}>No. Telepon / WhatsApp</label>
+                <input
+                  type="tel"
+                  className="form-input"
+                  maxLength={30}
+                  placeholder="Contoh: 081234567890"
+                  value={profileForm.no_telepon}
+                  onChange={(e) => setProfileForm({ ...profileForm, no_telepon: e.target.value })}
+                  style={{ fontSize: "0.95rem", padding: "0.7rem 0.95rem" }}
+                />
+              </div>
+
+              <div className="form-group" style={{ marginBottom: "1rem" }}>
+                <label className="form-label" style={{ fontSize: "0.9rem" }}>Alamat Domisili</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  maxLength={255}
+                  placeholder="Contoh: Jl. Lamongrejo No. 10, Kec. Lamongan"
+                  value={profileForm.alamat}
+                  onChange={(e) => setProfileForm({ ...profileForm, alamat: e.target.value })}
+                  style={{ fontSize: "0.95rem", padding: "0.7rem 0.95rem" }}
+                />
+              </div>
+
+              <div className="form-group" style={{ marginBottom: "1.25rem" }}>
+                <label className="form-label" style={{ fontSize: "0.9rem" }}>
+                  Kata Sandi Baru (Opsional)
+                </label>
+                <input
+                  type="password"
+                  className="form-input"
+                  placeholder="Kosongkan jika tidak ingin mengubah kata sandi"
+                  value={profileForm.password}
+                  onChange={(e) => setProfileForm({ ...profileForm, password: e.target.value })}
+                  style={{ fontSize: "0.95rem", padding: "0.7rem 0.95rem" }}
+                />
+                <span style={{ fontSize: "0.78rem", color: "#486581" }}>
+                  Jika diisi: min. 8 karakter dengan huruf besar, huruf kecil, angka, dan simbol (!@#$%).
+                </span>
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.75rem" }}>
+                <button
+                  type="button"
+                  className="nav-btn"
+                  onClick={() => setIsEditingProfile(false)}
+                  disabled={savingProfile}
+                  style={{ borderColor: "var(--border-color)", padding: "0.6rem 1.1rem", fontSize: "0.9rem" }}
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="nav-btn nav-btn-primary"
+                  disabled={savingProfile}
+                  style={{ padding: "0.6rem 1.25rem", fontSize: "0.9rem" }}
+                >
+                  {savingProfile ? "Menyimpan..." : "Simpan Perubahan"}
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+      </div>
+    );
 
   if (!token) {
     return (
@@ -1091,7 +1749,11 @@ export default function App() {
         <main className="auth-portal">
           <section className="auth-visual" aria-label="Tentang GovSmart">
             <div className="auth-brand-mark">
-              <Sparkles size={30} />
+              <img
+                src="/logo-lamongan.png"
+                alt="Logo Kabupaten Lamongan"
+                className="brand-crest-img auth-crest-lg"
+              />
             </div>
             <span className="auth-eyebrow">PEMERINTAH KABUPATEN LAMONGAN</span>
             <h1>GovSmart AI</h1>
@@ -1114,8 +1776,12 @@ export default function App() {
           <section className="auth-glass-card">
             <div className="auth-card-header">
               <div className="auth-brand-mini">
-                <Sparkles size={20} />
-                <span>GovSmart</span>
+                <img
+                  src="/logo-lamongan.png"
+                  alt="Logo Kabupaten Lamongan"
+                  className="brand-crest-img auth-crest-sm"
+                />
+                <span>GovSmart Lamongan</span>
               </div>
               <span className="auth-secure">PORTAL LOGIN</span>
             </div>
@@ -1250,69 +1916,16 @@ export default function App() {
         <ToastViewport notifications={notifications} dismiss={dismissNotification} />
         <header className="navbar-solid portal-navbar">
           <div className="brand-logo">
-            <Sparkles className="w-6 h-6 text-accent-primary" />
-            <span>GovSmart AI</span>
+            <img
+              src="/logo-lamongan.png"
+              alt="Logo Kabupaten Lamongan"
+              className="brand-crest-img nav-crest-img"
+            />
+            <span>GovSmart Lamongan</span>
           </div>
-          <div>
-            <span
-              style={{
-                fontSize: "1rem",
-                fontWeight: 600,
-                color: "var(--text-main)",
-              }}
-            >
-              {userRole === "admin" && (
-                <button
-                  onClick={() => { setUnreadCount(0); setMainView("admin"); }}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    color: "inherit",
-                    cursor: "pointer",
-                    marginRight: "0.5rem",
-                    position: "relative",
-                  }}
-                  title="Dasbor Admin"
-                >
-                  <Bell size={18} />
-                  {unreadCount > 0 && (
-                    <span
-                      style={{
-                        position: "absolute",
-                        top: "-4px",
-                        right: "-4px",
-                        background: "var(--accent-rose)",
-                        color: "white",
-                        fontSize: "0.65rem",
-                        fontWeight: 700,
-                        padding: "2px 5px",
-                        borderRadius: "999px",
-                        minWidth: "18px",
-                        textAlign: "center",
-                      }}
-                    >
-                      {unreadCount}
-                    </span>
-                  )}
-                </button>
-              )}
-              {userEmail} ({userRole}) &nbsp;&bull;&nbsp;
-              <button
-                onClick={handleLogout}
-                style={{
-                  background: "none",
-                  border: "none",
-                  color: "var(--accent-rose)",
-                  fontWeight: 700,
-                  cursor: "pointer",
-                  fontSize: "1rem",
-                }}
-              >
-                Keluar
-              </button>
-            </span>
-          </div>
+          {renderAccountDropdown(true)}
         </header>
+        {renderProfileModal()}
 
         <div
           className="portal-content"
@@ -1327,10 +1940,11 @@ export default function App() {
           }}
         >
           <h1
+            className="options-hero-title"
             style={{
-              fontSize: "2.5rem",
+              fontSize: "clamp(1.75rem, 4.5vw, 2.5rem)",
               fontWeight: 800,
-              marginBottom: "3rem",
+              marginBottom: "clamp(1.5rem, 4vw, 3rem)",
               textAlign: "center",
               color: "var(--text-main)",
             }}
@@ -1338,11 +1952,13 @@ export default function App() {
             Pilih Layanan Anda
           </h1>
           <div
+            className="options-grid"
             style={{
               display: "flex",
               gap: "2rem",
               flexWrap: "wrap",
               justifyContent: "center",
+              width: "100%",
             }}
           >
             {userRole === "admin" || userRole === "super_admin" ? (
@@ -1429,34 +2045,16 @@ export default function App() {
           onClick={() => setMainView("options")}
           style={{ cursor: "pointer" }}
         >
-          <Sparkles className="w-6 h-6 text-accent-primary" />
-          <span>GovSmart AI</span>
+          <img
+            src="/logo-lamongan.png"
+            alt="Logo Kabupaten Lamongan"
+            className="brand-crest-img nav-crest-img"
+          />
+          <span>GovSmart Lamongan</span>
         </div>
-        <div>
-          <span
-            style={{
-              fontSize: "1rem",
-              fontWeight: 600,
-              color: "var(--text-main)",
-            }}
-          >
-            {userEmail} ({userRole}) &nbsp;&bull;&nbsp;
-            <button
-              onClick={handleLogout}
-              style={{
-                background: "none",
-                border: "none",
-                color: "var(--accent-rose)",
-                fontWeight: 700,
-                cursor: "pointer",
-                fontSize: "1rem",
-              }}
-            >
-              Keluar
-            </button>
-          </span>
-        </div>
+        {renderAccountDropdown(true)}
       </header>
+      {renderProfileModal()}
 
       <div
         className="portal-content"
@@ -1477,14 +2075,7 @@ export default function App() {
         </button>
 
         {mainView === "pengaduan" && (
-          <div
-            className="portal-report-layout"
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: "3rem",
-            }}
-          >
+          <div className="portal-report-layout">
             <div id="form-pengaduan" className="glass-panel">
               <h2
                 style={{
@@ -1579,7 +2170,7 @@ export default function App() {
                 </div>
                 {/* Koordinat Lokasi + Tombol GPS */}
                 <div className="form-group">
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+                  <div className="coord-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.5rem", marginBottom: "0.5rem" }}>
                     <label className="form-label" style={{ margin: 0 }}>Koordinat Lokasi Kejadian (Opsional)</label>
                     <button
                       type="button"
@@ -1588,7 +2179,7 @@ export default function App() {
                       style={{
                         display: "flex", alignItems: "center", gap: "0.35rem",
                         background: "var(--accent-primary)", color: "white",
-                        border: "none", borderRadius: "8px", padding: "0.4rem 0.85rem",
+                        border: "none", borderRadius: "8px", padding: "0.45rem 0.85rem",
                         fontSize: "0.8rem", fontWeight: 700, cursor: gpsLoading ? "not-allowed" : "pointer",
                         opacity: gpsLoading ? 0.7 : 1, transition: "all 0.2s",
                       }}
@@ -1597,7 +2188,7 @@ export default function App() {
                       {gpsLoading ? "Mendeteksi..." : "Gunakan Lokasi Saya"}
                     </button>
                   </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                  <div className="coord-grid">
                     <input
                       type="number" step="any" className="form-input"
                       placeholder="Latitude, e.g. -7.1123"
@@ -1978,12 +2569,199 @@ export default function App() {
                         </a>
                       </div>
                     )}
+
+                    {/* Penilaian Kepuasan Warga untuk laporan berstatus selesai */}
+                    {report.status === "selesai" && (
+                      <div
+                        style={{
+                          marginBottom: "1rem",
+                          padding: "1rem 1.15rem",
+                          background: "#fffbeb",
+                          border: "1px solid #fde68a",
+                          borderLeft: "4px solid #f59e0b",
+                          borderRadius: "8px",
+                        }}
+                      >
+                        {userRole === "warga" && (!report.rating_kepuasan || editingRatingId === report.id) ? (
+                          <div>
+                            <div
+                              style={{
+                                fontWeight: 700,
+                                fontSize: "0.95rem",
+                                color: "#92400e",
+                                marginBottom: "0.35rem",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "0.4rem",
+                              }}
+                            >
+                              <Star size={17} fill="#f59e0b" color="#f59e0b" />
+                              Penilaian Kepuasan Penanganan Laporan
+                            </div>
+                            <p style={{ fontSize: "0.88rem", color: "#78350f", marginBottom: "0.75rem" }}>
+                              Pilih tingkat kepuasan Anda terhadap hasil tindak lanjut petugas dinas:
+                            </p>
+                            <div
+                              style={{
+                                display: "flex",
+                                flexWrap: "wrap",
+                                gap: "0.5rem",
+                                alignItems: "center",
+                                marginBottom: "0.75rem",
+                              }}
+                            >
+                              {[1, 2, 3, 4, 5].map((starVal) => {
+                                const currentRating = getRatingDraft(report).rating;
+                                const isSelected = starVal <= currentRating;
+                                return (
+                                  <button
+                                    key={starVal}
+                                    type="button"
+                                    onClick={() => setRatingDraftField(report, "rating", starVal)}
+                                    style={{
+                                      display: "inline-flex",
+                                      alignItems: "center",
+                                      gap: "0.3rem",
+                                      padding: "0.45rem 0.8rem",
+                                      borderRadius: "8px",
+                                      border: isSelected ? "2px solid #d97706" : "1px solid #cbd5e1",
+                                      background: isSelected ? "#fef3c7" : "#ffffff",
+                                      color: isSelected ? "#92400e" : "#475569",
+                                      fontWeight: 700,
+                                      fontSize: "0.9rem",
+                                      cursor: "pointer",
+                                    }}
+                                    title={RATING_LABELS[starVal]}
+                                  >
+                                    <Star
+                                      size={16}
+                                      fill={isSelected ? "#f59e0b" : "none"}
+                                      color={isSelected ? "#d97706" : "#94a3b8"}
+                                    />
+                                    {starVal}
+                                  </button>
+                                );
+                              })}
+                              <span
+                                style={{
+                                  fontSize: "0.9rem",
+                                  fontWeight: 700,
+                                  color: "#92400e",
+                                  marginLeft: "0.35rem",
+                                }}
+                              >
+                                {RATING_LABELS[getRatingDraft(report).rating] || ""}
+                              </span>
+                            </div>
+                            <textarea
+                              className="form-textarea"
+                              rows={2}
+                              maxLength={500}
+                              placeholder="Tulis ulasan atau masukan singkat Anda terhadap penanganan petugas (opsional)..."
+                              value={getRatingDraft(report).ulasan}
+                              onChange={(e) => setRatingDraftField(report, "ulasan", e.target.value)}
+                              style={{
+                                background: "#ffffff",
+                                fontSize: "0.9rem",
+                                marginBottom: "0.75rem",
+                              }}
+                            />
+                            <div style={{ display: "flex", gap: "0.6rem", alignItems: "center" }}>
+                              <button
+                                type="button"
+                                className="nav-btn nav-btn-primary"
+                                disabled={submittingRatingId === report.id}
+                                onClick={() => handleSubmitRating(report)}
+                                style={{ padding: "0.5rem 1.1rem", fontSize: "0.88rem" }}
+                              >
+                                {submittingRatingId === report.id ? "Menyimpan..." : "Kirim Penilaian"}
+                              </button>
+                              {editingRatingId === report.id && (
+                                <button
+                                  type="button"
+                                  className="nav-btn"
+                                  onClick={() => setEditingRatingId(null)}
+                                  style={{ padding: "0.5rem 0.9rem", fontSize: "0.85rem" }}
+                                >
+                                  Batal
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        ) : report.rating_kepuasan ? (
+                          <div>
+                            <div
+                              style={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "center",
+                                flexWrap: "wrap",
+                                gap: "0.5rem",
+                              }}
+                            >
+                              <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                                {[1, 2, 3, 4, 5].map((s) => (
+                                  <Star
+                                    key={s}
+                                    size={16}
+                                    fill={s <= report.rating_kepuasan ? "#f59e0b" : "none"}
+                                    color={s <= report.rating_kepuasan ? "#d97706" : "#cbd5e1"}
+                                  />
+                                ))}
+                                <strong style={{ fontSize: "0.9rem", color: "#92400e", marginLeft: "0.25rem" }}>
+                                  {RATING_LABELS[report.rating_kepuasan] || `${report.rating_kepuasan}/5`}
+                                </strong>
+                              </div>
+                              {userRole === "warga" && (
+                                <button
+                                  type="button"
+                                  className="nav-btn"
+                                  onClick={() => {
+                                    setRatingDrafts((prev) => ({
+                                      ...prev,
+                                      [report.id]: {
+                                        rating: report.rating_kepuasan,
+                                        ulasan: report.ulasan_warga || "",
+                                      },
+                                    }));
+                                    setEditingRatingId(report.id);
+                                  }}
+                                  style={{ padding: "0.25rem 0.65rem", fontSize: "0.78rem" }}
+                                >
+                                  Ubah Penilaian
+                                </button>
+                              )}
+                            </div>
+                            {report.ulasan_warga && (
+                              <p
+                                style={{
+                                  margin: "0.45rem 0 0",
+                                  fontSize: "0.9rem",
+                                  color: "#78350f",
+                                  lineHeight: 1.5,
+                                }}
+                              >
+                                &ldquo;{report.ulasan_warga}&rdquo;
+                              </p>
+                            )}
+                          </div>
+                        ) : (
+                          <div style={{ fontSize: "0.85rem", color: "#92400e" }}>
+                            Belum ada penilaian kepuasan dari warga pelapor.
+                          </div>
+                        )}
+                      </div>
+                    )}
+
                     <div
+                      className="report-card-meta"
                       style={{
                         fontSize: "0.85rem",
                         color: "var(--text-dim)",
                         display: "flex",
                         justifyContent: "space-between",
+                        flexWrap: "wrap",
+                        gap: "0.5rem",
                         borderTop: "1px solid #e2e8f0",
                         paddingTop: "1rem",
                       }}
@@ -2000,12 +2778,11 @@ export default function App() {
                       </span>
                     </div>
                     {userRole === "warga" && report.status === "diterima" && (
-                      <>
+                      <div className="report-card-actions" style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem", marginTop: "1rem" }}>
                         <button
                           type="button"
                           className="nav-btn"
                           onClick={() => openEditModal(report)}
-                          style={{ marginTop: "1rem", marginRight: "1rem" }}
                         >
                           Edit Pengaduan
                         </button>
@@ -2013,11 +2790,11 @@ export default function App() {
                           type="button"
                           className="nav-btn"
                           onClick={() => handleCancelReport(report.id)}
-                          style={{ marginTop: "1rem", color: "#dc2626", borderColor: "#fecaca" }}
+                          style={{ color: "#dc2626", borderColor: "#fecaca" }}
                         >
                           Batalkan Pengaduan
                         </button>
-                      </>
+                      </div>
                     )}
                   </div>
                 ))
@@ -2029,20 +2806,23 @@ export default function App() {
 
         {mainView === "pertanyaan" && (
           <div
-            className="glass-panel"
-            style={{ padding: "2rem", maxWidth: "800px", margin: "0 auto" }}
+            className="glass-panel chat-panel-shell"
+            style={{ maxWidth: "800px", margin: "0 auto" }}
           >
             <div
+              className="chat-panel-header"
               style={{
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
-                marginBottom: "1.5rem",
+                flexWrap: "wrap",
+                gap: "0.75rem",
+                marginBottom: "1.25rem",
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-                <Bot size={32} className="text-accent-primary" />
-                <h2 style={{ fontSize: "1.75rem", fontWeight: 800 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.85rem" }}>
+                <Bot size={32} className="text-accent-primary" style={{ flexShrink: 0 }} />
+                <h2 style={{ fontSize: "clamp(1.3rem, 3.8vw, 1.75rem)", fontWeight: 800 }}>
                   Tanya AI GovSmart
                 </h2>
               </div>
@@ -2050,7 +2830,7 @@ export default function App() {
                 type="button"
                 className="nav-btn"
                 onClick={handleClearChat}
-                style={{ padding: "0.4rem 0.85rem", fontSize: "0.82rem", display: "inline-flex", alignItems: "center", gap: "0.4rem" }}
+                style={{ padding: "0.45rem 0.85rem", fontSize: "0.84rem", display: "inline-flex", alignItems: "center", gap: "0.4rem" }}
                 title="Bersihkan riwayat percakapan di layar"
               >
                 <RotateCcw size={14} /> Mulai Baru
@@ -2059,19 +2839,7 @@ export default function App() {
 
             <div
               ref={chatContainerRef}
-              style={{
-                height: "400px",
-                overflowY: "auto",
-                marginBottom: "2rem",
-                padding: "1rem",
-                background: "#f8fafc",
-                borderRadius: "12px",
-                border: "1px solid #e2e8f0",
-                display: "flex",
-                flexDirection: "column",
-                gap: "1rem",
-                scrollBehavior: "smooth",
-              }}
+              className="chat-messages-box"
             >
               {chatMessages.map((msg, i) => (
                 <div
@@ -2090,6 +2858,23 @@ export default function App() {
                     border: msg.role === "user" ? "none" : "1px solid #e2e8f0",
                   }}
                 >
+                  {msg.role === "ai" && msg.konteks_sebelumnya && (
+                    <div
+                      style={{
+                        display: "inline-block",
+                        marginBottom: "0.55rem",
+                        padding: "0.2rem 0.6rem",
+                        borderRadius: "6px",
+                        background: "#eff6ff",
+                        border: "1px solid #bfdbfe",
+                        color: "#1e40af",
+                        fontSize: "0.78rem",
+                        fontWeight: 700,
+                      }}
+                    >
+                      Melanjutkan topik: {msg.konteks_sebelumnya}
+                    </div>
+                  )}
                   {renderChatText(msg.text)}
                   {msg.role === "ai" && Array.isArray(msg.sumber) && msg.sumber.length > 0 && (
                     <div
@@ -2162,25 +2947,24 @@ export default function App() {
 
             <form
               onSubmit={handleSendChat}
-              style={{ display: "flex", gap: "1rem" }}
+              className="chat-input-form"
             >
               <input
                 ref={chatInputRef}
                 type="text"
                 maxLength={500}
                 className="form-input"
-                placeholder="Tanyakan panduan atau lapor..."
+                placeholder="Tanyakan panduan atau pertanyaan lanjutan (misal: Kalau biayanya berapa?)..."
                 value={chatPrompt}
                 onChange={(e) => setChatPrompt(e.target.value)}
-                style={{ flex: 1 }}
+                style={{ flex: 1, minWidth: 0 }}
               />
               <button
                 type="submit"
                 disabled={chatLoading || !chatPrompt.trim()}
-                className="nav-btn nav-btn-primary"
-                style={{ padding: "0.85rem 1.5rem" }}
+                className="nav-btn nav-btn-primary chat-send-btn"
               >
-                <Send size={18} /> {chatLoading ? "Mengirim..." : "Kirim"}
+                <Send size={18} /> <span>{chatLoading ? "Mengirim..." : "Kirim"}</span>
               </button>
             </form>
           </div>
@@ -2190,24 +2974,18 @@ export default function App() {
           (userRole === "admin" || userRole === "super_admin") && (
             <div>
               <h1
+                className="admin-page-title"
                 style={{
-                  fontSize: "2rem",
+                  fontSize: "clamp(1.4rem, 3.8vw, 2rem)",
                   fontWeight: 800,
-                  marginBottom: "2rem",
+                  marginBottom: "1.75rem",
                 }}
               >
                 Dasbor Manajemen & Penanganan Pengaduan
               </h1>
 
               {/* Kartu Ringkasan Statistik (KPI Metrics) */}
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-                  gap: "1.25rem",
-                  marginBottom: "2rem",
-                }}
-              >
+              <div className="kpi-grid">
                 <div className="glass-panel" style={{ padding: "1.25rem 1.5rem" }}>
                   <div style={{ fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 600 }}>Total Pengaduan</div>
                   <div style={{ fontSize: "2rem", fontWeight: 800, color: "var(--text-main)", marginTop: "0.25rem" }}>{kpiTotal}</div>
@@ -2239,10 +3017,28 @@ export default function App() {
                   </div>
                   <div style={{ fontSize: "0.75rem", color: "var(--text-dim)", marginTop: "0.25rem" }}>Penyelesaian tuntas</div>
                 </div>
+
+                <div className="glass-panel" style={{ padding: "1.25rem 1.5rem", borderLeft: "4px solid #eab308" }}>
+                  <div style={{ fontSize: "0.85rem", color: "#b45309", fontWeight: 700, display: "flex", alignItems: "center", gap: "0.35rem" }}>
+                    <Star size={15} fill="#f59e0b" color="#d97706" /> Kepuasan Warga
+                  </div>
+                  <div style={{ fontSize: "2rem", fontWeight: 800, color: "#b45309", marginTop: "0.25rem" }}>
+                    {kpiAvgRating ? (
+                      <>
+                        {kpiAvgRating} <span style={{ fontSize: "1rem", fontWeight: 600, color: "var(--text-muted)" }}>/ 5.0</span>
+                      </>
+                    ) : (
+                      <span style={{ fontSize: "1.25rem", color: "var(--text-muted)" }}>Belum Ada</span>
+                    )}
+                  </div>
+                  <div style={{ fontSize: "0.75rem", color: "var(--text-dim)", marginTop: "0.25rem" }}>
+                    {ratedReports.length > 0 ? `Dari ${ratedReports.length} penilaian warga` : "Menunggu penilaian warga"}
+                  </div>
+                </div>
               </div>
               {userRole === "super_admin" && (
                 <div
-                  className="glass-panel"
+                  className="glass-panel admin-dinas-banner"
                   style={{
                     padding: "1.25rem 1.75rem",
                     marginBottom: "2rem",
@@ -2265,6 +3061,7 @@ export default function App() {
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
+                        flexShrink: 0,
                       }}
                     >
                       <Users className="text-accent-primary" size={24} />
@@ -2280,11 +3077,12 @@ export default function App() {
                   </div>
                   <button
                     type="button"
-                    className="nav-btn nav-btn-primary"
+                    className="nav-btn nav-btn-primary admin-dinas-banner-btn"
                     onClick={() => setMainView("admin_dinas")}
                     style={{
                       display: "inline-flex",
                       alignItems: "center",
+                      justifyContent: "center",
                       gap: "0.5rem",
                       padding: "0.75rem 1.4rem",
                       fontSize: "0.92rem",
@@ -2295,67 +3093,280 @@ export default function App() {
                     Buka Halaman Daftar Admin Dinas &rarr;
                   </button>
                 </div>
-              )}{/* Peta Lamongan dengan Pin Laporan*/}
-              <div className="glass-panel" style={{ padding: "1.5rem", marginBottom: "2rem" }}>
-                <h2 style={{ fontSize: "1.2rem", fontWeight: 700, marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                  <MapPin className="text-accent-primary" /> Peta Sebaran Laporan — Kabupaten Lamongan
-                </h2>
-                {/* Legenda Dinas */}
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginBottom: "1rem" }}>
-                  {departments.map((d, i) => (
-                    <span key={d.id} style={{ display: "flex", alignItems: "center", gap: "0.3rem", fontSize: "0.75rem", background: "#f1f5f9", padding: "0.25rem 0.6rem", borderRadius: "999px", fontWeight: 600 }}>
-                      <span style={{ width: 10, height: 10, borderRadius: "50%", background: DEPT_COLORS[i % DEPT_COLORS.length], display: "inline-block" }} />
-                      {d.nama_dinas.replace("Dinas ", "")}
-                    </span>
-                  ))}
+              )}
+
+              {/* Tab Pemisah Khusus Mode Mobile: Peta Sebaran vs Daftar Pengaduan */}
+              <div className="admin-mobile-tabs" role="tablist" aria-label="Pilih tampilan dasbor">
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={adminMobileTab === "peta"}
+                  className={`admin-mobile-tab-btn ${adminMobileTab === "peta" ? "is-active" : ""}`}
+                  onClick={() => setAdminMobileTab("peta")}
+                >
+                  <MapPin size={17} />
+                  <span>Peta Sebaran ({mapFilteredReports.length})</span>
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={adminMobileTab === "daftar"}
+                  className={`admin-mobile-tab-btn ${adminMobileTab === "daftar" ? "is-active" : ""}`}
+                  onClick={() => setAdminMobileTab("daftar")}
+                >
+                  <FileText size={17} />
+                  <span>Daftar Pengaduan ({filteredReports.length})</span>
+                </button>
+              </div>
+
+              {/* Peta Lamongan dengan Pin Laporan */}
+              <div
+                className={`glass-panel admin-tab-panel ${adminMobileTab === "peta" ? "is-active-mobile-tab" : ""}`}
+                style={{ padding: "1.5rem", marginBottom: "2rem" }}
+              >
+                <div className="admin-map-header">
+                  <div>
+                    <h2 style={{ fontSize: "1.18rem", fontWeight: 800, margin: 0, display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                      <MapPin className="text-accent-primary" style={{ flexShrink: 0 }} />
+                      <span>Peta Sebaran Laporan — Kabupaten Lamongan</span>
+                    </h2>
+                    <p style={{ margin: "0.25rem 0 0", fontSize: "0.84rem", color: "var(--text-muted)" }}>
+                      Menampilkan <strong>{mapFilteredReports.length}</strong> dari <strong>{allCoordReports.length}</strong> titik laporan berkoordinat GPS.
+                    </p>
+                  </div>
+
+                  {/* Toggle Fokus Laporan Aktif vs Semua Status */}
+                  <div className="map-status-toggle" role="group" aria-label="Filter status titik peta">
+                    <button
+                      type="button"
+                      className={`map-status-pill ${mapStatusMode === "active" ? "is-active" : ""}`}
+                      onClick={() => setMapStatusMode("active")}
+                    >
+                      Hanya Aktif ({activeCoordReportsByDept.length})
+                    </button>
+                    <button
+                      type="button"
+                      className={`map-status-pill ${mapStatusMode === "all" ? "is-active" : ""}`}
+                      onClick={() => setMapStatusMode("all")}
+                    >
+                      Semua Status ({coordReportsByDept.length})
+                    </button>
+                  </div>
                 </div>
-                <div style={{ height: "420px", borderRadius: "12px", overflow: "hidden" }}>
+
+                {/* Bar Kontrol Filter Dinas & Tombol Legenda Collapsible */}
+                <div className="admin-map-toolbar">
+                  <div className="admin-map-filter-select-wrap">
+                    <Filter size={15} className="text-accent-primary" style={{ flexShrink: 0 }} />
+                    <label htmlFor="map-dept-filter" className="admin-map-filter-label">
+                      Filter Dinas:
+                    </label>
+                    <select
+                      id="map-dept-filter"
+                      className="form-select admin-map-select"
+                      value={mapDeptFilter}
+                      onChange={(e) => setMapDeptFilter(e.target.value)}
+                    >
+                      <option value="all">Semua Dinas ({allCoordReports.length} titik)</option>
+                      {departments.map((d) => {
+                        const deptCount = allCoordReports.filter(
+                          (r) => Number(r.dept_id) === Number(d.id),
+                        ).length;
+                        return (
+                          <option key={d.id} value={String(d.id)}>
+                            {d.nama_dinas} ({deptCount})
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </div>
+
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
+                    {mapDeptFilter !== "all" && (
+                      <button
+                        type="button"
+                        className="nav-btn map-legend-toggle-btn"
+                        onClick={() => setMapDeptFilter("all")}
+                      >
+                        Reset Dinas
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      className={`nav-btn map-legend-toggle-btn ${showMapLegend ? "is-open" : ""}`}
+                      onClick={() => setShowMapLegend((prev) => !prev)}
+                      aria-expanded={showMapLegend}
+                    >
+                      <span>{showMapLegend ? "Sembunyikan Legenda" : `Legenda Warna (${departments.length})`}</span>
+                      <ChevronDown
+                        size={15}
+                        style={{
+                          transform: showMapLegend ? "rotate(180deg)" : "rotate(0deg)",
+                          transition: "transform 0.2s ease",
+                        }}
+                      />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Legenda Dinas Collapsible (Tertutup secara default agar di Mobile tidak penuh) */}
+                {showMapLegend && (
+                  <div className="admin-map-legend-box">
+                    {departments.map((d, i) => {
+                      const isSelected = mapDeptFilter === String(d.id);
+                      const deptCount = allCoordReports.filter(
+                        (r) => Number(r.dept_id) === Number(d.id),
+                      ).length;
+                      return (
+                        <button
+                          key={d.id}
+                          type="button"
+                          onClick={() =>
+                            setMapDeptFilter(isSelected ? "all" : String(d.id))
+                          }
+                          className={`admin-map-legend-chip ${isSelected ? "is-selected" : ""}`}
+                          title="Klik untuk memfilter titik peta berdasarkan dinas ini"
+                        >
+                          <span
+                            className="admin-map-legend-dot"
+                            style={{ background: DEPT_COLORS[i % DEPT_COLORS.length] }}
+                          />
+                          <span>{d.nama_dinas.replace("Dinas ", "")}</span>
+                          <span className="admin-map-legend-count">{deptCount}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                <div className="admin-map-box">
                   <MapContainer
                     center={[-7.1189, 112.4109]}
                     zoom={11}
                     style={{ height: "100%", width: "100%" }}
                     scrollWheelZoom={true}
                   >
+                    <MapInvalidateSize
+                      trigger={`${adminMobileTab}-${mapDeptFilter}-${mapStatusMode}`}
+                    />
                     <TileLayer
                       url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                       attribution='&copy; <a href="https://openstreetmap.org">OpenStreetMap</a>'
                     />
-                    {reports
-                      .filter((r) => r.lat && r.long)
-                      .map((r) => {
-                        const deptIdx = departments.findIndex((d) => d.id === r.dept_id);
-                        const color = DEPT_COLORS[deptIdx >= 0 ? deptIdx % DEPT_COLORS.length : 0];
-                        return (
-                          <Marker
-                            key={r.id}
-                            position={[parseFloat(r.lat), parseFloat(r.long)]}
-                            icon={createReportIcon(color)}
-                          >
-                            <Popup>
-                              <div style={{ minWidth: "180px" }}>
-                                <strong style={{ fontSize: "0.9rem" }}>{r.judul}</strong><br />
-                                <span style={{ fontSize: "0.8rem", color: "#64748b" }}>
-                                  {departments.find((d) => d.id === r.dept_id)?.nama_dinas || "AI Auto-Routing"}
-                                </span><br />
-                                <span style={{ fontSize: "0.75rem", fontWeight: 700, color: r.urgensi === "darurat" ? "#ef4444" : r.urgensi === "penting" ? "#f97316" : "#22c55e" }}>
-                                  ● {r.urgensi.toUpperCase()}
-                                </span>{" | "}
-                                <span style={{ fontSize: "0.75rem" }}>{r.status}</span>
+                    {mapFilteredReports.map((r) => {
+                      const deptIdx = departments.findIndex((d) => d.id === r.dept_id);
+                      const color = DEPT_COLORS[deptIdx >= 0 ? deptIdx % DEPT_COLORS.length : 0];
+                      return (
+                        <Marker
+                          key={r.id}
+                          position={[parseFloat(r.lat), parseFloat(r.long)]}
+                          icon={createReportIcon(color)}
+                        >
+                          <Popup>
+                            <div style={{ minWidth: "200px", maxWidth: "250px" }}>
+                              <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "#64748b", marginBottom: "0.15rem" }}>
+                                Laporan #{r.id}
                               </div>
-                            </Popup>
-                          </Marker>
-                        );
-                      })}
+                              <strong style={{ fontSize: "0.92rem", color: "#0d223a", display: "block", marginBottom: "0.25rem" }}>
+                                {r.judul}
+                              </strong>
+                              <span style={{ fontSize: "0.8rem", color: "#475569", display: "block", marginBottom: "0.4rem" }}>
+                                {departments.find((d) => d.id === r.dept_id)?.nama_dinas || "AI Auto-Routing"}
+                              </span>
+                              <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", marginBottom: "0.65rem", flexWrap: "wrap" }}>
+                                <span
+                                  style={{
+                                    fontSize: "0.74rem",
+                                    fontWeight: 800,
+                                    color:
+                                      r.urgensi === "darurat"
+                                        ? "#ef4444"
+                                        : r.urgensi === "penting"
+                                        ? "#f97316"
+                                        : "#16a34a",
+                                  }}
+                                >
+                                  ● {r.urgensi.toUpperCase()}
+                                </span>
+                                <span style={{ color: "#cbd5e1" }}>|</span>
+                                <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "#0e56a8", textTransform: "capitalize" }}>
+                                  Status: {r.status}
+                                </span>
+                              </div>
+                              <div style={{ display: "flex", gap: "0.4rem" }}>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setSelectedReport(r);
+                                    setNewStatus(r.status);
+                                    setCatatanPetugas(r.catatan_petugas || "");
+                                  }}
+                                  style={{
+                                    flex: 1,
+                                    padding: "0.38rem 0.6rem",
+                                    borderRadius: "6px",
+                                    border: "none",
+                                    background: "#0e56a8",
+                                    color: "#ffffff",
+                                    fontSize: "0.76rem",
+                                    fontWeight: 700,
+                                    cursor: "pointer",
+                                  }}
+                                >
+                                  Kelola Status
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleViewAuditLogs(r)}
+                                  style={{
+                                    padding: "0.38rem 0.6rem",
+                                    borderRadius: "6px",
+                                    border: "1px solid #0e56a8",
+                                    background: "#ffffff",
+                                    color: "#0e56a8",
+                                    fontSize: "0.76rem",
+                                    fontWeight: 700,
+                                    cursor: "pointer",
+                                  }}
+                                >
+                                  Log
+                                </button>
+                              </div>
+                            </div>
+                          </Popup>
+                        </Marker>
+                      );
+                    })}
                   </MapContainer>
                 </div>
-                {reports.filter((r) => r.lat && r.long).length === 0 && (
-                  <p style={{ textAlign: "center", color: "var(--text-muted)", fontSize: "0.85rem", marginTop: "0.75rem" }}>
-                    Belum ada laporan dengan data koordinat lokasi.
-                  </p>
+
+                {mapFilteredReports.length === 0 && (
+                  <div style={{ textAlign: "center", color: "var(--text-muted)", fontSize: "0.86rem", marginTop: "0.85rem", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.45rem" }}>
+                    <span>
+                      {allCoordReports.length === 0
+                        ? "Belum ada laporan dengan data koordinat lokasi."
+                        : mapStatusMode === "active" && coordReportsByDept.length > 0
+                        ? `Tidak ada laporan aktif (Diterima/Diproses) pada filter ini, namun ada ${coordReportsByDept.length} laporan selesai/ditolak.`
+                        : "Tidak ada titik laporan untuk filter dinas yang dipilih."}
+                    </span>
+                    {mapStatusMode === "active" && coordReportsByDept.length > 0 && (
+                      <button
+                        type="button"
+                        className="nav-btn"
+                        style={{ padding: "0.35rem 0.85rem", fontSize: "0.8rem", borderColor: "var(--accent-primary)", color: "var(--accent-primary)" }}
+                        onClick={() => setMapStatusMode("all")}
+                      >
+                        Tampilkan Semua Status ({coordReportsByDept.length} titik)
+                      </button>
+                    )}
+                  </div>
                 )}
               </div>
 
-              <div className="glass-panel" style={{ padding: "1.5rem" }}>
+              <div
+                className={`glass-panel admin-tab-panel ${adminMobileTab === "daftar" ? "is-active-mobile-tab" : ""}`}
+                style={{ padding: "1.5rem" }}
+              >
                 <div
                   style={{
                     marginBottom: "1.25rem",
@@ -2457,107 +3468,134 @@ export default function App() {
                     {statusFilter !== "all" || dateFilter !== "all" ? `Tidak ada laporan yang cocok dengan filter yang dipilih.` : "Belum ada pengaduan masuk."}
                   </p>
                 ) : (
-                  <table
-                    style={{
-                      width: "100%",
-                      borderCollapse: "collapse",
-                      fontSize: "0.95rem",
-                    }}
-                  >
-                    <thead>
-                      <tr
-                        style={{
-                          borderBottom: "2px solid var(--border-color)",
-                          textAlign: "left",
-                          color: "var(--text-muted)",
-                        }}
-                      >
-                        <th style={{ padding: "1rem" }}>ID</th>
-                        <th style={{ padding: "1rem" }}>Urgensi AI</th>
-                        <th style={{ padding: "1rem" }}>Judul Laporan</th>
-                        <th style={{ padding: "1rem" }}>Status</th>
-                        <th style={{ padding: "1rem" }}>Aksi</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredReports.map((r) => (
-                      <tr
-                        key={r.id}
-                        style={{ borderBottom: "1px solid #e2e8f0" }}
-                      >
-                        <td style={{ padding: "1rem", fontWeight: 600 }}>
-                          #{r.id}
-                        </td>
-                        <td style={{ padding: "1rem" }}>
-                          <span className={`badge badge-${r.urgensi}`}>
-                            {r.urgensi}
-                          </span>
-                        </td>
-                        <td
+                  <div className="table-responsive-wrap">
+                    <table
+                      className="responsive-table"
+                      style={{
+                        width: "100%",
+                        borderCollapse: "collapse",
+                        fontSize: "0.95rem",
+                      }}
+                    >
+                      <thead>
+                        <tr
                           style={{
-                            padding: "1rem",
-                            fontWeight: 700,
-                            color: "var(--text-main)",
+                            borderBottom: "2px solid var(--border-color)",
+                            textAlign: "left",
+                            color: "var(--text-muted)",
                           }}
                         >
-                          {r.judul}
-                        </td>
-                        <td style={{ padding: "1rem" }}>
-                          <span
+                          <th style={{ padding: "1rem" }}>ID</th>
+                          <th style={{ padding: "1rem" }}>Urgensi AI</th>
+                          <th style={{ padding: "1rem" }}>Judul Laporan</th>
+                          <th style={{ padding: "1rem" }}>Status</th>
+                          <th style={{ padding: "1rem" }}>Aksi</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredReports.map((r) => (
+                        <tr
+                          key={r.id}
+                          style={{ borderBottom: "1px solid #e2e8f0" }}
+                        >
+                          <td style={{ padding: "1rem", fontWeight: 600 }}>
+                            #{r.id}
+                          </td>
+                          <td style={{ padding: "1rem" }}>
+                            <span className={`badge badge-${r.urgensi}`}>
+                              {r.urgensi}
+                            </span>
+                          </td>
+                          <td
                             style={{
-                              color:
-                                r.status === "selesai" ? "#059669" : "#b45309",
+                              padding: "1rem",
                               fontWeight: 700,
+                              color: "var(--text-main)",
                             }}
                           >
-                            {r.status}
-                          </span>
-                        </td>
-                        <td
-                          style={{
-                            padding: "1rem",
-                            display: "flex",
-                            gap: "0.5rem",
-                          }}
-                        >
-                          <button
-                            className="nav-btn"
+                            {r.judul}
+                          </td>
+                          <td style={{ padding: "1rem" }}>
+                            <span
+                              style={{
+                                color:
+                                  r.status === "selesai" ? "#059669" : "#b45309",
+                                fontWeight: 700,
+                              }}
+                            >
+                              {r.status}
+                            </span>
+                            {r.rating_kepuasan && (
+                              <div
+                                style={{
+                                  marginTop: "0.3rem",
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: "0.25rem",
+                                  padding: "0.15rem 0.5rem",
+                                  borderRadius: "6px",
+                                  background: "#fef3c7",
+                                  border: "1px solid #fde68a",
+                                  color: "#92400e",
+                                  fontSize: "0.78rem",
+                                  fontWeight: 700,
+                                }}
+                                title={r.ulasan_warga ? `Ulasan warga: "${r.ulasan_warga}"` : RATING_LABELS[r.rating_kepuasan]}
+                              >
+                                <Star size={12} fill="#f59e0b" color="#d97706" />
+                                {r.rating_kepuasan}/5
+                              </div>
+                            )}
+                          </td>
+                          <td
                             style={{
-                              padding: "0.4rem 0.8rem",
-                              fontSize: "0.85rem",
-                            }}
-                            onClick={() => {
-                              setSelectedReport(r);
-                              setNewStatus(r.status);
-                              setCatatanPetugas(r.catatan_petugas || "");
+                              padding: "1rem",
+                              display: "flex",
+                              gap: "0.5rem",
+                              flexWrap: "wrap",
                             }}
                           >
-                            Ubah Status
-                          </button>
-                          <button
-                            className="nav-btn"
-                            style={{
-                              padding: "0.4rem 0.8rem",
-                              fontSize: "0.85rem",
-                              borderColor: "var(--accent-primary)",
-                              color: "var(--accent-primary)",
-                            }}
-                            onClick={() => handleViewAuditLogs(r)}
-                          >
-                            Audit Log
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                            <button
+                              className="nav-btn"
+                              style={{
+                                padding: "0.4rem 0.8rem",
+                                fontSize: "0.85rem",
+                                whiteSpace: "nowrap",
+                              }}
+                              onClick={() => {
+                                setSelectedReport(r);
+                                setNewStatus(r.status);
+                                setCatatanPetugas(r.catatan_petugas || "");
+                              }}
+                            >
+                              Ubah Status
+                            </button>
+                            <button
+                              className="nav-btn"
+                              style={{
+                                padding: "0.4rem 0.8rem",
+                                fontSize: "0.85rem",
+                                borderColor: "var(--accent-primary)",
+                                color: "var(--accent-primary)",
+                                whiteSpace: "nowrap",
+                              }}
+                              onClick={() => handleViewAuditLogs(r)}
+                            >
+                              Audit Log
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </div>
           </div>
         )}
 
         {mainView === "admin_dinas" && userRole === "super_admin" && (
-          <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
             <div
               className="glass-panel"
               style={{
@@ -2570,7 +3608,7 @@ export default function App() {
               }}
             >
               <div>
-                <h1 style={{ fontSize: "1.75rem", fontWeight: 800, margin: 0 }}>
+                <h1 style={{ fontSize: "clamp(1.35rem, 3.5vw, 1.75rem)", fontWeight: 800, margin: 0 }}>
                   Manajemen Admin Dinas (OPD)
                 </h1>
                 <p style={{ color: "var(--text-muted)", margin: "0.4rem 0 0", fontSize: "0.95rem" }}>
@@ -2617,12 +3655,7 @@ export default function App() {
               )}
               <form
                 onSubmit={handleCreateAdminDinas}
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr 1fr auto",
-                  gap: "1rem",
-                  alignItems: "end",
-                }}
+                className="admin-create-grid"
               >
                 <div className="form-group" style={{ margin: 0 }}>
                   <label className="form-label">NIP Aparatur</label>
@@ -2673,8 +3706,8 @@ export default function App() {
                 </div>
                 <button
                   type="submit"
-                  className="nav-btn nav-btn-primary"
-                  style={{ padding: "0.85rem 1.5rem" }}
+                  className="nav-btn nav-btn-primary admin-create-submit"
+                  style={{ padding: "0.85rem 1.5rem", justifyContent: "center" }}
                 >
                   Buat Akun
                 </button>
@@ -2690,7 +3723,7 @@ export default function App() {
                   alignItems: "center",
                   marginBottom: "1rem",
                   flexWrap: "wrap",
-                  gap: "0.5rem",
+                  gap: "0.75rem",
                 }}
               >
                 <h2
@@ -2703,7 +3736,12 @@ export default function App() {
                     gap: "0.5rem",
                   }}
                 >
-                  <Users className="text-accent-primary" /> Daftar Admin Dinas Terdaftar ({adminDinasList.length})
+                  <Users className="text-accent-primary" /> Daftar Admin Dinas Terdaftar (
+                  {filteredAdminDinas.length}
+                  {filteredAdminDinas.length !== adminDinasList.length
+                    ? ` dari ${adminDinasList.length}`
+                    : ""}
+                  )
                 </h2>
                 <button
                   type="button"
@@ -2715,11 +3753,92 @@ export default function App() {
                 </button>
               </div>
 
-              {adminDinasList.length === 0 ? (
-                <p style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>Belum ada Admin Dinas terdaftar.</p>
+              {/* Filter Berdasarkan Nama Dinas & Pencarian Cepat */}
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: "0.85rem",
+                  alignItems: "center",
+                  marginBottom: "1.25rem",
+                  padding: "0.9rem 1rem",
+                  background: "#f8fafc",
+                  borderRadius: "10px",
+                  border: "1px solid var(--border-color)",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flex: "1 1 280px" }}>
+                  <Filter size={16} className="text-accent-primary" style={{ flexShrink: 0 }} />
+                  <label
+                    htmlFor="filter-admin-dinas"
+                    style={{ fontSize: "0.88rem", fontWeight: 700, color: "var(--text-main)", whiteSpace: "nowrap" }}
+                  >
+                    Filter Dinas:
+                  </label>
+                  <select
+                    id="filter-admin-dinas"
+                    className="form-select"
+                    value={adminDeptFilter}
+                    onChange={(e) => setAdminDeptFilter(e.target.value)}
+                    style={{ padding: "0.5rem 0.85rem", fontSize: "0.9rem" }}
+                  >
+                    <option value="all">Semua Dinas ({adminDinasList.length})</option>
+                    {departments.map((d) => {
+                      const count = adminDinasList.filter((a) => Number(a.dept_id) === Number(d.id)).length;
+                      return (
+                        <option key={d.id} value={String(d.id)}>
+                          {d.nama_dinas} ({count})
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
+
+                <div style={{ position: "relative", flex: "1 1 240px" }}>
+                  <Search
+                    size={15}
+                    style={{
+                      position: "absolute",
+                      left: "12px",
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      color: "var(--text-muted)",
+                    }}
+                  />
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="Cari nama dinas, NIP, atau email..."
+                    value={adminSearchQuery}
+                    onChange={(e) => setAdminSearchQuery(e.target.value)}
+                    style={{ padding: "0.5rem 0.85rem 0.5rem 2.2rem", fontSize: "0.9rem" }}
+                  />
+                </div>
+
+                {(adminDeptFilter !== "all" || adminSearchQuery.trim() !== "") && (
+                  <button
+                    type="button"
+                    className="nav-btn"
+                    onClick={() => {
+                      setAdminDeptFilter("all");
+                      setAdminSearchQuery("");
+                    }}
+                    style={{ padding: "0.45rem 0.85rem", fontSize: "0.84rem", borderColor: "var(--border-color)" }}
+                  >
+                    Reset Filter
+                  </button>
+                )}
+              </div>
+
+              {filteredAdminDinas.length === 0 ? (
+                <p style={{ color: "var(--text-muted)", fontSize: "0.92rem", padding: "1rem 0" }}>
+                  {adminDinasList.length === 0
+                    ? "Belum ada Admin Dinas terdaftar."
+                    : "Tidak ada akun Admin Dinas yang sesuai dengan filter dinas atau kata kunci yang dipilih."}
+                </p>
               ) : (
-                <div style={{ overflowX: "auto" }}>
-                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.9rem" }}>
+                <div className="table-responsive-wrap">
+                  <table className="responsive-table" style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.9rem" }}>
                     <thead>
                       <tr style={{ borderBottom: "2px solid var(--border-color)", textAlign: "left", color: "var(--text-muted)" }}>
                         <th style={{ padding: "0.75rem" }}>ID</th>
@@ -2731,7 +3850,7 @@ export default function App() {
                       </tr>
                     </thead>
                     <tbody>
-                      {adminDinasList.map((a) => (
+                      {filteredAdminDinas.map((a) => (
                         <tr key={a.id} style={{ borderBottom: "1px solid #e2e8f0" }}>
                           <td style={{ padding: "0.75rem", fontWeight: 600 }}>#{a.id}</td>
                           <td style={{ padding: "0.75rem" }}>{a.nik_or_nip}</td>
@@ -2781,179 +3900,296 @@ export default function App() {
 
       {/* Modals for Admin Actions */}
       {selectedReport && !showAuditModal && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h3
-              style={{
-                fontSize: "1.25rem",
-                fontWeight: 800,
-                marginBottom: "1rem",
-              }}
-            >
-              Pembaruan Status Laporan #{selectedReport.id}
-            </h3>
-            <p
-              style={{
-                fontSize: "1.05rem",
-                fontWeight: 700,
-                color: "var(--text-main)",
-                marginBottom: "0.5rem",
-              }}
-            >
-              {selectedReport.judul}
-            </p>
-            <p
-              style={{
-                fontSize: "0.9rem",
-                color: "var(--text-muted)",
-                marginBottom: "1rem",
-                lineHeight: 1.5,
-                background: "rgba(0,0,0,0.02)",
-                padding: "0.75rem",
-                borderRadius: "8px",
-                border: "1px solid var(--border-color)",
-              }}
-            >
-              {selectedReport.isi_laporan}
-            </p>
-            {selectedReport.foto_bukti && (
-              <div style={{ marginBottom: "1rem" }}>
-                <p style={{ fontSize: "0.8rem", fontWeight: 600, color: "var(--text-muted)", marginBottom: "0.25rem" }}>
-                  Foto Bukti Lampiran:
-                </p>
-                <img
-                  src={apiUrl(`/uploads/${selectedReport.foto_bukti}`)}
-                  alt="Foto Bukti"
-                  style={{
-                    maxWidth: "100%",
-                    maxHeight: "180px",
-                    borderRadius: "8px",
-                    objectFit: "cover",
-                    border: "1px solid var(--border-color)",
-                    cursor: "pointer",
-                  }}
-                  onClick={() => window.open(apiUrl(`/uploads/${selectedReport.foto_bukti}`), "_blank")}
-                  title="Klik untuk membuka ukuran penuh"
-                />
+        <div
+          className="modal-overlay"
+          onClick={() => {
+            setSelectedReport(null);
+            setCatatanPetugas("");
+            setFeedbackFile(null);
+            setFeedbackUploadMsg("");
+          }}
+        >
+          <div
+            className="modal-content status-update-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header Modal */}
+            <div className="status-modal-header">
+              <div className="status-modal-title-group">
+                <div className="status-modal-icon-badge">
+                  <FileText size={20} />
+                </div>
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
+                    <h3 className="status-modal-title">
+                      Pembaruan Status Laporan #{selectedReport.id}
+                    </h3>
+                    <span className={`badge badge-${selectedReport.urgensi}`} style={{ fontSize: "0.7rem", padding: "0.2rem 0.6rem" }}>
+                      {selectedReport.urgensi}
+                    </span>
+                  </div>
+                  <p className="status-modal-subtitle">
+                    <Building2 size={13} style={{ display: "inline", marginRight: "4px", verticalAlign: "-2px" }} />
+                    {departments.find((d) => d.id === selectedReport.dept_id)?.nama_dinas || "AI Auto-Routing"}
+                  </p>
+                </div>
               </div>
-            )}
-            {selectedReport.lat && selectedReport.long && (
-              <div style={{ marginBottom: "1rem" }}>
-                <a
-                  href={`https://www.google.com/maps?q=${selectedReport.lat},${selectedReport.long}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "0.35rem",
-                    fontSize: "0.8rem",
-                    color: "var(--accent-primary)",
-                    textDecoration: "none",
-                    background: "rgba(59, 130, 246, 0.08)",
-                    padding: "0.3rem 0.65rem",
-                    borderRadius: "6px",
-                    fontWeight: 600,
-                  }}
-                >
-                  <MapPin size={13} /> Lokasi GPS ({selectedReport.lat}, {selectedReport.long})
-                </a>
-              </div>
-            )}
-            <div className="form-group">
-              <label className="form-label">Pilih Status Baru</label>
-              <select
-                className="form-select"
-                value={newStatus}
-                onChange={(e) => setNewStatus(e.target.value)}
+              <button
+                type="button"
+                className="status-modal-close-btn"
+                aria-label="Tutup modal"
+                onClick={() => {
+                  setSelectedReport(null);
+                  setCatatanPetugas("");
+                  setFeedbackFile(null);
+                  setFeedbackUploadMsg("");
+                }}
               >
-                <option value="diterima">Diterima</option>
-                <option value="diproses">Diproses</option>
-                <option value="selesai">Selesai</option>
-                <option value="ditolak">Ditolak</option>
-              </select>
+                <X size={19} />
+              </button>
             </div>
-            <div className="form-group" style={{ marginTop: "1rem" }}>
-              <label className="form-label">Catatan / Tindak Lanjut Petugas (Opsional)</label>
+
+            {/* Kartu Ringkasan Laporan Warga */}
+            <div className="status-modal-report-card">
+              <div className="status-modal-section-kicker">DETAIL LAPORAN WARGA</div>
+              <h4 className="status-modal-report-heading">{selectedReport.judul}</h4>
+              {selectedReport.isi_laporan &&
+                selectedReport.isi_laporan.trim() !== selectedReport.judul?.trim() && (
+                  <p className="status-modal-report-body">{selectedReport.isi_laporan}</p>
+                )}
+
+              {(selectedReport.lat && selectedReport.long) || selectedReport.foto_bukti ? (
+                <div className="status-modal-report-meta">
+                  {selectedReport.lat && selectedReport.long && (
+                    <a
+                      href={`https://www.google.com/maps?q=${selectedReport.lat},${selectedReport.long}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="status-modal-gps-chip"
+                    >
+                      <MapPin size={13} />
+                      <span>Lokasi GPS ({selectedReport.lat}, {selectedReport.long})</span>
+                    </a>
+                  )}
+                </div>
+              ) : null}
+
+              {selectedReport.foto_bukti && (
+                <div style={{ marginTop: "0.75rem" }}>
+                  <p style={{ fontSize: "0.76rem", fontWeight: 700, color: "#486581", marginBottom: "0.35rem" }}>
+                    Foto Bukti Lampiran Warga:
+                  </p>
+                  <img
+                    src={apiUrl(`/uploads/${selectedReport.foto_bukti}`)}
+                    alt="Foto Bukti"
+                    style={{
+                      width: "100%",
+                      maxHeight: "170px",
+                      borderRadius: "10px",
+                      objectFit: "cover",
+                      border: "1px solid var(--border-color)",
+                      cursor: "pointer",
+                    }}
+                    onClick={() => window.open(apiUrl(`/uploads/${selectedReport.foto_bukti}`), "_blank")}
+                    title="Klik untuk membuka ukuran penuh"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Penilaian Warga (Jika sudah ada) */}
+            {selectedReport.rating_kepuasan && (
+              <div
+                style={{
+                  marginBottom: "1.15rem",
+                  padding: "0.85rem 1rem",
+                  background: "#fffbeb",
+                  border: "1px solid #fde68a",
+                  borderLeft: "4px solid #f59e0b",
+                  borderRadius: "10px",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", marginBottom: "0.2rem", flexWrap: "wrap" }}>
+                  {[1, 2, 3, 4, 5].map((s) => (
+                    <Star
+                      key={s}
+                      size={15}
+                      fill={s <= selectedReport.rating_kepuasan ? "#f59e0b" : "none"}
+                      color={s <= selectedReport.rating_kepuasan ? "#d97706" : "#cbd5e1"}
+                    />
+                  ))}
+                  <strong style={{ fontSize: "0.86rem", color: "#92400e", marginLeft: "0.25rem" }}>
+                    Penilaian Warga: {RATING_LABELS[selectedReport.rating_kepuasan] || `${selectedReport.rating_kepuasan}/5`}
+                  </strong>
+                </div>
+                {selectedReport.ulasan_warga && (
+                  <p style={{ margin: "0.25rem 0 0", fontSize: "0.86rem", color: "#78350f" }}>
+                    &ldquo;{selectedReport.ulasan_warga}&rdquo;
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Pemilih Status Baru Interaktif (4 Kartu Pill Status) */}
+            <div className="form-group" style={{ marginBottom: "1.15rem" }}>
+              <label className="form-label" style={{ fontSize: "0.92rem", marginBottom: "0.35rem" }}>
+                Pilih Status Baru
+              </label>
+              <div className="status-selector-grid" role="radiogroup" aria-label="Pilih status laporan">
+                {[
+                  { value: "diterima", label: "Diterima", desc: "Laporan masuk", icon: FileText, tone: "blue" },
+                  { value: "diproses", label: "Diproses", desc: "Ditindaklanjuti", icon: Clock, tone: "amber" },
+                  { value: "selesai", label: "Selesai", desc: "Penanganan tuntas", icon: CheckCircle, tone: "emerald" },
+                  { value: "ditolak", label: "Ditolak", desc: "Tidak valid", icon: X, tone: "rose" },
+                ].map((opt) => {
+                  const IconComp = opt.icon;
+                  const active = newStatus === opt.value;
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      role="radio"
+                      aria-checked={active}
+                      onClick={() => setNewStatus(opt.value)}
+                      className={`status-option-card tone-${opt.tone} ${active ? "is-selected" : ""}`}
+                    >
+                      <span className="status-option-icon">
+                        <IconComp size={16} />
+                      </span>
+                      <span className="status-option-text">
+                        <strong>{opt.label}</strong>
+                        <small>{opt.desc}</small>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Catatan / Tindak Lanjut Petugas */}
+            <div className="form-group" style={{ marginBottom: "1.15rem" }}>
+              <label className="form-label" style={{ fontSize: "0.92rem" }}>
+                Catatan / Tindak Lanjut Petugas <span style={{ fontWeight: 500, color: "#64748b", fontSize: "0.82rem" }}>(Opsional)</span>
+              </label>
               <textarea
-                className="form-input"
+                className="form-input status-modal-textarea"
                 rows={3}
                 placeholder="Tuliskan keterangan perbaikan, tindak lanjut tim lapangan, atau alasan penolakan..."
                 value={catatanPetugas}
                 onChange={(e) => setCatatanPetugas(e.target.value)}
-                style={{ resize: "vertical" }}
               />
             </div>
-            {/* Preview dokumen feedback jika sudah ada */}
-            {selectedReport.foto_feedback && (
-              <div style={{ marginBottom: "1rem" }}>
-                <p style={{ fontSize: "0.8rem", fontWeight: 600, color: "var(--text-muted)", marginBottom: "0.25rem" }}>
-                  Dokumen Feedback yang Diupload:
-                </p>
-                {selectedReport.foto_feedback.toLowerCase().endsWith(".pdf") ? (
-                  <a
-                    href={apiUrl("/uploads/" + selectedReport.foto_feedback)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem", fontSize: "0.9rem", color: "var(--accent-primary)" }}
-                  >
-                    📎 Buka Dokumen PDF
-                  </a>
-                ) : (
-                  <img
-                    src={apiUrl("/uploads/" + selectedReport.foto_feedback)}
-                    alt="Foto Feedback"
-                    style={{ maxWidth: "100%", maxHeight: "120px", borderRadius: "8px", objectFit: "cover", border: "1px solid var(--border-color)", cursor: "pointer" }}
-                    onClick={() => window.open(apiUrl("/uploads/" + selectedReport.foto_feedback), "_blank")}
-                  />
-                )}
+
+            {/* Bagian Dokumen / Foto Feedback Dinas */}
+            <div className="status-modal-feedback-box">
+              <div className="status-modal-feedback-header">
+                <span className="form-label" style={{ fontSize: "0.9rem", margin: 0 }}>
+                  Lampiran Bukti Tindak Lanjut Dinas <span style={{ fontWeight: 500, color: "#64748b", fontSize: "0.8rem" }}>(Opsional)</span>
+                </span>
               </div>
-            )}
-            {/* Upload dokumen/foto feedback dari admin dinas */}
-            <form onSubmit={handleUploadFeedback} style={{ marginTop: "1rem" }}>
-              <label className="form-label">Upload Dokumen/Foto Feedback (Opsional)</label>
-              <input
-                type="file"
-                accept="image/jpeg,image/png,image/webp,application/pdf"
-                onChange={(e) => setFeedbackFile(e.target.files[0] || null)}
-                style={{ marginBottom: "0.5rem" }}
-              />
-              {feedbackUploadMsg && (
-                <p style={{ fontSize: "0.8rem", marginTop: "0.3rem", color: feedbackUploadMsg.startsWith("✅") ? "#059669" : "#dc2626", fontWeight: 600 }}>
-                  {feedbackUploadMsg}
-                </p>
+
+              {/* Preview dokumen feedback jika sudah ada */}
+              {selectedReport.foto_feedback && (
+                <div className="feedback-existing-card">
+                  <div className="feedback-existing-info">
+                    <span className="feedback-existing-badge">
+                      <FileText size={16} />
+                    </span>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: "0.82rem", fontWeight: 700, color: "#0d223a" }}>
+                        Dokumen Feedback Terlampir
+                      </div>
+                      <div style={{ fontSize: "0.75rem", color: "#486581", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {selectedReport.foto_feedback.toLowerCase().endsWith(".pdf")
+                          ? "Dokumen PDF Resmi"
+                          : "Foto Bukti Penanganan"}
+                      </div>
+                    </div>
+                  </div>
+                  {selectedReport.foto_feedback.toLowerCase().endsWith(".pdf") ? (
+                    <a
+                      href={apiUrl("/uploads/" + selectedReport.foto_feedback)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="feedback-open-doc-btn"
+                    >
+                      Buka PDF &rarr;
+                    </a>
+                  ) : (
+                    <button
+                      type="button"
+                      className="feedback-open-doc-btn"
+                      onClick={() => window.open(apiUrl("/uploads/" + selectedReport.foto_feedback), "_blank")}
+                    >
+                      Lihat Foto &rarr;
+                    </button>
+                  )}
+                </div>
               )}
+
+              {/* Form Upload Dokumen/Foto Feedback Modern */}
+              <form onSubmit={handleUploadFeedback} className="feedback-upload-form">
+                <input
+                  id="feedback-file-picker"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,application/pdf"
+                  onChange={(e) => {
+                    setFeedbackFile(e.target.files[0] || null);
+                    setFeedbackUploadMsg("");
+                  }}
+                  style={{ display: "none" }}
+                />
+                <div className="feedback-picker-row">
+                  <label htmlFor="feedback-file-picker" className="feedback-file-trigger">
+                    <Download size={15} style={{ transform: "rotate(180deg)", flexShrink: 0 }} />
+                    <span className="feedback-file-name">
+                      {feedbackFile ? feedbackFile.name : "Pilih File PDF / Foto (Maks 5MB)..."}
+                    </span>
+                  </label>
+                  <button
+                    type="submit"
+                    className={`nav-btn feedback-upload-submit-btn ${feedbackFile ? "is-ready" : ""}`}
+                    disabled={feedbackUploading || !feedbackFile}
+                  >
+                    {feedbackUploading ? "Mengupload..." : "Upload"}
+                  </button>
+                </div>
+                {feedbackUploadMsg && (
+                  <p
+                    style={{
+                      fontSize: "0.8rem",
+                      marginTop: "0.45rem",
+                      color: feedbackUploadMsg.startsWith("✅") ? "#059669" : "#dc2626",
+                      fontWeight: 700,
+                    }}
+                  >
+                    {feedbackUploadMsg}
+                  </p>
+                )}
+              </form>
+            </div>
+
+            {/* Footer Aksi Modal */}
+            <div className="status-modal-footer">
               <button
-                type="submit"
-                className="nav-btn"
-                style={{ padding: "0.4rem 0.85rem", fontSize: "0.82rem" }}
-                disabled={feedbackUploading || !feedbackFile}
-              >
-                {feedbackUploading ? "Mengupload..." : "Upload Feedback"}
-              </button>
-            </form>
-            <div
-              style={{
-                display: "flex",
-                gap: "1rem",
-                justifyContent: "flex-end",
-                marginTop: "2rem",
-              }}
-            >
-              <button
-                className="nav-btn"
+                type="button"
+                className="nav-btn status-modal-cancel-btn"
                 onClick={() => {
                   setSelectedReport(null);
                   setCatatanPetugas("");
+                  setFeedbackFile(null);
+                  setFeedbackUploadMsg("");
                 }}
               >
                 Batal
               </button>
               <button
-                className="nav-btn nav-btn-primary"
+                type="button"
+                className="nav-btn nav-btn-primary status-modal-save-btn"
                 onClick={() => handleUpdateStatus(selectedReport.id)}
               >
-                Simpan Perubahan
+                <CheckCircle size={17} />
+                <span>Simpan Perubahan</span>
               </button>
             </div>
           </div>
@@ -3095,8 +4331,8 @@ export default function App() {
       )}
 
       {editReportModal.open && (
-        <div className="modal-overlay" style={{ position: "fixed", zIndex: 50, left: 0, top: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.25)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <div className="glass-panel" style={{ width: 420, maxWidth: "95vw", padding: 28, borderRadius: 16, boxShadow: "0 4px 32px rgba(0,0,0,0.15)" }}>
+        <div className="modal-overlay">
+          <div className="modal-content">
             <h2 style={{ fontSize: "1.2rem", fontWeight: 700, marginBottom: 16 }}>Edit Laporan</h2>
             <form onSubmit={handleEditReport}>
               <div className="form-group">
@@ -3116,15 +4352,17 @@ export default function App() {
                 <label className="form-label">Isi Laporan</label>
                 <textarea className="form-textarea" rows={4} value={editIsi} onChange={(e) => setEditIsi(e.target.value)} required />
               </div>
-              <div className="form-group">
-                <label className="form-label">Latitude (Opsional)</label>
-                <input type="number" step="any" className="form-input" value={editLat} onChange={(e) => setEditLat(e.target.value)} />
+              <div className="coord-grid" style={{ marginBottom: "1rem" }}>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label">Latitude (Opsional)</label>
+                  <input type="number" step="any" className="form-input" value={editLat} onChange={(e) => setEditLat(e.target.value)} />
+                </div>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label">Longitude (Opsional)</label>
+                  <input type="number" step="any" className="form-input" value={editLong} onChange={(e) => setEditLong(e.target.value)} />
+                </div>
               </div>
-              <div className="form-group">
-                <label className="form-label">Longitude (Opsional)</label>
-                <input type="number" step="any" className="form-input" value={editLong} onChange={(e) => setEditLong(e.target.value)} />
-              </div>
-              <div style={{ marginTop: 20, display: "flex", justifyContent: "flex-end", gap: 12 }}>
+              <div style={{ marginTop: 20, display: "flex", justifyContent: "flex-end", flexWrap: "wrap", gap: 12 }}>
                 <button type="button" className="nav-btn" onClick={() => setEditReportModal({ open: false, report: null })}>Batal</button>
                 <button type="submit" className="nav-btn nav-btn-primary">Simpan Perubahan</button>
               </div>

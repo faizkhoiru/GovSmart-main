@@ -64,12 +64,34 @@ class AdminDinasUpdate(BaseModel):
         return v
 
 
+class UserProfileUpdate(BaseModel):
+    nama_lengkap: Optional[str] = Field(None, max_length=120, description="Nama lengkap pengguna")
+    email: Optional[EmailStr] = None
+    no_telepon: Optional[str] = Field(None, max_length=30, description="Nomor telepon atau WhatsApp")
+    alamat: Optional[str] = Field(None, max_length=255, description="Alamat domisili")
+    password: Optional[str] = Field(None, min_length=8, description="Kata sandi baru (opsional)")
+
+    @field_validator("password")
+    @classmethod
+    def password_must_be_strong(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None and v != "":
+            return validate_password_strength(v)
+        return v
+
+
 class UserResponse(UserBase):
     id: int
     role: str
     dept_id: Optional[int] = None
     is_active: bool = True
     nama_dinas: Optional[str] = None
+    nama_lengkap: Optional[str] = None
+    no_telepon: Optional[str] = None
+    alamat: Optional[str] = None
 
     class Config:
         from_attributes = True
+
+
+class UserProfileUpdateResponse(UserResponse):
+    access_token: Optional[str] = None

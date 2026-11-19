@@ -2,7 +2,7 @@
 from fastapi import APIRouter, Depends, Request, HTTPException, status
 # pyrefly: ignore [missing-import]
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional, Dict, Any
 from app.api.deps import get_db, get_current_user
 from app.core.config import settings
 from app.core.privacy import mask_pii
@@ -589,7 +589,39 @@ BISA_BANTU_RE = re.compile(
 )
 
 
-def generate_builtin_chatbot_response(pertanyaan: str) -> dict:
+FOLLOWUP_SIGNAL_RE = re.compile(
+    r"(?:"
+    r"^(?:kalau|kalo|terus|trus|lalu|kemudian|nah\s+kalau|jadi\s+kalau|untuk|soal|terkait|tentang)\b|"
+    r"\b(?:itu|tersebut|tadi|tsb|di\s+atas)\b|"
+    r"\b(?:biayanya|tarifnya|prosesnya|waktunya|lamanya|syaratnya|persyaratannya|dokumennya|berkasnya|prosedurnya|caranya|langkahnya|urusnya|mengurusnya|daftarnya|pendaftarannya|lokasinya|tempatnya|kantornya|aplikasinya|statusnya|editnya|batalinnya)\b|"
+    r"\b(?:berapa\s+lama|jangka\s+waktu|estimasi\s+waktu|berapa\s+hari|berapa\s+biaya|biaya|tarif|retribusi|apakah\s+gratis|gratis\s+atau\s+bayar|bayar\s+berapa|syarat(?:nya)?\s+apa|dokumen(?:nya)?\s+apa|berkas(?:nya)?\s+apa|mengurus(?:nya)?\s+di\s*mana|urus(?:nya)?\s+di\s*mana|di\s*mana\s+mengurus|lewat\s+mana|secara\s+online|kalau\s+hilang|kalau\s+rusak|bisa\s+diedit|bisa\s+dibatalkan)\b"
+    r")",
+    re.I,
+)
+
+
+def _match_best_knowledge_intent(q_text: str):
+    best_intent: Optional[Dict[str, Any]] = None
+    best_score = 0
+    for item in KNOWLEDGE_INTENTS:
+        score = 0
+        for phrase in item["phrases"]:
+            if phrase in q_text:
+                words_count = len(phrase.split())
+                score += 8 + (words_count * 4)
+        for kw in item["keywords"]:
+            if re.search(r"\b" + re.escape(kw) + r"\b", q_text):
+                score += 3
+        if score > best_score:
+            best_score = score
+            best_intent = item
+    return best_intent, best_score
+
+
+def generate_builtin_chatbot_response(
+    pertanyaan: str,
+    riwayat: Optional[List[Dict[str, Any]]] = None,
+) -> dict:
     q = pertanyaan.lower().strip()
 
     # Kupas sapaan / basa-basi pembuka
@@ -599,7 +631,9 @@ def generate_builtin_chatbot_response(pertanyaan: str) -> dict:
         q_core = POLA_BASA_BASI_PREFIX.sub("", q).strip()
         q_core = re.sub(r"^[,\-?!:;\s]+", "", q_core).strip()
 
-    if re.search(r"\b(?:apa\s+kabar|gimana\s+kabar(?:nya)?|sehat\s*(?:min|gak|kah)?|kabarnya\s+gimana|lagi\s+(?:apa|ngapain|sibuk)|kbrnya\s+gmn|gmn\s+kbr|kbr|piye\s+kabare|pripun\s+kabare)\b", q):
+    q_check = q_core if q_core else q
+
+    if re.search(r"\b(?:apa\s+kabar|gimana\s+kabar(?:nya)?|sehat\s*(?:min|gak|kah)?|kabarnya\s+gimana|lagi\s+(?:apa|ngapain|sibuk)|kbrnya\s+gmn|gmn\s+kbr|kbr|piye\s+kabare|pripun\s+kabare)\b", q_check):
         return {
             "jawaban": "Alhamdulillah kabar saya sangat baik dan selalu siap siaga 24/7 membantu warga Lamongan! 😊\n\nBagaimana kabar Anda hari ini? Ada panduan layanan perizinan, administrasi kependudukan, atau pengaduan fasilitas daerah yang bisa saya bantu?",
             "intent": "sapaan",
@@ -607,7 +641,7 @@ def generate_builtin_chatbot_response(pertanyaan: str) -> dict:
             "sumber": [],
         }
 
-    if re.search(r"\b(?:kamu\s+(?:pintar|pinter|cerdas|hebat|keren|ramah|asik|lucu|baik)|keren\s+banget|mantap\s+banget|bagus\s+banget|terbaik|good\s+job)\b", q):
+    if re.search(r"\b(?:kamu\s+(?:pintar|pinter|cerdas|hebat|keren|ramah|asik|lucu|baik)|keren\s+banget|mantap\s+banget|bagus\s+banget|terbaik|good\s+job)\b", q_check):
         return {
             "jawaban": "Hehe, terima kasih banyak atas apresiasinya! Senang sekali bisa membantu Anda 😊\n\nJika ada perizinan atau layanan publik lain yang ingin Anda ketahui, jangan ragu bertanya lagi ya!",
             "intent": "sapaan",
@@ -615,7 +649,7 @@ def generate_builtin_chatbot_response(pertanyaan: str) -> dict:
             "sumber": [],
         }
 
-    if BISA_BANTU_RE.search(q) or (q_core and BISA_BANTU_RE.search(q_core)):
+    if BISA_BANTU_RE.search(q_check):
         return {
             "jawaban": "Tentu saja bisa banget! 😊 Silakan sampaikan apa yang ingin Anda tanyakan atau kendala apa yang sedang dihadapi seputar aplikasi GovSmart atau layanan Pemkab Lamongan. Saya siap memandu langkah demi langkah.",
             "intent": "sapaan",
@@ -640,23 +674,24 @@ def generate_builtin_chatbot_response(pertanyaan: str) -> dict:
         }
 
     q_eval = q_core if len(q_core) >= 5 else q
-    best_intent = None
-    best_score = 0
+    best_intent, best_score = _match_best_knowledge_intent(f"{q} {q_eval}")
+    konteks_sebelumnya = None
 
-    for item in KNOWLEDGE_INTENTS:
-        score = 0
-        for phrase in item["phrases"]:
-            if phrase in q or phrase in q_eval:
-                words_count = len(phrase.split())
-                score += 8 + (words_count * 4)
-
-        for kw in item["keywords"]:
-            if re.search(r"\b" + re.escape(kw) + r"\b", q) or re.search(r"\b" + re.escape(kw) + r"\b", q_eval):
-                score += 3
-
-        if score > best_score:
-            best_score = score
-            best_intent = item
+    # Resolusi Multi-Turn Memory pada fallback builtin jika pertanyaan saat ini adalah pertanyaan lanjutan
+    if (not best_intent or best_score < 8) and riwayat and FOLLOWUP_SIGNAL_RE.search(q_eval):
+        for turn in reversed(riwayat[-6:]):
+            if not isinstance(turn, dict):
+                continue
+            prev_q = str(turn.get("prompt") or turn.get("pertanyaan") or "").lower().strip()
+            prev_a = str(turn.get("response") or turn.get("jawaban") or "").lower().strip()
+            if "tidak tersedia di dalam basis dokumen resmi" in prev_a:
+                continue
+            prev_intent, prev_score = _match_best_knowledge_intent(f"{prev_q} {prev_a}")
+            if prev_intent and prev_score >= 6 and prev_intent["intent"] != "sapaan":
+                best_intent = prev_intent
+                best_score = max(best_score, 10)
+                konteks_sebelumnya = str(prev_intent.get("layanan") or "")
+                break
 
     if best_intent and best_score >= 3:
         if best_score < 8:
@@ -669,10 +704,14 @@ def generate_builtin_chatbot_response(pertanyaan: str) -> dict:
                 "di", "ke", "dari", "dan", "atau", "ini", "itu", "nya", "ya", "dong",
                 "saya", "aku", "kamu", "anda", "kita", "kami", "ada", "untuk", "dengan",
                 "baru", "lama", "membuat", "buat", "bikin", "mengurus", "urus", "daftar",
+                "kalau", "kalo", "terus", "lalu", "biayanya", "prosesnya", "waktunya",
             }
-            intent_corpus = " ".join(
-                best_intent["phrases"] + best_intent["keywords"] + [best_intent["jawaban"].lower()]
-            )
+            raw_phrases = best_intent.get("phrases")
+            raw_keywords = best_intent.get("keywords")
+            phrases_list = [str(p) for p in raw_phrases] if isinstance(raw_phrases, list) else []
+            keywords_list = [str(k) for k in raw_keywords] if isinstance(raw_keywords, list) else []
+            jawaban_low = str(best_intent.get("jawaban") or "").lower()
+            intent_corpus = " ".join([*phrases_list, *keywords_list, jawaban_low])
             specific_words = [
                 w for w in re.findall(r"[a-z0-9]+", q)
                 if len(w) >= 3 and w not in filler_words
@@ -684,7 +723,7 @@ def generate_builtin_chatbot_response(pertanyaan: str) -> dict:
                     "mode": "guardrail_rag",
                     "sumber": [],
                 }
-        return {
+        res_out = {
             "jawaban": best_intent["jawaban"],
             "intent": best_intent["intent"],
             "mode": "asisten_cerdas",
@@ -698,6 +737,9 @@ def generate_builtin_chatbot_response(pertanyaan: str) -> dict:
                 }
             ],
         }
+        if konteks_sebelumnya:
+            res_out["konteks_sebelumnya"] = konteks_sebelumnya
+        return res_out
 
     return {
         "jawaban": DI_LUAR_RAG_JAWABAN,
@@ -719,6 +761,16 @@ async def ask_chatbot(
     pertanyaan = mask_pii(payload.get_query())
     if not (1 <= len(pertanyaan) <= 500):
         raise HTTPException(422, detail="Pertanyaan wajib 1-500 karakter.")
+
+    # Ambil riwayat percakapan terakhir KHUSUS milik user terautentikasi untuk Multi-Turn Memory
+    riwayat_konteks = []
+    db_rows = crud_chat.history(db, user_id=user_id, limit=10, offset=0)
+    for r in reversed(db_rows):
+        riwayat_konteks.append({
+            "prompt": mask_pii(str(r.get("prompt") or "")[:500]),
+            "response": mask_pii(str(r.get("response") or "")[:1000]),
+        })
+
     db.rollback()  # kunci: rolling sesi supaya pool DB tidak hold selama await
 
     body = None
@@ -728,24 +780,28 @@ async def ask_chatbot(
 
     try:
         async with httpx.AsyncClient(timeout=timeout) as client:
-            resp = await client.post(chat_url, json={"pertanyaan": pertanyaan}, headers=headers)
+            resp = await client.post(
+                chat_url,
+                json={"pertanyaan": pertanyaan, "riwayat": riwayat_konteks},
+                headers=headers,
+            )
             if resp.status_code == 200:
                 body = resp.json()
             elif resp.status_code == 422:
                 raise HTTPException(422, detail=resp.json())
             elif resp.status_code == 429:
                 raise HTTPException(429, detail={"kode": "CHATBOT_BUSY", "pesan": "Chatbot sedang sibuk.", "fields": [], "retry_after": 5})
-    except (httpx.RequestError, httpx.TimeoutException) as exc:
+    except httpx.RequestError as exc:
         import logging
         logging.getLogger(__name__).warning(f"External chatbot unavailable, falling back to built-in knowledge: {exc}")
 
     # Fallback ke asisten cerdas bawaan jika service eksternal belum aktif atau tidak merespons
     if not body:
-        body = generate_builtin_chatbot_response(pertanyaan)
+        body = generate_builtin_chatbot_response(pertanyaan, riwayat=riwayat_konteks)
 
     jawaban = mask_pii(body.get("jawaban", ""))[:2000]
     crud_chat.create(db, user_id=user_id, prompt=pertanyaan, response=jawaban)
-    chat_res = {k: body[k] for k in ("jawaban", "intent", "mode") if k in body}
+    chat_res = {k: body[k] for k in ("jawaban", "intent", "mode", "konteks_sebelumnya") if k in body}
     if "sumber" in body:
         chat_res["sumber"] = [
             {k: v for k, v in sumber.items() if k in ["no", "judul", "konteks", "layanan", "halaman"]}

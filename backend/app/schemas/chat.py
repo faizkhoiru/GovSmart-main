@@ -1,10 +1,11 @@
 from pydantic import BaseModel, Field, Extra
-from typing import List, Optional, Any
+from typing import List, Optional, Any, Dict
 from datetime import datetime
 
 class ChatRequest(BaseModel):
     pertanyaan: Optional[str] = Field(None, min_length=1, max_length=500)
     prompt: Optional[str] = Field(None, min_length=1, max_length=500)
+    riwayat: Optional[List[Dict[str, Any]]] = None
 
     model_config = {"extra": "ignore"}
 
@@ -22,6 +23,7 @@ class ChatResponse(BaseModel):
     jawaban: str
     intent: Optional[str]
     mode: Optional[str]
+    konteks_sebelumnya: Optional[str] = None
     sumber: Optional[List[Sumber]]
 
 class ChatHistoryItem(BaseModel):

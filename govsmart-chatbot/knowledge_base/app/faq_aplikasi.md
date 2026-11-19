@@ -60,20 +60,26 @@ Diterima: laporan sudah masuk ke sistem dan diteruskan ke dinas. Diproses: admin
 ## Apakah saya bisa melihat laporan milik orang lain?
 Tidak. Warga hanya dapat melihat laporan miliknya sendiri. Admin Dinas hanya dapat melihat laporan yang diarahkan ke dinasnya.
 
-## Apakah saya bisa mengedit atau menghapus laporan yang sudah dikirim?
-Tidak. Saat ini GovSmart belum menyediakan fitur mengedit atau menghapus laporan oleh warga. Pastikan isi laporan sudah benar sebelum dikirim. Jika ada kesalahan, Anda dapat membuat laporan baru dengan informasi yang lebih jelas.
+## Apakah saya bisa mengedit atau membatalkan laporan yang sudah dikirim?
+Ya, bisa selama status laporan Anda masih **"Diterima"** (belum diubah menjadi "Diproses" atau "Selesai" oleh Admin Dinas). Pada kartu laporan Anda di tab "Riwayat & Status Laporan", klik tombol **"Edit Laporan"** untuk memperbaiki judul atau isi deskripsi, atau klik **"Batalkan Laporan"** jika ingin membatalkan aduan. Jika status sudah berubah menjadi "Diproses" atau "Selesai", laporan dikunci dan tidak dapat diedit/dibatalkan lagi.
+
+## Bagaimana cara memberikan rating atau penilaian kepuasan pada laporan yang sudah selesai?
+Ketika laporan pengaduan Anda telah ditangani dan statusnya diubah menjadi **"Selesai"** oleh Admin Dinas, pada kartu laporan Anda akan muncul fitur **Penilaian Kepuasan Warga**. Anda dapat memilih rating **1 hingga 5 bintang** beserta komentar/ulasan singkat mengenai hasil penanganan petugas, lalu menekan tombol **"Kirim Penilaian"**.
+
+## Apakah saya bisa melihat bukti atau catatan tindak lanjut dari petugas dinas?
+Ya. Ketika Admin Dinas memperbarui status laporan (misalnya menjadi "Diproses", "Selesai", atau "Ditolak"), petugas dapat menyertakan **Catatan / Tindak Lanjut Petugas** serta mengunggah **Dokumen/Foto Feedback** (PDF atau gambar bukti pengerjaan) yang dapat langsung Anda lihat dan buka pada kartu riwayat laporan Anda.
 
 ## Apakah laporan anonim bisa dibuat?
-Tidak. Setiap laporan terhubung dengan akun terdaftar.
+Tidak. Setiap laporan terhubung dengan akun terdaftar agar pelapor dapat memantau riwayat status secara transparan dan menerima umpan balik resmi dari dinas terkait.
 
 ## Apakah saya akan mendapat notifikasi jika status laporan berubah?
-Saat ini belum ada notifikasi status untuk warga. Silakan cek status laporan Anda langsung di portal. Notifikasi laporan baru hanya tersedia untuk Admin Dinas.
+Setiap perubahan status laporan dapat dipantau langsung secara *real-time* pada tab **"Riwayat & Status Laporan"** beserta tombol **"Riwayat Log"** yang menampilkan waktu perubahan dan catatan petugas. Admin Dinas dan Super Admin juga memiliki lonceng notifikasi khusus untuk setiap pengaduan baru yang masuk.
 
 ## Bagaimana jika saya lupa password?
-Saat ini GovSmart belum memiliki fitur lupa password atau reset password. Jika Anda tidak dapat masuk, hubungi pengelola GovSmart.
+Jika Anda sudah masuk (login), Anda dapat langsung mengganti password melalui menu **Dropdown Profil Pengguna** di pojok kanan atas -> klik **"Lihat & Edit Profil"**. Jika Anda lupa password saat belum login, silakan hubungi administrator pengelola GovSmart.
 
-## Apakah saya bisa mengubah password, NIK, atau email akun saya?
-Saat ini GovSmart belum menyediakan fitur ubah password, NIK, atau email melalui portal. Hubungi pengelola GovSmart jika memerlukan perubahan data akun.
+## Apakah saya bisa melihat dan mengubah profil, password, nama, atau email akun saya?
+Ya! Klik tombol **Profil Pengguna (Dropdown)** di pojok kanan atas layar, lalu pilih **"Lihat & Edit Profil"**. Anda dapat memperbarui **Nama Lengkap, Email, Nomor Telepon/WhatsApp, Alamat Domisili, serta Password baru**. Khusus **NIK (16 digit)** bersifat tetap (terkunci) sebagai identitas tunggal kependudukan dan tidak dapat diubah.
 
 ## Apakah satu NIK atau email bisa dipakai untuk lebih dari satu akun?
 Tidak. Satu NIK hanya dapat dipakai untuk satu akun, dan satu email hanya terhubung ke satu akun.

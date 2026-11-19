@@ -54,9 +54,11 @@ services:
       - "8001:8001"
     environment:
       - CHATBOT_INTERNAL_TOKEN=${CHATBOT_INTERNAL_TOKEN:-govsmart-dev-token}
-      - LLM_BASE_URL=${LLM_BASE_URL:-}
-      - LLM_MODEL=${LLM_MODEL:-}
+      - LLM_BASE_URL=${LLM_BASE_URL:-http://host.docker.internal:11434/v1}
+      - LLM_MODEL=${LLM_MODEL:-qwen2:1.5b}
       - LLM_API_KEY=${LLM_API_KEY:-}
+      - LLM_TEMPERATURE=${LLM_TEMPERATURE:-0.35}
+      - PROMPT_RINGKAS=${PROMPT_RINGKAS:-1}
     volumes:
       # Index RAG dan skrip layanan chatbot dipasang agar selalu sinkron dengan kode terbaru.
       - ./govsmart-chatbot/data:/app/data:ro

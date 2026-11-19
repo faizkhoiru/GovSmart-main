@@ -4,11 +4,12 @@ Parameter: target=900, max=1300, overlap=150, min=120, min_conf=0.3
 
 | Dokumen | Topik | Mode | Hal dipakai | Chunk | Rata2 | Min | Maks |
 |---|---|---|---|---|---|---|---|
-| faq_aplikasi | app | md | 1/1 | 36 | 249 | 135 | 431 |
+| faq_aplikasi | app | md | 1/1 | 39 | 272 | 135 | 511 |
+| panduan_umum_govsmart | app | md | 1/1 | 10 | 687 | 63 | 1096 |
 | anri_naskah_sumber_bpupk_1945 | nasionalisme | plain | 218/273 | 522 | 805 | 191 | 1035 |
 | uu_24_2009_bendera_bahasa_lambang | nasionalisme | legal | 53/57 | 93 | 724 | 115 | 1184 |
 | uud1945_perubahan4 | nasionalisme | legal | 18/18 | 49 | 720 | 86 | 1208 |
-| panduan_pelaporan | pelaporan | md | 1/1 | 40 | 238 | 127 | 791 |
+| panduan_pelaporan | pelaporan | md | 1/1 | 41 | 245 | 127 | 791 |
 | layanan_publik_lamongan | pemerintah | md | 1/1 | 20 | 410 | 132 | 749 |
 | panduan_nib_oss | pemerintah | plain | 17/17 | 7 | 854 | 802 | 898 |
 | perbup_lamongan_40_2025_sop_perizinan | pemerintah | legal | 81/81 | 149 | 793 | 132 | 1236 |

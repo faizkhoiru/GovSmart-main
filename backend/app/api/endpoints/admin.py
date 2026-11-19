@@ -2,7 +2,14 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from app.database import get_db
-from app.schemas.user import AdminDinasCreate, AdminDinasUpdate, UserResponse
+from app.schemas.user import (
+    AdminDinasCreate,
+    AdminDinasUpdate,
+    UserProfileUpdate,
+    UserProfileUpdateResponse,
+    UserResponse,
+)
+from app.core.security import get_password_hash, create_access_token
 from app.schemas.audit import AuditLogResponse
 from app.crud.user import (
     create_admin_dinas,
@@ -26,6 +33,61 @@ router = APIRouter()
 @router.get("/me", response_model=UserResponse)
 def read_current_user_profile(current_user: User = Depends(get_current_user)):
     return current_user
+
+
+@router.put("/me", response_model=UserProfileUpdateResponse)
+def update_current_user_profile(
+    profile_in: UserProfileUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Memperbarui profil pengguna yang sedang login (nama lengkap, email, no. telepon, alamat,
+    dan password baru opsional). NIK/NIP tidak dapat diubah demi integritas identitas.
+    """
+    email_changed = False
+    if profile_in.email is not None:
+        new_email = str(profile_in.email).strip().lower()
+        if new_email != current_user.email:
+            existing = get_user_by_email(db, new_email)
+            if existing and existing.id != current_user.id:
+                raise HTTPException(status_code=400, detail="Email sudah digunakan oleh akun lain")
+            current_user.email = new_email
+            email_changed = True
+
+    if profile_in.nama_lengkap is not None:
+        cleaned = profile_in.nama_lengkap.strip()
+        current_user.nama_lengkap = cleaned if cleaned else None
+
+    if profile_in.no_telepon is not None:
+        cleaned = profile_in.no_telepon.strip()
+        current_user.no_telepon = cleaned if cleaned else None
+
+    if profile_in.alamat is not None:
+        cleaned = profile_in.alamat.strip()
+        current_user.alamat = cleaned if cleaned else None
+
+    if profile_in.password:
+        current_user.password_hash = get_password_hash(profile_in.password)
+
+    db.commit()
+    db.refresh(current_user)
+
+    new_token = create_access_token(subject=current_user.email) if email_changed else None
+    dept = get_department(db, current_user.dept_id) if current_user.dept_id else None
+    return UserProfileUpdateResponse(
+        id=current_user.id,
+        nik_or_nip=current_user.nik_or_nip,
+        email=current_user.email,
+        role=current_user.role,
+        dept_id=current_user.dept_id,
+        is_active=current_user.is_active,
+        nama_dinas=dept.nama_dinas if dept else None,
+        nama_lengkap=current_user.nama_lengkap,
+        no_telepon=current_user.no_telepon,
+        alamat=current_user.alamat,
+        access_token=new_token,
+    )
 
 @router.post("/admin-dinas", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 def create_admin_dinas_account(

@@ -1,8 +1,9 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import case
 from typing import Optional, List, cast
+from datetime import datetime
 from app.models.report import Report
-from app.schemas.report import ReportCreate, ReportUpdate
+from app.schemas.report import ReportCreate, ReportUpdate, ReportRatingInput
 from app.core.ai_routing import analyze_report_ai
 from app.crud.audit import create_audit_log
 
@@ -123,4 +124,14 @@ def update_report_status(db: Session, report: Report, status_baru: str, admin_id
 
     # Record audit log automatically
     create_audit_log(db, report_id=cast(int, report.id), admin_id=admin_id, status_baru=status_baru)
+    return report
+
+
+def rate_report(db: Session, report: Report, rating_in: ReportRatingInput):
+    setattr(report, "rating_kepuasan", rating_in.rating_kepuasan)
+    ulasan_clean = (rating_in.ulasan_warga or "").strip()
+    setattr(report, "ulasan_warga", ulasan_clean if ulasan_clean else None)
+    setattr(report, "rated_at", datetime.utcnow())
+    db.commit()
+    db.refresh(report)
     return report
