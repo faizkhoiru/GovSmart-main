@@ -5,6 +5,7 @@ from app.database import get_db
 from app.schemas.user import (
     AdminDinasCreate,
     AdminDinasUpdate,
+    WargaAdminUpdate,
     UserProfileUpdate,
     UserProfileUpdateResponse,
     UserResponse,
@@ -22,6 +23,11 @@ from app.crud.user import (
     activate_admin_dinas,
     soft_delete_admin_dinas,
     hard_delete_admin_dinas,
+    get_warga_list,
+    update_warga_user,
+    soft_delete_warga_user,
+    activate_warga_user,
+    hard_delete_warga_user,
 )
 from app.crud.department import get_department
 from app.crud.report import get_report_by_id
@@ -178,6 +184,67 @@ def reactivate_admin_dinas(
     if not admin:
         raise HTTPException(status_code=404, detail="Admin Dinas tidak ditemukan")
     return admin
+
+
+@router.get("/warga", response_model=List[UserResponse])
+def list_warga_users(
+    skip: int = 0,
+    limit: int = 200,
+    include_inactive: bool = False,
+    db: Session = Depends(get_db),
+    current_super_admin: User = Depends(get_current_super_admin),
+):
+    return get_warga_list(db, skip=skip, limit=limit, include_inactive=include_inactive)
+
+
+@router.put("/warga/{user_id}", response_model=UserResponse)
+def edit_warga_user(
+    user_id: int,
+    warga_in: WargaAdminUpdate,
+    db: Session = Depends(get_db),
+    current_super_admin: User = Depends(get_current_super_admin),
+):
+    warga = get_user_by_id(db, user_id)
+    if not warga or warga.role != "warga":
+        raise HTTPException(status_code=404, detail="Akun warga tidak ditemukan")
+    if warga_in.email is not None:
+        new_email = str(warga_in.email).strip().lower()
+        existing = get_user_by_email(db, new_email)
+        if existing and existing.id != warga.id:
+            raise HTTPException(status_code=400, detail="Email sudah digunakan oleh akun lain")
+    updated = update_warga_user(db, user_id, warga_in)
+    if not updated:
+        raise HTTPException(status_code=404, detail="Akun warga tidak ditemukan")
+    return updated
+
+
+@router.delete("/warga/{user_id}", response_model=UserResponse)
+def delete_warga_user(
+    user_id: int,
+    hard: Optional[bool] = False,
+    db: Session = Depends(get_db),
+    current_super_admin: User = Depends(get_current_super_admin),
+):
+    warga = get_user_by_id(db, user_id)
+    if not warga or warga.role != "warga":
+        raise HTTPException(status_code=404, detail="Akun warga tidak ditemukan")
+    if hard:
+        hard_delete_warga_user(db, user_id)
+    else:
+        soft_delete_warga_user(db, user_id)
+    return warga
+
+
+@router.post("/warga/{user_id}/activate", response_model=UserResponse)
+def reactivate_warga_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_super_admin: User = Depends(get_current_super_admin),
+):
+    warga = activate_warga_user(db, user_id)
+    if not warga:
+        raise HTTPException(status_code=404, detail="Akun warga tidak ditemukan")
+    return warga
 
 @router.get("/audit-logs/{report_id}", response_model=List[AuditLogResponse])
 def get_report_audit_history(

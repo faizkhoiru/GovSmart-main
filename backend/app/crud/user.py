@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from app.models.user import User
 from app.models.department import Department
-from app.schemas.user import UserCreate, AdminDinasCreate, AdminDinasUpdate
+from app.schemas.user import UserCreate, AdminDinasCreate, AdminDinasUpdate, WargaAdminUpdate
 from app.core.security import get_password_hash
 
 def get_user_by_id(db: Session, user_id: int):
@@ -112,6 +112,66 @@ def hard_delete_admin_dinas(db: Session, admin_id: int):
     db.delete(db_admin)
     db.commit()
     return db_admin
+
+
+def get_warga_list(db: Session, skip: int = 0, limit: int = 200, include_inactive: bool = False):
+    q = db.query(User).filter(User.role == "warga")
+    if not include_inactive:
+        q = q.filter(User.is_active == True)
+    return q.order_by(User.id.desc()).offset(skip).limit(limit).all()
+
+
+def update_warga_user(db: Session, user_id: int, warga_in: WargaAdminUpdate):
+    db_warga = db.query(User).filter(User.id == user_id, User.role == "warga").first()
+    if not db_warga:
+        return None
+    update_data = warga_in.model_dump(exclude_unset=True)
+    if "password" in update_data and update_data["password"]:
+        update_data["password_hash"] = get_password_hash(update_data["password"])
+        del update_data["password"]
+    elif "password" in update_data:
+        del update_data["password"]
+    for field in ("nama_lengkap", "no_telepon", "alamat"):
+        if field in update_data and update_data[field] is not None:
+            cleaned = update_data[field].strip()
+            update_data[field] = cleaned if cleaned else None
+    if "email" in update_data and update_data["email"] is not None:
+        update_data["email"] = str(update_data["email"]).strip().lower()
+    for field, value in update_data.items():
+        setattr(db_warga, field, value)
+    db.add(db_warga)
+    db.commit()
+    db.refresh(db_warga)
+    return db_warga
+
+
+def soft_delete_warga_user(db: Session, user_id: int):
+    db_warga = db.query(User).filter(User.id == user_id, User.role == "warga").first()
+    if not db_warga:
+        return None
+    db_warga.is_active = False
+    db.commit()
+    db.refresh(db_warga)
+    return db_warga
+
+
+def activate_warga_user(db: Session, user_id: int):
+    db_warga = db.query(User).filter(User.id == user_id, User.role == "warga").first()
+    if not db_warga:
+        return None
+    db_warga.is_active = True
+    db.commit()
+    db.refresh(db_warga)
+    return db_warga
+
+
+def hard_delete_warga_user(db: Session, user_id: int):
+    db_warga = db.query(User).filter(User.id == user_id, User.role == "warga").first()
+    if not db_warga:
+        return None
+    db.delete(db_warga)
+    db.commit()
+    return db_warga
 
 def seed_super_admin(db: Session):
     existing = get_user_by_email(db, "superadmin@govsmart.go.id")

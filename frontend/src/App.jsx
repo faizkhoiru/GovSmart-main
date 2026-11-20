@@ -25,6 +25,8 @@ import {
   Star,
   User,
   ChevronDown,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 
 const RATING_LABELS = {
@@ -296,6 +298,9 @@ export default function App() {
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotNewPassword, setForgotNewPassword] = useState("");
   const [forgotSubmitting, setForgotSubmitting] = useState(false);
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
+  const [showRegisterPassword, setShowRegisterPassword] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
 
   // Warga Form State
   const [judul, setJudul] = useState("");
@@ -352,6 +357,17 @@ export default function App() {
   const [mapStatusMode, setMapStatusMode] = useState("active"); // 'active' | 'all'
   const [showMapLegend, setShowMapLegend] = useState(false);
   const [editingAdmin, setEditingAdmin] = useState(null);
+  const [wargaList, setWargaList] = useState([]);
+  const [wargaSearchQuery, setWargaSearchQuery] = useState("");
+  const [showInactiveWarga, setShowInactiveWarga] = useState(false);
+  const [editingWarga, setEditingWarga] = useState(null);
+  const [editWargaForm, setEditWargaForm] = useState({
+    nama_lengkap: "",
+    email: "",
+    no_telepon: "",
+    alamat: "",
+    password: "",
+  });
   const [unreadCount, setUnreadCount] = useState(0);
   const [statusFilter, setStatusFilter] = useState("all"); // 'all' | 'diterima' | 'diproses' | 'selesai' | 'ditolak'
   const [dateFilter, setDateFilter] = useState("all"); // 'all' | 'day' | 'week' | 'month' | 'year'
@@ -553,6 +569,7 @@ export default function App() {
             if (profData.email) setUserEmail(profData.email);
             if (profData.role === "super_admin") {
               fetchAdminDinas(showInactiveAdmins);
+              fetchWargaList(showInactiveWarga);
             }
           }
         }
@@ -1200,6 +1217,108 @@ export default function App() {
     }
   };
 
+  // Fetch Warga Users list (Super Admin)
+  const fetchWargaList = async (includeInactive = showInactiveWarga) => {
+    try {
+      const query = includeInactive ? "?include_inactive=true" : "";
+      const res = await apiFetch(`/api/v1/admin/warga${query}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setWargaList(data);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleEditWarga = (w) => {
+    setEditingWarga(w);
+    setEditWargaForm({
+      nama_lengkap: w.nama_lengkap || "",
+      email: w.email || "",
+      no_telepon: w.no_telepon || "",
+      alamat: w.alamat || "",
+      password: "",
+    });
+  };
+
+  const handleUpdateWarga = async (e) => {
+    e.preventDefault();
+    if (!editingWarga) return;
+    try {
+      const payload = {
+        nama_lengkap: editWargaForm.nama_lengkap,
+        email: editWargaForm.email,
+        no_telepon: editWargaForm.no_telepon,
+        alamat: editWargaForm.alamat,
+      };
+      if (editWargaForm.password.trim()) {
+        payload.password = editWargaForm.password.trim();
+      }
+      const res = await apiFetch(`/api/v1/admin/warga/${editingWarga.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        let errorMsg = "Gagal memperbarui akun warga";
+        if (typeof err.detail === "string") errorMsg = err.detail;
+        else if (Array.isArray(err.detail)) errorMsg = err.detail.map((d) => d.msg).join(" | ");
+        throw new Error(errorMsg);
+      }
+      notify("Akun warga berhasil diperbarui.", "success");
+      setEditingWarga(null);
+      fetchWargaList(showInactiveWarga);
+    } catch (err) {
+      notify(err.message);
+    }
+  };
+
+  const handleDeleteWarga = async (w, hard = false) => {
+    const msg = hard
+      ? `Hapus PERMANEN akun warga ${w.email} dari database?`
+      : `Nonaktifkan akun warga ${w.email}? Akun yang dinonaktifkan tidak dapat login.`;
+    if (!window.confirm(msg)) return;
+    try {
+      const url = hard ? `/api/v1/admin/warga/${w.id}?hard=true` : `/api/v1/admin/warga/${w.id}`;
+      const res = await apiFetch(url, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || "Gagal menghapus akun warga");
+      }
+      notify(hard ? "Akun warga dihapus permanen." : "Akun warga berhasil dinonaktifkan.", "success");
+      fetchWargaList(showInactiveWarga);
+    } catch (err) {
+      notify(err.message);
+    }
+  };
+
+  const handleActivateWarga = async (w) => {
+    try {
+      const res = await apiFetch(`/api/v1/admin/warga/${w.id}/activate`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || "Gagal mengaktifkan kembali akun warga");
+      }
+      notify(`Akun warga (${w.email}) berhasil diaktifkan kembali.`, "success");
+      fetchWargaList(showInactiveWarga);
+    } catch (err) {
+      notify(err.message);
+    }
+  };
+
   // AI Chatbot Handler
   const chatErrorText = async (res) => {
     try {
@@ -1358,6 +1477,19 @@ export default function App() {
       return deptName.includes(q) || email.includes(q) || nip.includes(q);
     }
     return true;
+  });
+
+  // Filtered Warga list by search query
+  const filteredWargaList = wargaList.filter((w) => {
+    if (!wargaSearchQuery.trim()) return true;
+    const q = wargaSearchQuery.trim().toLowerCase();
+    return (
+      (w.nama_lengkap || "").toLowerCase().includes(q) ||
+      (w.email || "").toLowerCase().includes(q) ||
+      (w.nik_or_nip || "").toLowerCase().includes(q) ||
+      (w.no_telepon || "").toLowerCase().includes(q) ||
+      (w.alamat || "").toLowerCase().includes(q)
+    );
   });
 
   // KPI Metrics Calculation
@@ -1931,15 +2063,40 @@ export default function App() {
                       Lupa kata sandi?
                     </button>
                   </div>
-                  <input
-                    type="password"
-                    className="auth-input"
-                    placeholder="Masukkan kata sandi"
-                    value={loginPassword}
-                    onChange={(e) => setLoginPassword(e.target.value)}
-                    autoComplete="current-password"
-                    required
-                  />
+                  <div style={{ position: "relative" }}>
+                    <input
+                      type={showLoginPassword ? "text" : "password"}
+                      className="auth-input"
+                      placeholder="Masukkan kata sandi"
+                      value={loginPassword}
+                      onChange={(e) => setLoginPassword(e.target.value)}
+                      autoComplete="current-password"
+                      style={{ paddingRight: "2.75rem" }}
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowLoginPassword((v) => !v)}
+                      aria-label={showLoginPassword ? "Sembunyikan kata sandi" : "Lihat kata sandi"}
+                      title={showLoginPassword ? "Sembunyikan kata sandi" : "Lihat kata sandi"}
+                      style={{
+                        position: "absolute",
+                        right: "0.75rem",
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                        background: "none",
+                        border: "none",
+                        padding: "0.25rem",
+                        cursor: "pointer",
+                        color: "#486581",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      {showLoginPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
                 </label>
 
                 <button type="submit" className="auth-btn">
@@ -1976,15 +2133,40 @@ export default function App() {
 
                 <label className="auth-field">
                   <span>Kata sandi</span>
-                  <input
-                    type="password"
-                    className="auth-input"
-                    placeholder="Gunakan password kuat"
-                    value={loginPassword}
-                    onChange={(e) => setLoginPassword(e.target.value)}
-                    autoComplete="new-password"
-                    required
-                  />
+                  <div style={{ position: "relative" }}>
+                    <input
+                      type={showRegisterPassword ? "text" : "password"}
+                      className="auth-input"
+                      placeholder="Gunakan password kuat"
+                      value={loginPassword}
+                      onChange={(e) => setLoginPassword(e.target.value)}
+                      autoComplete="new-password"
+                      style={{ paddingRight: "2.75rem" }}
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowRegisterPassword((v) => !v)}
+                      aria-label={showRegisterPassword ? "Sembunyikan kata sandi" : "Lihat kata sandi"}
+                      title={showRegisterPassword ? "Sembunyikan kata sandi" : "Lihat kata sandi"}
+                      style={{
+                        position: "absolute",
+                        right: "0.75rem",
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                        background: "none",
+                        border: "none",
+                        padding: "0.25rem",
+                        cursor: "pointer",
+                        color: "#486581",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      {showRegisterPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
                 </label>
 
                 <button type="submit" className="auth-btn">
@@ -2049,14 +2231,39 @@ export default function App() {
                 </div>
                 <div className="form-group" style={{ marginBottom: "1.25rem" }}>
                   <label className="form-label">Kata Sandi Baru</label>
-                  <input
-                    type="password"
-                    className="form-input"
-                    placeholder="Min. 8 karakter (Huruf besar, kecil, angka, simbol)"
-                    value={forgotNewPassword}
-                    onChange={(e) => setForgotNewPassword(e.target.value)}
-                    required
-                  />
+                  <div style={{ position: "relative" }}>
+                    <input
+                      type={showForgotPassword ? "text" : "password"}
+                      className="form-input"
+                      placeholder="Min. 8 karakter (Huruf besar, kecil, angka, simbol)"
+                      value={forgotNewPassword}
+                      onChange={(e) => setForgotNewPassword(e.target.value)}
+                      style={{ paddingRight: "2.75rem" }}
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowForgotPassword((v) => !v)}
+                      aria-label={showForgotPassword ? "Sembunyikan kata sandi" : "Lihat kata sandi"}
+                      title={showForgotPassword ? "Sembunyikan kata sandi" : "Lihat kata sandi"}
+                      style={{
+                        position: "absolute",
+                        right: "0.75rem",
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                        background: "none",
+                        border: "none",
+                        padding: "0.25rem",
+                        cursor: "pointer",
+                        color: "#486581",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      {showForgotPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
                 </div>
                 <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.75rem" }}>
                   <button type="button" className="nav-btn" onClick={() => setShowForgotModal(false)}>
@@ -2239,10 +2446,19 @@ export default function App() {
       >
         <button
           className="nav-btn"
-          onClick={() => setMainView(mainView === "admin_dinas" ? "admin" : "options")}
+          onClick={() =>
+            setMainView(
+              mainView === "admin_dinas" || mainView === "user_warga"
+                ? "admin"
+                : "options"
+            )
+          }
           style={{ marginBottom: "2rem" }}
         >
-          &larr; {mainView === "admin_dinas" ? "Kembali ke Dasbor Admin" : "Kembali ke Pilihan"}
+          &larr;{" "}
+          {mainView === "admin_dinas" || mainView === "user_warga"
+            ? "Kembali ke Dasbor Admin"
+            : "Kembali ke Pilihan"}
         </button>
 
         {mainView === "pengaduan" && (
@@ -3278,6 +3494,69 @@ export default function App() {
                 </div>
               )}
 
+              {userRole === "super_admin" && (
+                <div
+                  className="glass-panel admin-dinas-banner"
+                  style={{
+                    padding: "1.25rem 1.75rem",
+                    marginBottom: "2rem",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    flexWrap: "wrap",
+                    gap: "1rem",
+                    border: "1px solid rgba(16, 185, 129, 0.28)",
+                    background: "rgba(255, 255, 255, 0.85)",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+                    <div
+                      style={{
+                        width: "48px",
+                        height: "48px",
+                        borderRadius: "12px",
+                        background: "rgba(16, 185, 129, 0.14)",
+                        color: "#059669",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        flexShrink: 0,
+                      }}
+                    >
+                      <User size={24} />
+                    </div>
+                    <div>
+                      <h2 style={{ fontSize: "1.2rem", fontWeight: 800, margin: 0, color: "var(--text-main)" }}>
+                        Daftar Akun User Warga
+                      </h2>
+                      <p style={{ margin: "0.25rem 0 0", fontSize: "0.88rem", color: "var(--text-muted)" }}>
+                        Kelola data akun masyarakat terdaftar, edit profil, reset sandi, atau nonaktifkan akun ({wargaList.length} akun terdaftar).
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className="nav-btn nav-btn-primary admin-dinas-banner-btn"
+                    onClick={() => {
+                      fetchWargaList(showInactiveWarga);
+                      setMainView("user_warga");
+                    }}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "0.5rem",
+                      padding: "0.75rem 1.4rem",
+                      fontSize: "0.92rem",
+                      fontWeight: 700,
+                    }}
+                  >
+                    <User size={18} />
+                    Buka Halaman Daftar Akun Warga &rarr;
+                  </button>
+                </div>
+              )}
+
               {/* Tab Pemisah Khusus Mode Mobile: Peta Sebaran vs Daftar Pengaduan */}
               <div className="admin-mobile-tabs" role="tablist" aria-label="Pilih tampilan dasbor">
                 <button
@@ -4126,6 +4405,236 @@ export default function App() {
             </div>
           </div>
         )}
+
+        {mainView === "user_warga" && userRole === "super_admin" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+            <div
+              className="glass-panel"
+              style={{
+                padding: "1.5rem 2rem",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                flexWrap: "wrap",
+                gap: "1rem",
+              }}
+            >
+              <div>
+                <h1 style={{ fontSize: "clamp(1.35rem, 3.5vw, 1.75rem)", fontWeight: 800, margin: 0 }}>
+                  Manajemen Akun User Warga
+                </h1>
+                <p style={{ color: "var(--text-muted)", margin: "0.4rem 0 0", fontSize: "0.95rem" }}>
+                  Kelola daftar akun masyarakat & pelaku UMKM Kabupaten Lamongan yang terdaftar di portal GovSmart.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="nav-btn"
+                onClick={() => setMainView("admin")}
+                style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem" }}
+              >
+                &larr; Kembali ke Dasbor Admin
+              </button>
+            </div>
+
+            <div className="glass-panel" style={{ padding: "1.5rem" }}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: "1rem",
+                  flexWrap: "wrap",
+                  gap: "0.75rem",
+                }}
+              >
+                <h2
+                  style={{
+                    fontSize: "1.2rem",
+                    fontWeight: 700,
+                    margin: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem",
+                  }}
+                >
+                  <User className="text-accent-primary" /> Daftar Akun Warga Terdaftar (
+                  {filteredWargaList.length}
+                  {filteredWargaList.length !== wargaList.length
+                    ? ` dari ${wargaList.length}`
+                    : ""}
+                  )
+                </h2>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.65rem", flexWrap: "wrap" }}>
+                  <label
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "0.4rem",
+                      fontSize: "0.82rem",
+                      fontWeight: 600,
+                      color: "var(--text-main)",
+                      cursor: "pointer",
+                      padding: "0.35rem 0.7rem",
+                      borderRadius: "8px",
+                      background: showInactiveWarga ? "#eff6ff" : "#f8fafc",
+                      border: "1px solid var(--border-color)",
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={showInactiveWarga}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        setShowInactiveWarga(checked);
+                        fetchWargaList(checked);
+                      }}
+                    />
+                    <span>Tampilkan Akun Non-aktif</span>
+                  </label>
+                  <button
+                    type="button"
+                    className="nav-btn"
+                    onClick={() => fetchWargaList(showInactiveWarga)}
+                    style={{ fontSize: "0.82rem", padding: "0.35rem 0.8rem" }}
+                  >
+                    Segarkan Data
+                  </button>
+                </div>
+              </div>
+
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: "0.85rem",
+                  alignItems: "center",
+                  marginBottom: "1.25rem",
+                  padding: "0.9rem 1rem",
+                  background: "#f8fafc",
+                  borderRadius: "10px",
+                  border: "1px solid var(--border-color)",
+                }}
+              >
+                <div style={{ position: "relative", flex: "1 1 280px" }}>
+                  <Search
+                    size={15}
+                    style={{
+                      position: "absolute",
+                      left: "12px",
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      color: "var(--text-muted)",
+                    }}
+                  />
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="Cari nama warga, NIK, email, atau nomor telepon..."
+                    value={wargaSearchQuery}
+                    onChange={(e) => setWargaSearchQuery(e.target.value)}
+                    style={{ padding: "0.5rem 0.85rem 0.5rem 2.2rem", fontSize: "0.9rem" }}
+                  />
+                </div>
+                {wargaSearchQuery.trim() !== "" && (
+                  <button
+                    type="button"
+                    className="nav-btn"
+                    onClick={() => setWargaSearchQuery("")}
+                    style={{ padding: "0.45rem 0.85rem", fontSize: "0.84rem", borderColor: "var(--border-color)" }}
+                  >
+                    Reset Pencarian
+                  </button>
+                )}
+              </div>
+
+              {filteredWargaList.length === 0 ? (
+                <p style={{ color: "var(--text-muted)", fontSize: "0.92rem", padding: "1rem 0" }}>
+                  {wargaList.length === 0
+                    ? "Belum ada akun warga terdaftar."
+                    : "Tidak ada akun warga yang cocok dengan kata kunci pencarian."}
+                </p>
+              ) : (
+                <div className="table-responsive-wrap">
+                  <table className="responsive-table" style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.9rem" }}>
+                    <thead>
+                      <tr style={{ borderBottom: "2px solid var(--border-color)", textAlign: "left", color: "var(--text-muted)" }}>
+                        <th style={{ padding: "0.75rem" }}>ID</th>
+                        <th style={{ padding: "0.75rem" }}>NIK</th>
+                        <th style={{ padding: "0.75rem" }}>Nama Lengkap</th>
+                        <th style={{ padding: "0.75rem" }}>Email</th>
+                        <th style={{ padding: "0.75rem" }}>No. Telepon</th>
+                        <th style={{ padding: "0.75rem" }}>Status</th>
+                        <th style={{ padding: "0.75rem" }}>Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredWargaList.map((w) => (
+                        <tr key={w.id} style={{ borderBottom: "1px solid #e2e8f0" }}>
+                          <td style={{ padding: "0.75rem", fontWeight: 600 }}>#{w.id}</td>
+                          <td style={{ padding: "0.75rem" }}>{w.nik_or_nip}</td>
+                          <td style={{ padding: "0.75rem" }}>{w.nama_lengkap || "-"}</td>
+                          <td style={{ padding: "0.75rem" }}>{w.email}</td>
+                          <td style={{ padding: "0.75rem" }}>{w.no_telepon || "-"}</td>
+                          <td style={{ padding: "0.75rem" }}>
+                            <span
+                              style={{
+                                display: "inline-block",
+                                padding: "0.2rem 0.55rem",
+                                borderRadius: "999px",
+                                fontSize: "0.75rem",
+                                fontWeight: 700,
+                                background: w.is_active ? "rgba(16, 185, 129, 0.15)" : "rgba(239, 68, 68, 0.15)",
+                                color: w.is_active ? "#059669" : "#dc2626",
+                              }}
+                            >
+                              {w.is_active ? "Aktif" : "Non-aktif"}
+                            </span>
+                          </td>
+                          <td style={{ padding: "0.75rem", display: "flex", gap: "0.35rem", flexWrap: "wrap" }}>
+                            <button
+                              className="nav-btn"
+                              style={{ padding: "0.3rem 0.7rem", fontSize: "0.8rem" }}
+                              onClick={() => handleEditWarga(w)}
+                            >
+                              Edit
+                            </button>
+                            {w.is_active ? (
+                              <button
+                                className="nav-btn"
+                                style={{ padding: "0.3rem 0.7rem", fontSize: "0.8rem", borderColor: "#ef4444", color: "#ef4444" }}
+                                onClick={() => handleDeleteWarga(w, false)}
+                              >
+                                Nonaktifkan
+                              </button>
+                            ) : (
+                              <>
+                                <button
+                                  className="nav-btn"
+                                  style={{ padding: "0.3rem 0.7rem", fontSize: "0.8rem", borderColor: "#059669", color: "#059669" }}
+                                  onClick={() => handleActivateWarga(w)}
+                                >
+                                  Aktifkan
+                                </button>
+                                <button
+                                  className="nav-btn"
+                                  style={{ padding: "0.3rem 0.7rem", fontSize: "0.8rem", borderColor: "#dc2626", color: "#dc2626" }}
+                                  onClick={() => handleDeleteWarga(w, true)}
+                                >
+                                  Hapus Permanen
+                                </button>
+                              </>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Modals for Admin Actions */}
@@ -4549,6 +5058,88 @@ export default function App() {
               </div>
               <div style={{ display: "flex", gap: "1rem", justifyContent: "flex-end", marginTop: "2rem" }}>
                 <button className="nav-btn" type="button" onClick={() => setEditingAdmin(null)}>
+                  Batal
+                </button>
+                <button type="submit" className="nav-btn nav-btn-primary">
+                  Simpan Perubahan
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Akun Warga Modal */}
+      {editingWarga && (
+        <div className="modal-overlay" onClick={() => setEditingWarga(null)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "480px" }}>
+            <h3 style={{ fontSize: "1.25rem", fontWeight: 800, marginBottom: "1rem" }}>
+              Edit Akun Warga — #{editingWarga.id}
+            </h3>
+            <form onSubmit={handleUpdateWarga}>
+              <div className="form-group">
+                <label className="form-label">NIK KTP (Tidak dapat diubah)</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  value={editingWarga.nik_or_nip || "-"}
+                  disabled
+                  readOnly
+                  style={{ background: "#f1f5f9", color: "#64748b", cursor: "not-allowed" }}
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Nama Lengkap</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  maxLength={120}
+                  value={editWargaForm.nama_lengkap}
+                  onChange={(e) => setEditWargaForm({ ...editWargaForm, nama_lengkap: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Alamat Email</label>
+                <input
+                  type="email"
+                  className="form-input"
+                  required
+                  value={editWargaForm.email}
+                  onChange={(e) => setEditWargaForm({ ...editWargaForm, email: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">No. Telepon / WhatsApp</label>
+                <input
+                  type="tel"
+                  className="form-input"
+                  maxLength={30}
+                  value={editWargaForm.no_telepon}
+                  onChange={(e) => setEditWargaForm({ ...editWargaForm, no_telepon: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Alamat Domisili</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  maxLength={255}
+                  value={editWargaForm.alamat}
+                  onChange={(e) => setEditWargaForm({ ...editWargaForm, alamat: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Password Baru (kosongkan jika tidak diubah)</label>
+                <input
+                  type="password"
+                  className="form-input"
+                  placeholder="••••••••"
+                  value={editWargaForm.password}
+                  onChange={(e) => setEditWargaForm({ ...editWargaForm, password: e.target.value })}
+                />
+              </div>
+              <div style={{ display: "flex", gap: "1rem", justifyContent: "flex-end", marginTop: "1.5rem" }}>
+                <button className="nav-btn" type="button" onClick={() => setEditingWarga(null)}>
                   Batal
                 </button>
                 <button type="submit" className="nav-btn nav-btn-primary">
