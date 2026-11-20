@@ -64,3 +64,29 @@ def test_register_strong_password_accepted(client):
     assert response.status_code == 201
     assert response.json()["role"] == "warga"
 
+
+def test_reset_password_with_matching_nik_and_email(client, warga_user):
+    """Reset password mandiri harus berhasil bila NIK dan Email cocok, lalu bisa login dengan password baru."""
+    # Gagal bila NIK tidak cocok
+    bad_res = client.post("/api/v1/auth/reset-password", json={
+        "nik_or_nip": "9999999999999999",
+        "email": warga_user.email,
+        "new_password": "PasswordBaru99!",
+    })
+    assert bad_res.status_code == 404
+
+    # Berhasil bila NIK dan Email cocok
+    ok_res = client.post("/api/v1/auth/reset-password", json={
+        "nik_or_nip": warga_user.nik_or_nip,
+        "email": warga_user.email,
+        "new_password": "PasswordBaru99!",
+    })
+    assert ok_res.status_code == 200
+
+    # Login dengan password baru berhasil
+    login_res = client.post(
+        "/api/v1/auth/login",
+        data={"username": warga_user.email, "password": "PasswordBaru99!"},
+    )
+    assert login_res.status_code == 200
+

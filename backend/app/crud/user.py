@@ -16,12 +16,16 @@ def get_user_by_nik_or_nip(db: Session, nik_or_nip: str):
 def get_user_by_dept_id(db: Session, dept_id: int):
     return db.query(User).filter(User.dept_id == dept_id).first()
 
-def get_admin_dinas_list(db: Session, skip: int = 0, limit: int = 100):
-    results = (
+def get_admin_dinas_list(db: Session, skip: int = 0, limit: int = 100, include_inactive: bool = False):
+    q = (
         db.query(User, Department.nama_dinas.label("nama_dinas"))
         .outerjoin(Department, User.dept_id == Department.id)
-        .filter(User.role == "admin", User.is_active == True)
-        .order_by(User.id)
+        .filter(User.role == "admin")
+    )
+    if not include_inactive:
+        q = q.filter(User.is_active == True)
+    results = (
+        q.order_by(User.id)
         .offset(skip)
         .limit(limit)
         .all()
@@ -66,11 +70,30 @@ def update_admin_dinas(db: Session, admin_id: int, admin_in: AdminDinasUpdate):
     if "password" in update_data and update_data["password"]:
         update_data["password_hash"] = get_password_hash(update_data["password"])
         del update_data["password"]
+    elif "password" in update_data:
+        del update_data["password"]
+    if "nip" in update_data and update_data["nip"]:
+        update_data["nik_or_nip"] = update_data.pop("nip")
+    elif "nip" in update_data:
+        del update_data["nip"]
     for field, value in update_data.items():
         setattr(db_admin, field, value)
     db.add(db_admin)
     db.commit()
     db.refresh(db_admin)
+    dept = db.query(Department).filter(Department.id == db_admin.dept_id).first() if db_admin.dept_id else None
+    setattr(db_admin, "nama_dinas", dept.nama_dinas if dept else None)
+    return db_admin
+
+def activate_admin_dinas(db: Session, admin_id: int):
+    db_admin = db.query(User).filter(User.id == admin_id, User.role == "admin").first()
+    if not db_admin:
+        return None
+    db_admin.is_active = True
+    db.commit()
+    db.refresh(db_admin)
+    dept = db.query(Department).filter(Department.id == db_admin.dept_id).first() if db_admin.dept_id else None
+    setattr(db_admin, "nama_dinas", dept.nama_dinas if dept else None)
     return db_admin
 
 def soft_delete_admin_dinas(db: Session, admin_id: int):

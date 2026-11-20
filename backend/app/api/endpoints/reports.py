@@ -47,8 +47,6 @@ def list_reports(
     # Warga only sees their own reports. Admin dinas only sees reports routed to their dinas.
     user_id_filter = current_user.id if current_user.role == "warga" else None
     dept_id_filter = current_user.dept_id if current_user.role == "admin" else dept_id
-    if current_user.role == "warga":
-        limit = min(limit, 5)
 
     return get_reports(
         db=db,
@@ -447,6 +445,9 @@ def export_reports_html(
         dept_name = dept.nama_dinas if dept else "Auto-Routing"
         created_val = getattr(r, "created_at", None)
         created = created_val.strftime("%d/%m/%Y %H:%M") if created_val else "-"
+        rating_val = getattr(r, "rating_kepuasan", None)
+        ulasan_val = getattr(r, "ulasan_warga", None)
+        rating_str = f"{rating_val}/5" if rating_val else "-"
         rows_html += f"""
         <tr>
             <td>{r.id}</td>
@@ -456,6 +457,8 @@ def export_reports_html(
             <td>{html.escape(str(r.status or ''))}</td>
             <td>{html.escape(str(r.lat or ''))}, {html.escape(str(r.long or ''))}</td>
             <td>{html.escape(str(r.catatan_petugas or '-'))}</td>
+            <td>{html.escape(str(rating_str))}</td>
+            <td>{html.escape(str(ulasan_val or '-'))}</td>
             <td>{html.escape(str(created))}</td>
         </tr>
         """
@@ -490,6 +493,8 @@ def export_reports_html(
                     <th>Status</th>
                     <th>Lokasi</th>
                     <th>Catatan Petugas</th>
+                    <th>Rating</th>
+                    <th>Ulasan Warga</th>
                     <th>Tanggal</th>
                 </tr>
             </thead>

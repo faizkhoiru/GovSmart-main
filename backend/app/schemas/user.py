@@ -55,6 +55,7 @@ class AdminDinasUpdate(BaseModel):
     email: Optional[EmailStr] = None
     password: Optional[str] = Field(None, min_length=8)
     dept_id: Optional[int] = Field(None, description="ID dinas yang dikelola admin")
+    is_active: Optional[bool] = Field(None, description="Status aktif akun Admin Dinas")
 
     @field_validator("password")
     @classmethod
@@ -62,6 +63,17 @@ class AdminDinasUpdate(BaseModel):
         if v is not None:
             return validate_password_strength(v)
         return v
+
+
+class PasswordResetRequest(BaseModel):
+    nik_or_nip: str = Field(..., min_length=16, max_length=20, description="NIK atau NIP terdaftar")
+    email: EmailStr
+    new_password: str = Field(..., min_length=8, description="Kata sandi baru")
+
+    @field_validator("new_password")
+    @classmethod
+    def password_must_be_strong(cls, v: str) -> str:
+        return validate_password_strength(v)
 
 
 class UserProfileUpdate(BaseModel):

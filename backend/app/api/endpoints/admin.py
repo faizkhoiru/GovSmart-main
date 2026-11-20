@@ -19,6 +19,7 @@ from app.crud.user import (
     get_user_by_dept_id,
     get_admin_dinas_list,
     update_admin_dinas,
+    activate_admin_dinas,
     soft_delete_admin_dinas,
     hard_delete_admin_dinas,
 )
@@ -108,10 +109,11 @@ def create_admin_dinas_account(
 def list_admin_dinas(
     skip: int = 0,
     limit: int = 100,
+    include_inactive: bool = False,
     db: Session = Depends(get_db),
     current_super_admin: User = Depends(get_current_super_admin)
 ):
-    admins = get_admin_dinas_list(db, skip=skip, limit=limit)
+    admins = get_admin_dinas_list(db, skip=skip, limit=limit, include_inactive=include_inactive)
     return admins
 
 @router.get("/admin-dinas/{admin_id}", response_model=UserResponse)
@@ -166,15 +168,28 @@ def delete_admin_dinas(
         soft_delete_admin_dinas(db, admin_id)
     return admin
 
+@router.post("/admin-dinas/{admin_id}/activate", response_model=UserResponse)
+def reactivate_admin_dinas(
+    admin_id: int,
+    db: Session = Depends(get_db),
+    current_super_admin: User = Depends(get_current_super_admin)
+):
+    admin = activate_admin_dinas(db, admin_id)
+    if not admin:
+        raise HTTPException(status_code=404, detail="Admin Dinas tidak ditemukan")
+    return admin
+
 @router.get("/audit-logs/{report_id}", response_model=List[AuditLogResponse])
 def get_report_audit_history(
     report_id: int,
     db: Session = Depends(get_db),
-    current_admin: User = Depends(get_current_active_admin)
+    current_user: User = Depends(get_current_user)
 ):
     report = get_report_by_id(db, report_id)
     if not report:
         raise HTTPException(status_code=404, detail="Laporan tidak ditemukan")
-    if current_admin.role == "admin" and report.dept_id != current_admin.dept_id:
+    if current_user.role == "warga" and report.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Tidak memiliki akses ke riwayat laporan ini")
+    if current_user.role == "admin" and report.dept_id != current_user.dept_id:
         raise HTTPException(status_code=403, detail="Tidak memiliki akses ke laporan ini")
     return get_audit_logs_by_report(db, report_id=report_id)

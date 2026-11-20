@@ -25,6 +25,11 @@ def get_current_user(db: Session = Depends(get_db), token: str = Depends(oauth2_
     user = db.query(User).filter(User.email == email).first()
     if user is None:
         raise credentials_exception
+    if user.is_active is False:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Akun telah dinonaktifkan. Silakan hubungi Super Admin.",
+        )
     return user
 
 def get_current_active_admin(current_user: User = Depends(get_current_user)):

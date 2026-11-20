@@ -50,6 +50,7 @@ def test_update_admin_dinas_dept_and_password(client, super_admin_headers):
     created = _create_admin(client, super_admin_headers)
     new_dept = _get_dept(client, "Dinas Kesehatan")
     payload = {
+        "nip": "199509092020121099",
         "email": "admin.crud.updated@lamongan.go.id",
         "dept_id": new_dept["id"],
         "password": "NewPassword123!",
@@ -61,6 +62,7 @@ def test_update_admin_dinas_dept_and_password(client, super_admin_headers):
     )
     assert res.status_code == 200
     data = res.json()
+    assert data["nik_or_nip"] == payload["nip"]
     assert data["email"] == payload["email"]
     assert data["dept_id"] == new_dept["id"]
 
@@ -106,6 +108,21 @@ def test_soft_delete_admin_dinas(client, super_admin_headers):
     list_res = client.get("/api/v1/admin/admin-dinas", headers=super_admin_headers)
     admins = list_res.json()
     assert not any(a["id"] == created["id"] for a in admins)
+
+    # Deactivated admin cannot login
+    login_res = client.post(
+        "/api/v1/auth/login",
+        data={"username": created["email"], "password": "PasswordAdmin123!"},
+    )
+    assert login_res.status_code == 403
+
+    # Super-admin can list with include_inactive=true and reactivate the account
+    all_res = client.get("/api/v1/admin/admin-dinas?include_inactive=true", headers=super_admin_headers)
+    assert any(a["id"] == created["id"] and a["is_active"] is False for a in all_res.json())
+
+    act_res = client.post(f"/api/v1/admin/admin-dinas/{created['id']}/activate", headers=super_admin_headers)
+    assert act_res.status_code == 200
+    assert act_res.json()["is_active"] is True
 
 
 def test_hard_delete_admin_dinas(client, super_admin_headers):

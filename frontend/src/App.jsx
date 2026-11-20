@@ -178,6 +178,8 @@ export default function App() {
   const [editDeptId, setEditDeptId] = useState("");
   const [editLat, setEditLat] = useState("");
   const [editLong, setEditLong] = useState("");
+  const [editFotoFile, setEditFotoFile] = useState(null);
+  const [editUploadingFoto, setEditUploadingFoto] = useState(false);
 
   const openEditModal = (report) => {
     setEditReportModal({ open: true, report });
@@ -186,6 +188,7 @@ export default function App() {
     setEditDeptId(report.dept_id ? String(report.dept_id) : "");
     setEditLat(report.lat || "");
     setEditLong(report.long || "");
+    setEditFotoFile(null);
   };
 
   const handleEditReport = async (e) => {
@@ -211,9 +214,30 @@ export default function App() {
         const err = await res.json();
         throw new Error(err.detail || "Gagal update laporan");
       }
+
+      if (editFotoFile) {
+        setEditUploadingFoto(true);
+        try {
+          const formData = new FormData();
+          formData.append("foto", editFotoFile);
+          const fotoRes = await apiFetch(`/api/v1/reports/${editReportModal.report.id}/upload-foto`, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}` },
+            body: formData,
+          });
+          if (!fotoRes.ok) {
+            const fotoErr = await fotoRes.json().catch(() => ({}));
+            throw new Error(fotoErr.detail || "Laporan diperbarui, tetapi gagal mengunggah foto bukti baru");
+          }
+        } finally {
+          setEditUploadingFoto(false);
+        }
+      }
+
       setEditReportModal({ open: false, report: null });
+      setEditFotoFile(null);
       fetchReports();
-      notify("Laporan berhasil diedit.", "success");
+      notify("Laporan berhasil diperbarui.", "success");
     } catch (e) {
       notify(e.message);
     }
@@ -262,11 +286,16 @@ export default function App() {
   }, [userMenuOpen]);
 
   // Auth Modal State
-  const [authMode, setAuthMode] = useState("login"); // 'login' | 'register'
+  const [authMode, setAuthMode] = useState("login"); // 'login' | 'register' | 'forgot'
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [regNik, setRegNik] = useState("");
   const [authError, setAuthError] = useState("");
+  const [showForgotModal, setShowForgotModal] = useState(false);
+  const [forgotNik, setForgotNik] = useState("");
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotNewPassword, setForgotNewPassword] = useState("");
+  const [forgotSubmitting, setForgotSubmitting] = useState(false);
 
   // Warga Form State
   const [judul, setJudul] = useState("");
@@ -317,6 +346,7 @@ export default function App() {
   const [adminDinasList, setAdminDinasList] = useState([]);
   const [adminDeptFilter, setAdminDeptFilter] = useState("all");
   const [adminSearchQuery, setAdminSearchQuery] = useState("");
+  const [showInactiveAdmins, setShowInactiveAdmins] = useState(false);
   const [adminMobileTab, setAdminMobileTab] = useState("peta"); // 'peta' | 'daftar'
   const [mapDeptFilter, setMapDeptFilter] = useState("all");
   const [mapStatusMode, setMapStatusMode] = useState("active"); // 'active' | 'all'
@@ -410,7 +440,6 @@ export default function App() {
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
       const params = new URLSearchParams();
       if (statusFilter !== "all") params.set("status", statusFilter);
-      if (userRole === "warga") params.set("limit", "5");
 
       // Date filter: hitung start/end date berdasarkan periode yang dipilih
       const { start, end } = getPeriodRange();
@@ -510,7 +539,6 @@ export default function App() {
 
     fetchReports();
     fetchDepartments();
-    fetchAdminDinas();
 
     (async () => {
       try {
@@ -523,6 +551,9 @@ export default function App() {
             setUserProfile(profData);
             if (profData.role) setUserRole(profData.role);
             if (profData.email) setUserEmail(profData.email);
+            if (profData.role === "super_admin") {
+              fetchAdminDinas(showInactiveAdmins);
+            }
           }
         }
       } catch (_) { /* profil opsional */ }
@@ -656,6 +687,42 @@ export default function App() {
     } catch (e) {
       setAuthError(e.message);
       notify(e.message);
+    }
+  };
+
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    setForgotSubmitting(true);
+    try {
+      const res = await apiFetch("/api/v1/auth/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nik_or_nip: forgotNik.trim(),
+          email: forgotEmail.trim(),
+          new_password: forgotNewPassword,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        let errorMsg = "Gagal mereset kata sandi";
+        if (typeof err.detail === "string") {
+          errorMsg = err.detail;
+        } else if (Array.isArray(err.detail)) {
+          errorMsg = err.detail.map((d) => d.msg).join(" | ");
+        }
+        throw new Error(errorMsg);
+      }
+      setShowForgotModal(false);
+      setLoginEmail(forgotEmail.trim());
+      setLoginPassword("");
+      setForgotNik("");
+      setForgotNewPassword("");
+      notify("Kata sandi berhasil diperbarui! Silakan masuk dengan kata sandi baru.", "success");
+    } catch (err) {
+      notify(err.message);
+    } finally {
+      setForgotSubmitting(false);
     }
   };
 
@@ -890,7 +957,6 @@ export default function App() {
     }
     try {
       const params = new URLSearchParams();
-      if (userRole === "warga") params.set("limit", "5");
       // Date filter via backend export
       const { start, end } = getPeriodRange();
       if (start) params.set("start_date", start.toISOString().split("T")[0]);
@@ -1032,9 +1098,10 @@ export default function App() {
   };
 
   // Fetch Admin Dinas list
-  const fetchAdminDinas = async () => {
+  const fetchAdminDinas = async (includeInactive = showInactiveAdmins) => {
     try {
-      const res = await apiFetch("/api/v1/admin/admin-dinas", {
+      const query = includeInactive ? "?include_inactive=true" : "";
+      const res = await apiFetch(`/api/v1/admin/admin-dinas${query}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
@@ -1043,6 +1110,24 @@ export default function App() {
       }
     } catch (e) {
       console.error(e);
+    }
+  };
+
+  // Activate deactivated Admin Dinas
+  const handleActivateAdminDinas = async (admin) => {
+    try {
+      const res = await apiFetch(`/api/v1/admin/admin-dinas/${admin.id}/activate`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || "Gagal mengaktifkan kembali akun");
+      }
+      notify(`Akun Admin Dinas (${admin.email}) berhasil diaktifkan kembali.`, "success");
+      fetchAdminDinas(showInactiveAdmins);
+    } catch (e) {
+      notify(e.message);
     }
   };
 
@@ -1091,10 +1176,16 @@ export default function App() {
   };
 
   // Delete Admin Dinas
-  const handleDeleteAdminDinas = async (admin) => {
-    if (!window.confirm(`Hapus akun Admin Dinas ${admin.email}? Akun yang dinonaktifkan tidak dapat login.`)) return;
+  const handleDeleteAdminDinas = async (admin, hard = false) => {
+    const msg = hard
+      ? `Hapus PERMANEN akun Admin Dinas ${admin.email} dari database?`
+      : `Nonaktifkan akun Admin Dinas ${admin.email}? Akun yang dinonaktifkan tidak dapat login.`;
+    if (!window.confirm(msg)) return;
     try {
-      const res = await apiFetch(`/api/v1/admin/admin-dinas/${admin.id}`, {
+      const url = hard
+        ? `/api/v1/admin/admin-dinas/${admin.id}?hard=true`
+        : `/api/v1/admin/admin-dinas/${admin.id}`;
+      const res = await apiFetch(url, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -1102,8 +1193,8 @@ export default function App() {
         const err = await res.json();
         throw new Error(err.detail || "Gagal menghapus akun");
       }
-      notify("Akun Admin Dinas berhasil dinonaktifkan.", "success");
-      fetchAdminDinas();
+      notify(hard ? "Akun Admin Dinas dihapus permanen." : "Akun Admin Dinas berhasil dinonaktifkan.", "success");
+      fetchAdminDinas(showInactiveAdmins);
     } catch (e) {
       notify(e.message);
     }
@@ -1188,7 +1279,7 @@ export default function App() {
         });
       }
     }
-    const recentRiwayat = riwayatPairs.slice(-4);
+    const recentRiwayat = riwayatPairs.slice(-10);
 
     setChatMessages((prev) => [...prev, { role: "user", text }]);
     setChatPrompt("");
@@ -1818,7 +1909,28 @@ export default function App() {
                 </label>
 
                 <label className="auth-field">
-                  <span>Kata sandi</span>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span>Kata sandi</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setForgotEmail(loginEmail);
+                        setShowForgotModal(true);
+                      }}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        padding: 0,
+                        fontSize: "0.78rem",
+                        fontWeight: 700,
+                        color: "#0e56a8",
+                        cursor: "pointer",
+                        textDecoration: "underline",
+                      }}
+                    >
+                      Lupa kata sandi?
+                    </button>
+                  </div>
                   <input
                     type="password"
                     className="auth-input"
@@ -1899,6 +2011,65 @@ export default function App() {
             </div>
           </section>
         </main>
+
+        {showForgotModal && (
+          <div className="modal-overlay" onClick={() => setShowForgotModal(false)}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "440px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+                <h3 style={{ fontSize: "1.2rem", fontWeight: 800, margin: 0 }}>Reset Kata Sandi</h3>
+                <button type="button" className="nav-btn" onClick={() => setShowForgotModal(false)} style={{ padding: "0.35rem" }}>
+                  <X size={18} />
+                </button>
+              </div>
+              <p style={{ fontSize: "0.86rem", color: "#486581", marginBottom: "1rem", lineHeight: 1.5 }}>
+                Masukkan <strong>NIK/NIP</strong> dan <strong>Alamat Email</strong> yang terdaftar pada akun Anda untuk membuat kata sandi baru.
+              </p>
+              <form onSubmit={handleResetPassword}>
+                <div className="form-group" style={{ marginBottom: "0.9rem" }}>
+                  <label className="form-label">NIK KTP / NIP (16–20 digit)</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="Masukkan NIK atau NIP terdaftar"
+                    value={forgotNik}
+                    onChange={(e) => setForgotNik(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="form-group" style={{ marginBottom: "0.9rem" }}>
+                  <label className="form-label">Alamat Email Terdaftar</label>
+                  <input
+                    type="email"
+                    className="form-input"
+                    placeholder="nama@email.com"
+                    value={forgotEmail}
+                    onChange={(e) => setForgotEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="form-group" style={{ marginBottom: "1.25rem" }}>
+                  <label className="form-label">Kata Sandi Baru</label>
+                  <input
+                    type="password"
+                    className="form-input"
+                    placeholder="Min. 8 karakter (Huruf besar, kecil, angka, simbol)"
+                    value={forgotNewPassword}
+                    onChange={(e) => setForgotNewPassword(e.target.value)}
+                    required
+                  />
+                </div>
+                <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.75rem" }}>
+                  <button type="button" className="nav-btn" onClick={() => setShowForgotModal(false)}>
+                    Batal
+                  </button>
+                  <button type="submit" className="nav-btn nav-btn-primary" disabled={forgotSubmitting}>
+                    {forgotSubmitting ? "Memproses..." : "Simpan Kata Sandi Baru"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -2338,7 +2509,7 @@ export default function App() {
                     marginBottom: "-0.5rem",
                   }}
                 >
-                  {["all", "diterima", "diproses", "selesai", "ditolak"].map((s) => (
+                  {["all", "diterima", "diproses", "selesai", "ditolak", "dibatalkan"].map((s) => (
                     <button
                       key={s}
                       onClick={() => setStatusFilter(s)}
@@ -2777,22 +2948,34 @@ export default function App() {
                         {formatDate(report.created_at, { dateStyle: "medium" })}
                       </span>
                     </div>
-                    {userRole === "warga" && report.status === "diterima" && (
+                    {userRole === "warga" && (
                       <div className="report-card-actions" style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem", marginTop: "1rem" }}>
+                        {report.status === "diterima" && (
+                          <>
+                            <button
+                              type="button"
+                              className="nav-btn"
+                              onClick={() => openEditModal(report)}
+                            >
+                              Edit Pengaduan
+                            </button>
+                            <button
+                              type="button"
+                              className="nav-btn"
+                              onClick={() => handleCancelReport(report.id)}
+                              style={{ color: "#dc2626", borderColor: "#fecaca" }}
+                            >
+                              Batalkan Pengaduan
+                            </button>
+                          </>
+                        )}
                         <button
                           type="button"
                           className="nav-btn"
-                          onClick={() => openEditModal(report)}
+                          onClick={() => handleViewAuditLogs(report)}
+                          style={{ borderColor: "var(--accent-primary)", color: "var(--accent-primary)" }}
                         >
-                          Edit Pengaduan
-                        </button>
-                        <button
-                          type="button"
-                          className="nav-btn"
-                          onClick={() => handleCancelReport(report.id)}
-                          style={{ color: "#dc2626", borderColor: "#fecaca" }}
-                        >
-                          Batalkan Pengaduan
+                          <Clock size={14} /> Riwayat Log
                         </button>
                       </div>
                     )}
@@ -3392,7 +3575,7 @@ export default function App() {
                     marginBottom: "0.75rem",
                   }}
                 >
-                  {["all", "diterima", "diproses", "selesai", "ditolak"].map((s) => (
+                  {["all", "diterima", "diproses", "selesai", "ditolak", "dibatalkan"].map((s) => (
                     <button
                       key={s}
                       onClick={() => setStatusFilter(s)}
@@ -3743,14 +3926,42 @@ export default function App() {
                     : ""}
                   )
                 </h2>
-                <button
-                  type="button"
-                  className="nav-btn"
-                  onClick={fetchAdminDinas}
-                  style={{ fontSize: "0.82rem", padding: "0.35rem 0.8rem" }}
-                >
-                  Segarkan Data
-                </button>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.65rem", flexWrap: "wrap" }}>
+                  <label
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "0.4rem",
+                      fontSize: "0.82rem",
+                      fontWeight: 600,
+                      color: "var(--text-main)",
+                      cursor: "pointer",
+                      padding: "0.35rem 0.7rem",
+                      borderRadius: "8px",
+                      background: showInactiveAdmins ? "#eff6ff" : "#f8fafc",
+                      border: "1px solid var(--border-color)",
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={showInactiveAdmins}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        setShowInactiveAdmins(checked);
+                        fetchAdminDinas(checked);
+                      }}
+                    />
+                    <span>Tampilkan Akun Non-aktif</span>
+                  </label>
+                  <button
+                    type="button"
+                    className="nav-btn"
+                    onClick={() => fetchAdminDinas(showInactiveAdmins)}
+                    style={{ fontSize: "0.82rem", padding: "0.35rem 0.8rem" }}
+                  >
+                    Segarkan Data
+                  </button>
+                </div>
               </div>
 
               {/* Filter Berdasarkan Nama Dinas & Pencarian Cepat */}
@@ -3871,7 +4082,7 @@ export default function App() {
                               {a.is_active ? "Aktif" : "Non-aktif"}
                             </span>
                           </td>
-                          <td style={{ padding: "0.75rem", display: "flex", gap: "0.3rem" }}>
+                          <td style={{ padding: "0.75rem", display: "flex", gap: "0.35rem", flexWrap: "wrap" }}>
                             <button
                               className="nav-btn"
                               style={{ padding: "0.3rem 0.7rem", fontSize: "0.8rem" }}
@@ -3879,13 +4090,32 @@ export default function App() {
                             >
                               Edit
                             </button>
-                            <button
-                              className="nav-btn"
-                              style={{ padding: "0.3rem 0.7rem", fontSize: "0.8rem", borderColor: "#ef4444", color: "#ef4444" }}
-                              onClick={() => handleDeleteAdminDinas(a)}
-                            >
-                              Hapus
-                            </button>
+                            {a.is_active ? (
+                              <button
+                                className="nav-btn"
+                                style={{ padding: "0.3rem 0.7rem", fontSize: "0.8rem", borderColor: "#ef4444", color: "#ef4444" }}
+                                onClick={() => handleDeleteAdminDinas(a, false)}
+                              >
+                                Nonaktifkan
+                              </button>
+                            ) : (
+                              <>
+                                <button
+                                  className="nav-btn"
+                                  style={{ padding: "0.3rem 0.7rem", fontSize: "0.8rem", borderColor: "#059669", color: "#059669" }}
+                                  onClick={() => handleActivateAdminDinas(a)}
+                                >
+                                  Aktifkan
+                                </button>
+                                <button
+                                  className="nav-btn"
+                                  style={{ padding: "0.3rem 0.7rem", fontSize: "0.8rem", borderColor: "#dc2626", color: "#dc2626" }}
+                                  onClick={() => handleDeleteAdminDinas(a, true)}
+                                >
+                                  Hapus Permanen
+                                </button>
+                              </>
+                            )}
                           </td>
                         </tr>
                       ))}
@@ -4239,7 +4469,7 @@ export default function App() {
                   <div
                     style={{ fontSize: "0.9rem", color: "var(--text-muted)" }}
                   >
-                    Oleh User ID #{log.admin_id} &bull;{" "}
+                    {log.admin_id ? `Oleh Petugas Admin (#${log.admin_id})` : "Oleh Sistem AI GovSmart / Pelapor"} &bull;{" "}
                     {formatDate(log.created_at)}
                   </div>
                   <div
@@ -4362,9 +4592,25 @@ export default function App() {
                   <input type="number" step="any" className="form-input" value={editLong} onChange={(e) => setEditLong(e.target.value)} />
                 </div>
               </div>
+              <div className="form-group">
+                <label className="form-label">Ganti / Tambah Foto Bukti (Opsional, JPEG/PNG/WEBP, maks 5 MB)</label>
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="form-input"
+                  onChange={(e) => setEditFotoFile(e.target.files?.[0] || null)}
+                />
+                {editReportModal.report?.foto_bukti && !editFotoFile && (
+                  <small style={{ color: "var(--text-muted)", display: "block", marginTop: "0.3rem" }}>
+                    Foto saat ini sudah terlampir. Pilih file baru hanya jika ingin mengganti foto bukti.
+                  </small>
+                )}
+              </div>
               <div style={{ marginTop: 20, display: "flex", justifyContent: "flex-end", flexWrap: "wrap", gap: 12 }}>
                 <button type="button" className="nav-btn" onClick={() => setEditReportModal({ open: false, report: null })}>Batal</button>
-                <button type="submit" className="nav-btn nav-btn-primary">Simpan Perubahan</button>
+                <button type="submit" className="nav-btn nav-btn-primary" disabled={editUploadingFoto}>
+                  {editUploadingFoto ? "Mengunggah Foto..." : "Simpan Perubahan"}
+                </button>
               </div>
             </form>
           </div>

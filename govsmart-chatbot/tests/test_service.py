@@ -89,7 +89,7 @@ def test_real_chatbot_intent_and_rag_accuracy():
 
     res_kkpr = bot.tanya("Berapa lama proses registrasi KKPR?", pakai_llm=False)
     assert res_kkpr["intent"] == "jawab"
-    assert "5 Hari" in res_kkpr["jawaban"] or "30" in res_kkpr["jawaban"]
+    assert "1 (satu) hari kerja" in res_kkpr["jawaban"] or "10 (sepuluh) hari kerja" in res_kkpr["jawaban"]
 
     out_of_rag_cases = [
         "cara membuka koperasi desa",
