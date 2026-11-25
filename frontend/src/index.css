@@ -340,15 +340,22 @@ body {
   border: 2px solid #d1d5db;
   border-radius: var(--radius-md);
   padding: 0.85rem 1.2rem;
-  color: var(--text-main);
+  color: #0d223a;
+  caret-color: #0e56a8;
   font-size: 1.05rem;
   outline: none;
+}
+.form-input::placeholder,
+.form-textarea::placeholder {
+  color: #64748b;
+  opacity: 1;
 }
 .form-input:focus,
 .form-textarea:focus,
 .form-select:focus {
   border-color: var(--accent-primary);
   background: #ffffff;
+  color: #0d223a;
   box-shadow: 0 0 0 4px rgba(30, 64, 175, 0.15);
 }
 

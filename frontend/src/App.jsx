@@ -48,6 +48,140 @@ const API_BASE_URL = (
 const apiUrl = (path) => `${API_BASE_URL}${path}`;
 const apiFetch = (path, options) => fetch(apiUrl(path), options);
 
+const FIELD_LABELS = {
+  judul: "Judul Laporan",
+  isi_laporan: "Isi Laporan",
+  dept_id: "Dinas Tujuan",
+  lat: "Latitude",
+  long: "Longitude",
+  nik_or_nip: "NIK / NIP",
+  nip: "NIP",
+  email: "Alamat Email",
+  password: "Kata Sandi",
+  new_password: "Kata Sandi Baru",
+  nama_lengkap: "Nama Lengkap",
+  no_telepon: "No. Telepon",
+  alamat: "Alamat Domisili",
+  status: "Status Laporan",
+  catatan_petugas: "Catatan Petugas",
+  rating_kepuasan: "Rating Kepuasan",
+  ulasan_warga: "Ulasan Warga",
+  pertanyaan: "Pertanyaan",
+  foto: "Berkas Foto / Dokumen",
+};
+
+const translateValidationMessage = (rawMsg, field) => {
+  let msg = String(rawMsg || "").replace(/^Value error,\s*/i, "").trim();
+  const minMatch = msg.match(/String should have at least (\d+) character/i);
+  if (minMatch) {
+    msg = `minimal ${minMatch[1]} karakter.`;
+  } else if (/String should have at most (\d+) character/i.test(msg)) {
+    const maxMatch = msg.match(/String should have at most (\d+) character/i);
+    msg = `maksimal ${maxMatch[1]} karakter.`;
+  } else if (/valid email address/i.test(msg)) {
+    msg = "format alamat email tidak valid.";
+  } else if (/Field required/i.test(msg)) {
+    msg = "wajib diisi.";
+  } else if (/valid integer|valid number/i.test(msg)) {
+    msg = "harus berupa angka yang valid.";
+  } else if (/greater than or equal to ([\-\d.]+)/i.test(msg)) {
+    const m = msg.match(/greater than or equal to ([\-\d.]+)/i);
+    msg = `nilai minimal adalah ${m[1]}.`;
+  } else if (/less than or equal to ([\-\d.]+)/i.test(msg)) {
+    const m = msg.match(/less than or equal to ([\-\d.]+)/i);
+    msg = `nilai maksimal adalah ${m[1]}.`;
+  }
+  const label = field ? FIELD_LABELS[field] || field : "";
+  return label ? `${label}: ${msg}` : msg;
+};
+
+const translateKnownBackendMessage = (text) => {
+  const raw = String(text || "").trim();
+  const low = raw.toLowerCase();
+  if (!raw || raw === "[object Object]") return "";
+  if (low.includes("incorrect email/nik or password")) {
+    return "Email/NIK atau kata sandi salah. Periksa kembali data masuk Anda.";
+  }
+  if (low.includes("email already registered")) {
+    return "Alamat email ini sudah terdaftar. Silakan gunakan email lain atau langsung masuk.";
+  }
+  if (low.includes("nik/nip already registered")) {
+    return "NIK atau NIP ini sudah terdaftar pada akun lain.";
+  }
+  if (low.includes("could not validate credentials") || low.includes("not authenticated")) {
+    return "Sesi login Anda telah berakhir. Silakan masuk kembali.";
+  }
+  if (low.includes("not enough permissions")) {
+    return "Anda tidak memiliki izin untuk melakukan tindakan ini.";
+  }
+  if (low.includes("failed to fetch") || low.includes("networkerror")) {
+    return "Tidak dapat terhubung ke server. Periksa koneksi internet Anda lalu coba lagi.";
+  }
+  return raw;
+};
+
+const extractApiErrorMessage = async (res, fallback = "Terjadi kesalahan saat memproses permintaan.") => {
+  let data = null;
+  try {
+    data = await res.json();
+  } catch (_) {
+    data = null;
+  }
+
+  if (data) {
+    const d = data.detail ?? data.pesan ?? data.message;
+    if (typeof d === "string" && d.trim()) {
+      return translateKnownBackendMessage(d);
+    }
+    if (Array.isArray(d) && d.length > 0) {
+      const formatted = d
+        .map((item) => {
+          if (typeof item === "string") return translateKnownBackendMessage(item);
+          const loc = Array.isArray(item?.loc) ? item.loc : [];
+          const field = loc.length > 1 ? loc[loc.length - 1] : loc[0];
+          return translateValidationMessage(item?.msg || "", field);
+        })
+        .filter(Boolean);
+      if (formatted.length > 0) return formatted.join(" • ");
+    }
+    if (d && typeof d === "object") {
+      if (typeof d.pesan === "string" && d.pesan.trim()) return d.pesan.trim();
+      if (typeof d.message === "string" && d.message.trim()) return translateKnownBackendMessage(d.message);
+    }
+  }
+
+  switch (res?.status) {
+    case 400:
+      return "Permintaan tidak dapat diproses. Periksa kembali data yang Anda masukkan.";
+    case 401:
+      return "Sesi login tidak valid atau telah berakhir. Silakan masuk kembali.";
+    case 403:
+      return "Anda tidak memiliki izin untuk mengakses fitur atau data ini.";
+    case 404:
+      return "Data yang Anda cari tidak ditemukan.";
+    case 409:
+      return "Tindakan tidak dapat dilakukan karena status data sudah berubah.";
+    case 413:
+      return "Ukuran berkas terlalu besar. Maksimal ukuran berkas adalah 5 MB.";
+    case 422:
+      return "Data yang dimasukkan belum sesuai ketentuan. Periksa kembali isian formulir Anda.";
+    case 429:
+      return "Terlalu banyak permintaan dalam waktu singkat. Mohon tunggu sebentar lalu coba lagi.";
+    case 500:
+    case 502:
+    case 503:
+    case 504:
+      return "Layanan server sedang sibuk atau mengalami gangguan sementara. Silakan coba beberapa saat lagi.";
+    default:
+      return fallback;
+  }
+};
+
+const formatCatchError = (err, fallback = "Terjadi gangguan koneksi. Silakan coba lagi.") => {
+  const msg = translateKnownBackendMessage(err?.message || "");
+  return msg || fallback;
+};
+
 // Fix leaflet default icon
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -213,8 +347,7 @@ export default function App() {
         body: JSON.stringify(body),
       });
       if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.detail || "Gagal update laporan");
+        throw new Error(await extractApiErrorMessage(res, "Gagal memperbarui laporan."));
       }
 
       if (editFotoFile) {
@@ -228,8 +361,12 @@ export default function App() {
             body: formData,
           });
           if (!fotoRes.ok) {
-            const fotoErr = await fotoRes.json().catch(() => ({}));
-            throw new Error(fotoErr.detail || "Laporan diperbarui, tetapi gagal mengunggah foto bukti baru");
+            throw new Error(
+              await extractApiErrorMessage(
+                fotoRes,
+                "Laporan diperbarui, tetapi gagal mengunggah foto bukti baru."
+              )
+            );
           }
         } finally {
           setEditUploadingFoto(false);
@@ -241,7 +378,7 @@ export default function App() {
       fetchReports();
       notify("Laporan berhasil diperbarui.", "success");
     } catch (e) {
-      notify(e.message);
+      notify(formatCatchError(e, "Gagal memperbarui laporan."));
     }
   };
 
@@ -620,14 +757,7 @@ export default function App() {
       });
 
       if (!res.ok) {
-        const err = await res.json();
-        let errorMsg = "Login gagal";
-        if (typeof err.detail === "string") {
-          errorMsg = err.detail;
-        } else if (Array.isArray(err.detail)) {
-          errorMsg = err.detail.map((d) => d.msg).join(", ");
-        }
-        throw new Error(errorMsg);
+        throw new Error(await extractApiErrorMessage(res, "Gagal masuk ke portal."));
       }
 
       const data = await res.json();
@@ -650,7 +780,7 @@ export default function App() {
         setMainView("options");
       }
     } catch (e) {
-      setAuthError(e.message);
+      setAuthError(formatCatchError(e, "Gagal masuk ke portal. Silakan coba lagi."));
     }
   };
 
@@ -669,41 +799,16 @@ export default function App() {
       });
 
       if (!res.ok) {
-        const err = await res.json();
-        let errorMsg = "Registrasi gagal";
-        if (typeof err.detail === "string") {
-          errorMsg = err.detail;
-        } else if (Array.isArray(err.detail)) {
-          errorMsg = err.detail
-            .map((d) => {
-              let msg = d.msg;
-              if (msg.includes("String should have at least")) {
-                const num = msg.match(/\d+/)?.[0] || "beberapa";
-                msg = `Minimal ${num} karakter.`;
-              } else if (msg.includes("String should have at most")) {
-                const num = msg.match(/\d+/)?.[0] || "tertentu";
-                msg = `Maksimal ${num} karakter.`;
-              } else if (msg.includes("value is not a valid email")) {
-                msg = `Format email tidak valid.`;
-              }
-
-              const field = d.loc?.[1];
-              if (field === "nik_or_nip") return `NIK: ${msg}`;
-              if (field === "password") return `Kata Sandi: ${msg}`;
-              if (field === "email") return `Email: ${msg}`;
-              return msg;
-            })
-            .join(" | ");
-        }
-        throw new Error(errorMsg);
+        throw new Error(await extractApiErrorMessage(res, "Registrasi akun gagal."));
       }
 
       // Auto login after register
       setAuthMode("login");
       notify("Registrasi berhasil. Silakan login.", "success");
     } catch (e) {
-      setAuthError(e.message);
-      notify(e.message);
+      const msg = formatCatchError(e, "Registrasi akun gagal. Periksa kembali data Anda.");
+      setAuthError(msg);
+      notify(msg);
     }
   };
 
@@ -721,14 +826,7 @@ export default function App() {
         }),
       });
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        let errorMsg = "Gagal mereset kata sandi";
-        if (typeof err.detail === "string") {
-          errorMsg = err.detail;
-        } else if (Array.isArray(err.detail)) {
-          errorMsg = err.detail.map((d) => d.msg).join(" | ");
-        }
-        throw new Error(errorMsg);
+        throw new Error(await extractApiErrorMessage(res, "Gagal mereset kata sandi."));
       }
       setShowForgotModal(false);
       setLoginEmail(forgotEmail.trim());
@@ -737,7 +835,7 @@ export default function App() {
       setForgotNewPassword("");
       notify("Kata sandi berhasil diperbarui! Silakan masuk dengan kata sandi baru.", "success");
     } catch (err) {
-      notify(err.message);
+      notify(formatCatchError(err, "Gagal mereset kata sandi."));
     } finally {
       setForgotSubmitting(false);
     }
@@ -790,8 +888,7 @@ export default function App() {
       });
 
       if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.detail || "Gagal mengirim laporan");
+        throw new Error(await extractApiErrorMessage(res, "Gagal mengirim laporan pengaduan."));
       }
 
       const data = await res.json();
@@ -817,8 +914,8 @@ export default function App() {
           if (fotoRes.ok) {
             setFotoUploadMsg("✅ Foto bukti berhasil diunggah!");
           } else {
-            const fotoErr = await fotoRes.json();
-            setFotoUploadMsg(`❌ ${fotoErr.detail || "Gagal mengupload foto"}`);
+            const fotoMsg = await extractApiErrorMessage(fotoRes, "Gagal mengupload foto bukti.");
+            setFotoUploadMsg(`❌ ${fotoMsg}`);
           }
         } catch {
           setFotoUploadMsg("❌ Gagal mengupload foto, koneksi terganggu.");
@@ -830,7 +927,7 @@ export default function App() {
 
       fetchReports();
     } catch (e) {
-      notify(e.message);
+      notify(formatCatchError(e, "Gagal mengirim laporan pengaduan."));
     } finally {
       setSubmitting(false);
     }
@@ -853,13 +950,12 @@ export default function App() {
         body: formData,
       });
       if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.detail || "Gagal mengupload foto");
+        throw new Error(await extractApiErrorMessage(res, "Gagal mengupload foto bukti."));
       }
       setFotoUploadMsg("✅ Foto bukti berhasil diunggah!");
       setFotoFile(null);
     } catch (e) {
-      setFotoUploadMsg(`❌ ${e.message}`);
+      setFotoUploadMsg(`❌ ${formatCatchError(e, "Gagal mengupload foto bukti.")}`);
     } finally {
       setUploadingFoto(false);
     }
@@ -893,16 +989,12 @@ export default function App() {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) {
-        const err = await res.json();
-        const detail = Array.isArray(err.detail)
-          ? err.detail.map((item) => item.msg).join(", ")
-          : err.detail;
-        throw new Error(detail || "Gagal membatalkan pengaduan");
+        throw new Error(await extractApiErrorMessage(res, "Gagal membatalkan pengaduan."));
       }
       await fetchReports();
       notify("Pengaduan berhasil dibatalkan.", "success");
     } catch (e) {
-      notify(e.message);
+      notify(formatCatchError(e, "Gagal membatalkan pengaduan."));
     }
   };
 
@@ -922,8 +1014,7 @@ export default function App() {
       });
 
       if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.detail || "Gagal memperbarui status");
+        throw new Error(await extractApiErrorMessage(res, "Gagal memperbarui status laporan."));
       }
 
       fetchReports();
@@ -931,7 +1022,7 @@ export default function App() {
       setCatatanPetugas("");
       notify("Status laporan berhasil diperbarui.", "success");
     } catch (e) {
-      notify(e.message);
+      notify(formatCatchError(e, "Gagal memperbarui status laporan."));
     }
   };
 
@@ -950,8 +1041,7 @@ export default function App() {
         body: formData,
       });
       if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.detail || "Gagal upload feedback");
+        throw new Error(await extractApiErrorMessage(res, "Gagal mengunggah dokumen feedback."));
       }
       const data = await res.json();
       setSelectedReport(data);
@@ -959,8 +1049,9 @@ export default function App() {
       setFeedbackUploadMsg("✅ Dokumen feedback berhasil diunggah!");
       notify("Dokumen feedback berhasil diunggah.", "success");
     } catch (e) {
-      setFeedbackUploadMsg(`❌ ${e.message}`);
-      notify(e.message);
+      const msg = formatCatchError(e, "Gagal mengunggah dokumen feedback.");
+      setFeedbackUploadMsg(`❌ ${msg}`);
+      notify(msg);
     } finally {
       setFeedbackUploading(false);
     }
@@ -984,8 +1075,7 @@ export default function App() {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.detail || "Gagal mengekspor CSV");
+        throw new Error(await extractApiErrorMessage(res, "Gagal mengekspor data CSV."));
       }
       const blob = new Blob([await res.text()], { type: "text/csv;charset=utf-8;" });
       const link = document.createElement("a");
@@ -996,7 +1086,7 @@ export default function App() {
       document.body.removeChild(link);
       notify("Berkas CSV laporan berhasil diunduh.", "success");
     } catch (e) {
-      notify(e.message);
+      notify(formatCatchError(e, "Gagal mengekspor data CSV."));
     }
   };
 
@@ -1017,8 +1107,7 @@ export default function App() {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.detail || "Gagal mengekspor PDF");
+        throw new Error(await extractApiErrorMessage(res, "Gagal mengekspor halaman PDF."));
       }
       const html = await res.text();
       const blob = new Blob([html], { type: "text/html;charset=utf-8" });
@@ -1028,7 +1117,7 @@ export default function App() {
       if (win) setTimeout(() => window.URL.revokeObjectURL(url), 10000);
       notify("Halaman laporan terbuka. Gunakan Ctrl+P / Cmd+P untuk cetak sebagai PDF.", "success");
     } catch (e) {
-      notify(e.message);
+      notify(formatCatchError(e, "Gagal mengekspor halaman PDF."));
     }
   };
 
@@ -1090,16 +1179,7 @@ export default function App() {
       });
 
       if (!res.ok) {
-        const err = await res.json();
-        let errorMsg = "Gagal membuat akun admin";
-        if (typeof err.detail === "string") {
-          errorMsg = err.detail;
-        } else if (Array.isArray(err.detail)) {
-          errorMsg = err.detail.map((d) => d.msg).join(", ");
-        } else if (err.detail) {
-          errorMsg = JSON.stringify(err.detail);
-        }
-        throw new Error(errorMsg);
+        throw new Error(await extractApiErrorMessage(res, "Gagal membuat akun Admin Dinas."));
       }
 
       setAdminSuccess(`Akun Admin Dinas (${adminEmail}) berhasil dibuat!`);
@@ -1110,7 +1190,7 @@ export default function App() {
       setAdminDeptId("");
       fetchAdminDinas();
     } catch (e) {
-      notify(e.message);
+      notify(formatCatchError(e, "Gagal membuat akun Admin Dinas."));
     }
   };
 
@@ -1138,13 +1218,12 @@ export default function App() {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.detail || "Gagal mengaktifkan kembali akun");
+        throw new Error(await extractApiErrorMessage(res, "Gagal mengaktifkan kembali akun Admin Dinas."));
       }
       notify(`Akun Admin Dinas (${admin.email}) berhasil diaktifkan kembali.`, "success");
       fetchAdminDinas(showInactiveAdmins);
     } catch (e) {
-      notify(e.message);
+      notify(formatCatchError(e, "Gagal mengaktifkan kembali akun Admin Dinas."));
     }
   };
 
@@ -1177,18 +1256,13 @@ export default function App() {
         }),
       });
       if (!res.ok) {
-        const err = await res.json();
-        let errorMsg = "Gagal memperbarui akun";
-        if (typeof err.detail === "string") errorMsg = err.detail;
-        else if (Array.isArray(err.detail)) errorMsg = err.detail.map((d) => d.msg).join(", ");
-        else if (err.detail) errorMsg = JSON.stringify(err.detail);
-        throw new Error(errorMsg);
+        throw new Error(await extractApiErrorMessage(res, "Gagal memperbarui akun Admin Dinas."));
       }
       notify("Akun Admin Dinas berhasil diperbarui.", "success");
       setEditingAdmin(null);
       fetchAdminDinas();
     } catch (e) {
-      notify(e.message);
+      notify(formatCatchError(e, "Gagal memperbarui akun Admin Dinas."));
     }
   };
 
@@ -1207,13 +1281,12 @@ export default function App() {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.detail || "Gagal menghapus akun");
+        throw new Error(await extractApiErrorMessage(res, "Gagal memproses penghapusan akun Admin Dinas."));
       }
       notify(hard ? "Akun Admin Dinas dihapus permanen." : "Akun Admin Dinas berhasil dinonaktifkan.", "success");
       fetchAdminDinas(showInactiveAdmins);
     } catch (e) {
-      notify(e.message);
+      notify(formatCatchError(e, "Gagal memproses penghapusan akun Admin Dinas."));
     }
   };
 
@@ -1266,17 +1339,13 @@ export default function App() {
         body: JSON.stringify(payload),
       });
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        let errorMsg = "Gagal memperbarui akun warga";
-        if (typeof err.detail === "string") errorMsg = err.detail;
-        else if (Array.isArray(err.detail)) errorMsg = err.detail.map((d) => d.msg).join(" | ");
-        throw new Error(errorMsg);
+        throw new Error(await extractApiErrorMessage(res, "Gagal memperbarui akun warga."));
       }
       notify("Akun warga berhasil diperbarui.", "success");
       setEditingWarga(null);
       fetchWargaList(showInactiveWarga);
     } catch (err) {
-      notify(err.message);
+      notify(formatCatchError(err, "Gagal memperbarui akun warga."));
     }
   };
 
@@ -1292,13 +1361,12 @@ export default function App() {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.detail || "Gagal menghapus akun warga");
+        throw new Error(await extractApiErrorMessage(res, "Gagal menghapus akun warga."));
       }
       notify(hard ? "Akun warga dihapus permanen." : "Akun warga berhasil dinonaktifkan.", "success");
       fetchWargaList(showInactiveWarga);
     } catch (err) {
-      notify(err.message);
+      notify(formatCatchError(err, "Gagal menghapus akun warga."));
     }
   };
 
@@ -1309,25 +1377,18 @@ export default function App() {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.detail || "Gagal mengaktifkan kembali akun warga");
+        throw new Error(await extractApiErrorMessage(res, "Gagal mengaktifkan kembali akun warga."));
       }
       notify(`Akun warga (${w.email}) berhasil diaktifkan kembali.`, "success");
       fetchWargaList(showInactiveWarga);
     } catch (err) {
-      notify(err.message);
+      notify(formatCatchError(err, "Gagal mengaktifkan kembali akun warga."));
     }
   };
 
   // AI Chatbot Handler
   const chatErrorText = async (res) => {
-    try {
-      const err = await res.json();
-      const d = err.detail;
-      if (d && typeof d === "object" && d.pesan) return d.pesan;
-      if (typeof d === "string") return d;
-    } catch (_) { /* body bukan JSON */ }
-    return "Maaf, terjadi kesalahan saat menghubungi server AI.";
+    return extractApiErrorMessage(res, "Maaf, terjadi kesalahan saat menghubungi server AI.");
   };
 
   // State Penilaian Kepuasan Warga (per report ID)
@@ -1371,14 +1432,13 @@ export default function App() {
         }),
       });
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.detail || "Gagal menyimpan penilaian kepuasan");
+        throw new Error(await extractApiErrorMessage(res, "Gagal menyimpan penilaian kepuasan."));
       }
       setEditingRatingId(null);
       await fetchReports();
       notify("Terima kasih! Penilaian kepuasan Anda telah tersimpan.", "success");
     } catch (e) {
-      notify(e.message);
+      notify(formatCatchError(e, "Gagal menyimpan penilaian kepuasan."));
     } finally {
       setSubmittingRatingId(null);
     }
@@ -1563,14 +1623,7 @@ export default function App() {
         body: JSON.stringify(payload),
       });
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        let errorMsg = "Gagal menyimpan perubahan profil";
-        if (typeof err.detail === "string") {
-          errorMsg = err.detail;
-        } else if (Array.isArray(err.detail)) {
-          errorMsg = err.detail.map((d) => d.msg).join(" | ");
-        }
-        throw new Error(errorMsg);
+        throw new Error(await extractApiErrorMessage(res, "Gagal menyimpan perubahan profil."));
       }
       const data = await res.json();
       setUserProfile(data);
@@ -1586,7 +1639,7 @@ export default function App() {
       setProfileForm((prev) => ({ ...prev, password: "" }));
       notify("Profil pengguna berhasil diperbarui.", "success");
     } catch (err) {
-      notify(err.message);
+      notify(formatCatchError(err, "Gagal menyimpan perubahan profil."));
     } finally {
       setSavingProfile(false);
     }
@@ -1922,7 +1975,7 @@ export default function App() {
 
               <div className="form-group" style={{ marginBottom: "1.25rem" }}>
                 <label className="form-label" style={{ fontSize: "0.9rem" }}>
-                  Kata Sandi Baru (Opsional)
+                  Kata Sandi Baru
                 </label>
                 <input
                   type="password"
@@ -2530,7 +2583,7 @@ export default function App() {
                   />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Dinas Tujuan (Opsional)</label>
+                  <label className="form-label">Dinas Tujuan</label>
                   <select
                     className="form-input"
                     value={reportDeptId}
@@ -2558,7 +2611,7 @@ export default function App() {
                 {/* Koordinat Lokasi + Tombol GPS */}
                 <div className="form-group">
                   <div className="coord-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.5rem", marginBottom: "0.5rem" }}>
-                    <label className="form-label" style={{ margin: 0 }}>Koordinat Lokasi Kejadian (Opsional)</label>
+                    <label className="form-label" style={{ margin: 0 }}>Koordinat Lokasi Kejadian</label>
                     <button
                       type="button"
                       onClick={handleUseGPS}
@@ -2596,7 +2649,7 @@ export default function App() {
 
                 {/* Upload Foto Bukti — Drag & Drop Zone */}
                 <div className="form-group">
-                  <label className="form-label">📎 Foto Bukti (Opsional, JPEG/PNG/WEBP, maks 5 MB)</label>
+                  <label className="form-label">📎 Foto Bukti (JPEG/PNG/WEBP, maks 5 MB)</label>
                   <div
                     onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
                     onDragLeave={(e) => { e.preventDefault(); setIsDragging(false); }}
@@ -2706,14 +2759,14 @@ export default function App() {
               >
                 {/* Search Bar Realtime */}
                 <div style={{ position: "relative", marginBottom: "0.25rem" }}>
-                  <Search size={16} style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
+                  <Search size={16} style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "#64748b" }} />
                   <input
                     type="text"
                     className="form-input"
                     placeholder="Cari laporan berdasarkan judul, isi, nama dinas, atau ID..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    style={{ paddingLeft: "2.3rem", fontSize: "0.9rem" }}
+                    style={{ paddingLeft: "2.3rem", fontSize: "0.9rem", color: "#0d223a" }}
                   />
                 </div>
 
@@ -3044,7 +3097,7 @@ export default function App() {
                               className="form-textarea"
                               rows={2}
                               maxLength={500}
-                              placeholder="Tulis ulasan atau masukan singkat Anda terhadap penanganan petugas (opsional)..."
+                              placeholder="Tulis ulasan atau masukan singkat Anda terhadap penanganan petugas..."
                               value={getRatingDraft(report).ulasan}
                               onChange={(e) => setRatingDraftField(report, "ulasan", e.target.value)}
                               style={{
@@ -4638,7 +4691,7 @@ export default function App() {
       </div>
 
       {/* Modals for Admin Actions */}
-      {selectedReport && !showAuditModal && (
+      {(userRole === "admin" || userRole === "super_admin") && selectedReport && !showAuditModal && (
         <div
           className="modal-overlay"
           onClick={() => {
@@ -4808,7 +4861,7 @@ export default function App() {
             {/* Catatan / Tindak Lanjut Petugas */}
             <div className="form-group" style={{ marginBottom: "1.15rem" }}>
               <label className="form-label" style={{ fontSize: "0.92rem" }}>
-                Catatan / Tindak Lanjut Petugas <span style={{ fontWeight: 500, color: "#64748b", fontSize: "0.82rem" }}>(Opsional)</span>
+                Catatan / Tindak Lanjut Petugas
               </label>
               <textarea
                 className="form-input status-modal-textarea"
@@ -4823,7 +4876,7 @@ export default function App() {
             <div className="status-modal-feedback-box">
               <div className="status-modal-feedback-header">
                 <span className="form-label" style={{ fontSize: "0.9rem", margin: 0 }}>
-                  Lampiran Bukti Tindak Lanjut Dinas <span style={{ fontWeight: 500, color: "#64748b", fontSize: "0.8rem" }}>(Opsional)</span>
+                  Lampiran Bukti Tindak Lanjut Dinas
                 </span>
               </div>
 
@@ -4936,8 +4989,14 @@ export default function App() {
       )}
 
       {showAuditModal && (
-        <div className="modal-overlay">
-          <div className="modal-content">
+        <div
+          className="modal-overlay"
+          onClick={() => {
+            setShowAuditModal(false);
+            setSelectedReport(null);
+          }}
+        >
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div
               style={{
                 display: "flex",
@@ -4950,8 +5009,12 @@ export default function App() {
                 Riwayat Status (Log #{selectedReport?.id})
               </h3>
               <button
+                type="button"
                 className="nav-btn"
-                onClick={() => setShowAuditModal(false)}
+                onClick={() => {
+                  setShowAuditModal(false);
+                  setSelectedReport(null);
+                }}
               >
                 <X size={20} />
               </button>
@@ -4979,7 +5042,7 @@ export default function App() {
                     style={{ fontSize: "0.9rem", color: "var(--text-muted)" }}
                   >
                     {log.admin_id ? `Oleh Petugas Admin (#${log.admin_id})` : "Oleh Sistem AI GovSmart / Pelapor"} &bull;{" "}
-                    {formatDate(log.created_at)}
+                    {formatDate(log.timestamp || log.created_at)}
                   </div>
                   <div
                     style={{
@@ -5161,7 +5224,7 @@ export default function App() {
                 <input type="text" className="form-input" value={editJudul} onChange={(e) => setEditJudul(e.target.value)} required />
               </div>
               <div className="form-group">
-                <label className="form-label">Dinas Tujuan (Opsional)</label>
+                <label className="form-label">Dinas Tujuan</label>
                 <select className="form-input" value={editDeptId} onChange={(e) => setEditDeptId(e.target.value)}>
                   <option value="">Otomatis oleh AI</option>
                   {departments.map((department) => (
@@ -5175,16 +5238,16 @@ export default function App() {
               </div>
               <div className="coord-grid" style={{ marginBottom: "1rem" }}>
                 <div className="form-group" style={{ marginBottom: 0 }}>
-                  <label className="form-label">Latitude (Opsional)</label>
+                  <label className="form-label">Latitude</label>
                   <input type="number" step="any" className="form-input" value={editLat} onChange={(e) => setEditLat(e.target.value)} />
                 </div>
                 <div className="form-group" style={{ marginBottom: 0 }}>
-                  <label className="form-label">Longitude (Opsional)</label>
+                  <label className="form-label">Longitude</label>
                   <input type="number" step="any" className="form-input" value={editLong} onChange={(e) => setEditLong(e.target.value)} />
                 </div>
               </div>
               <div className="form-group">
-                <label className="form-label">Ganti / Tambah Foto Bukti (Opsional, JPEG/PNG/WEBP, maks 5 MB)</label>
+                <label className="form-label">Ganti / Tambah Foto Bukti (JPEG/PNG/WEBP, maks 5 MB)</label>
                 <input
                   type="file"
                   accept="image/jpeg,image/png,image/webp"

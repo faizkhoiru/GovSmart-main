@@ -277,7 +277,13 @@ def sync_unrouted_reports(
     details = []
 
     for rep in unrouted:
-        dept_id, urgensi = analyze_report_ai(cast(str, rep.judul), cast(str, rep.isi_laporan), db)
+        dept_id, urgensi = analyze_report_ai(
+            cast(str, rep.judul),
+            cast(str, rep.isi_laporan),
+            db,
+            lat=cast(Optional[float], rep.lat),
+            long=cast(Optional[float], rep.long),
+        )
         setattr(rep, "dept_id", dept_id)
         if urgensi:
             setattr(rep, "urgensi", urgensi)
@@ -309,7 +315,13 @@ def reroute_single_report(
     if not report:
         raise HTTPException(status_code=404, detail="Laporan tidak ditemukan")
 
-    dept_id, urgensi = analyze_report_ai(cast(str, report.judul), cast(str, report.isi_laporan), db)
+    dept_id, urgensi = analyze_report_ai(
+        cast(str, report.judul),
+        cast(str, report.isi_laporan),
+        db,
+        lat=cast(Optional[float], report.lat),
+        long=cast(Optional[float], report.long),
+    )
     setattr(report, "dept_id", dept_id)
     if urgensi:
         setattr(report, "urgensi", urgensi)

@@ -503,3 +503,56 @@ def test_warga_rating_kepuasan_only_after_selesai(client, warga_headers, super_a
     assert rated_data["ulasan_warga"] == "Terima kasih, lampu jalan sudah menyala terang kembali."
     assert rated_data["rated_at"] is not None
 
+
+def test_road_damage_near_campus_pens_routes_to_bina_marga(client, warga_headers):
+    """Jalan rusak di area kampus PENS (termasuk typo 'kammpus' & koordinat PENS) harus masuk Dinas PU Bina Marga, bukan Dinas Pendidikan."""
+    res = client.post("/api/v1/reports/", json={
+        "judul": "Jalan rusak di area kammpus PENS",
+        "isi_laporan": "Jalan berlubang dan aspal rusak di area kammpus PENS Lamongan sangat mengganggu pengendara.",
+        "lat": -7.1155,
+        "long": 112.4280,
+    }, headers=warga_headers)
+    assert res.status_code == 201
+    depts = client.get("/api/v1/departments/").json()
+    dept = next(d for d in depts if d["id"] == res.json()["dept_id"])
+    assert dept["nama_dinas"] == "Dinas Pekerjaan Umum Bina Marga"
+
+
+def test_pju_outage_in_front_of_school_routes_to_dishub(client, warga_headers):
+    """Lampu PJU mati di depan sekolah harus masuk Dinas Perhubungan, bukan Dinas Pendidikan."""
+    res = client.post("/api/v1/reports/", json={
+        "judul": "Lampu jalan PJU mati di depan sekolah",
+        "isi_laporan": "Lampu penerangan jalan umum di depan sekolah padam total sejak dua malam lalu.",
+        "lat": -7.1190,
+        "long": 112.4160,
+    }, headers=warga_headers)
+    assert res.status_code == 201
+    depts = client.get("/api/v1/departments/").json()
+    dept = next(d for d in depts if d["id"] == res.json()["dept_id"])
+    assert dept["nama_dinas"] == "Dinas Perhubungan"
+
+
+def test_coordinate_aware_routing_near_rsud_and_tpi(client, warga_headers):
+    """Laporan umum tanpa nama dinas eksplisit namun berkoordinat di RSUD Soegiri / TPI Brondong harus terarah sesuai zona GPS."""
+    depts = client.get("/api/v1/departments/").json()
+
+    res_rs = client.post("/api/v1/reports/", json={
+        "judul": "Antrean pelayanan sangat panjang",
+        "isi_laporan": "Mohon penertiban antrean pelayanan loket yang menumpuk sejak pagi di lokasi ini.",
+        "lat": -7.1204,
+        "long": 112.4119,
+    }, headers=warga_headers)
+    assert res_rs.status_code == 201
+    dept_rs = next(d for d in depts if d["id"] == res_rs.json()["dept_id"])
+    assert dept_rs["nama_dinas"] == "Dinas Kesehatan"
+
+    res_tpi = client.post("/api/v1/reports/", json={
+        "judul": "Fasilitas dermaga butuh perbaikan",
+        "isi_laporan": "Mohon perbaikan fasilitas umum pada area bongkar muat di koordinat berikut.",
+        "lat": -6.8732,
+        "long": 112.2825,
+    }, headers=warga_headers)
+    assert res_tpi.status_code == 201
+    dept_tpi = next(d for d in depts if d["id"] == res_tpi.json()["dept_id"])
+    assert dept_tpi["nama_dinas"] == "Dinas Perikanan"
+

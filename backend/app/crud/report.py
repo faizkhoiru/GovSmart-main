@@ -8,8 +8,14 @@ from app.core.ai_routing import analyze_report_ai
 from app.crud.audit import create_audit_log
 
 def create_report(db: Session, report_in: ReportCreate, user_id: int):
-    # Run AI smart routing and urgency analysis
-    ai_dept_id, ai_urgensi = analyze_report_ai(report_in.judul, report_in.isi_laporan, db)
+    # Run AI smart routing and urgency analysis (including GPS coordinates)
+    ai_dept_id, ai_urgensi = analyze_report_ai(
+        report_in.judul,
+        report_in.isi_laporan,
+        db,
+        lat=report_in.lat,
+        long=report_in.long,
+    )
 
     # Use manual dept_id if supplied, otherwise fallback to AI suggestion
     final_dept_id = report_in.dept_id if report_in.dept_id else ai_dept_id
@@ -38,7 +44,13 @@ def get_report_by_id(db: Session, report_id: int):
 
 
 def update_report(db: Session, report: Report, report_in: ReportUpdate):
-    ai_dept_id, ai_urgensi = analyze_report_ai(report_in.judul, report_in.isi_laporan, db)
+    ai_dept_id, ai_urgensi = analyze_report_ai(
+        report_in.judul,
+        report_in.isi_laporan,
+        db,
+        lat=report_in.lat,
+        long=report_in.long,
+    )
     report.judul = report_in.judul
     report.isi_laporan = report_in.isi_laporan
     report.dept_id = report_in.dept_id or ai_dept_id

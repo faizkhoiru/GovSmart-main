@@ -174,7 +174,7 @@ def hard_delete_warga_user(db: Session, user_id: int):
     return db_warga
 
 def seed_super_admin(db: Session):
-    existing = get_user_by_email(db, "superadmin@govsmart.go.id")
+    existing = get_user_by_email(db, "superadmin@govsmart.go.id") or get_user_by_nik_or_nip(db, "199001012026011001")
     if not existing:
         hashed_password = get_password_hash("SuperAdmin123!")
         super_admin = User(
