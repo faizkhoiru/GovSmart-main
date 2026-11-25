@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+  <title>GovSmart Lamongan</title>
+  <defs>
+    <linearGradient id="shield" x1="18" y1="10" x2="106" y2="118" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1472C8"/>
+      <stop offset="1" stop-color="#072B5E"/>
+    </linearGradient>
+  </defs>
+  <path d="M64 5 113 23v36c0 29-19 51-49 64C34 110 15 88 15 59V23L64 5Z" fill="url(#shield)"/>
+  <path d="M64 13 105 28v31c0 24-15 43-41 55C38 102 23 83 23 59V28l41-15Z" stroke="#fff" stroke-opacity=".22" stroke-width="2"/>
+  <path d="M36 51 64 34l28 17H36Z" fill="#F2CB05"/>
+  <path d="M42 55h44v25H42z" fill="#fff"/>
+  <path d="M37 83h54v6H37z" fill="#F2CB05"/>
+  <path d="M49 59h6v17h-6zM61 59h6v17h-6zM73 59h6v17h-6z" fill="#0E56A8"/>
+  <path d="M54 96h20v9H54z" fill="#fff"/>
+  <circle cx="64" cy="98" r="3" fill="#F2CB05"/>
+</svg>

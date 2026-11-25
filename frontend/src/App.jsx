@@ -642,7 +642,7 @@ export default function App() {
                 ? (await navigator.serviceWorker).active?.postMessage({ type: "newReport", count: newCount })
                 : new Notification("GovSmart — Laporan Baru", {
                     body: `${newCount} laporan baru untuk dinas Anda`,
-                    icon: "/favicon.png",
+                    icon: "/govsmart-logo.svg",
                   });
               // Sound efek kecil (data URI, <1KB)
               const audio = new Audio("data:audio/wav;base64,UklGRlgAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YVgAAAFg////AYGA////AP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AA==");
@@ -2026,7 +2026,7 @@ export default function App() {
           <section className="auth-visual" aria-label="Tentang GovSmart">
             <div className="auth-brand-mark">
               <img
-                src="/logo-lamongan.png"
+                src="/govsmart-logo.svg"
                 alt="Logo Kabupaten Lamongan"
                 className="brand-crest-img auth-crest-lg"
               />
@@ -2053,7 +2053,7 @@ export default function App() {
             <div className="auth-card-header">
               <div className="auth-brand-mini">
                 <img
-                  src="/logo-lamongan.png"
+                  src="/govsmart-logo.svg"
                   alt="Logo Kabupaten Lamongan"
                   className="brand-crest-img auth-crest-sm"
                 />
@@ -2348,7 +2348,7 @@ export default function App() {
         <header className="navbar-solid portal-navbar">
           <div className="brand-logo">
             <img
-              src="/logo-lamongan.png"
+              src="/govsmart-logo.svg"
               alt="Logo Kabupaten Lamongan"
               className="brand-crest-img nav-crest-img"
             />
@@ -2477,7 +2477,7 @@ export default function App() {
           style={{ cursor: "pointer" }}
         >
           <img
-            src="/logo-lamongan.png"
+            src="/govsmart-logo.svg"
             alt="Logo Kabupaten Lamongan"
             className="brand-crest-img nav-crest-img"
           />
